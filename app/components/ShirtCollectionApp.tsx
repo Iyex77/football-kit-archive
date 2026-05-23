@@ -379,7 +379,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
     return;
     }
 
-    const payload = {
+    const payload: any = {
       id: editingId || crypto.randomUUID(),
       sport: (form.sport || "football") as Sport,
       category: (form.category || "club") as ShirtCategory,
@@ -398,20 +398,27 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       user_id: user.id,
     };
 
+    console.log("AUTH USER:", user);
+    console.log("PAYLOAD:", payload);
+
     let result;
 
     if (editingId) {
       result = await supabase
         .from("shirts")
         .update(payload)
-        .eq("id", editingId);
+        .eq("id", editingId)
+        .select();
     } else {
       result = await supabase
         .from("shirts")
-        .insert([payload]);
+        .insert([payload])
+        .select();
     }
 
-    console.log("SUPABASE RESULT:", result);
+    console.log("INSERT RESULT:", result);
+    console.log("INSERT DATA:", result.data);
+    console.log("INSERT ERROR:", result.error);
 
     if (result.error) {
       alert(result.error.message);
