@@ -204,19 +204,22 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       data: { session },
     } = await supabase.auth.getSession();
 
-    console.log("SESSION:", session);
+    console.log("SESSION USER:", session?.user?.id);
 
     const { data, error } = await supabase
       .from("shirts")
-      .select("*")
-      .order("created_at", {
-        ascending: false,
-      });
-    console.log("SHIRTS:", data);
-    console.log("ERROR:", error);
+    .select("*");
 
-    if (!error && data) {
-      setShirts(data as Shirt[]);
+    console.log("RAW SHIRTS:", data);
+    console.log("RAW ERROR:", error);
+    const mine = data?.filter(
+      (s) => s.user_id === session?.user?.id
+    );
+
+    console.log("MATCHING USER SHIRTS:", mine);
+
+    if (mine) {
+      setShirts(mine as Shirt[]);
     }
   }
 
