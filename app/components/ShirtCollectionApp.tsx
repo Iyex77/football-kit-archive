@@ -155,7 +155,11 @@ function matchesFilters(shirt: Shirt, filters: ShirtFilters) {
   );
 }
 
-export function ShirtCollectionApp() {
+interface ShirtCollectionAppProps {
+  onLogout?: () => Promise<void> | void;
+}
+
+export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   const [shirts, setShirts] = useState<Shirt[]>(initialShirts);
   const [form, setForm] = useState<ShirtFormState>(defaultForm);
   const [filters, setFilters] = useState<ShirtFilters>(emptyFilters);
@@ -495,6 +499,18 @@ export function ShirtCollectionApp() {
             <span>{collectionCount} en colección</span>
             <span>{wishlistCount} wishlist</span>
           </div>
+
+          {onLogout ? (
+            <div className="mt-6 sm:mt-0">
+              <button
+                type="button"
+                className="rounded-full border border-slate-600 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-slate-400 hover:bg-slate-900"
+                onClick={onLogout}
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          ) : null}
         </header>
 
         <section className="space-y-7">
