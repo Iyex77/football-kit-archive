@@ -431,18 +431,54 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   };
 
   const handleDelete = async (id: string) => {
+
+    const shirt = shirts.find((s) => s.id === id);
+
+    if (!shirt) return;
+
+    // BORRAR IMÁGENES STORAGE
+    if (shirt.images?.length) {
+
+      const filesToDelete = shirt.images
+        .map((img) => {
+
+          if (!img.url.includes("/storage/v1/object/public/shirts/")) {
+            return null;
+          }
+
+          return img.url.split(
+            "/storage/v1/object/public/shirts/"
+          )[1];
+
+        })
+        .filter((file): file is string => Boolean(file))
+
+      if (filesToDelete.length) {
+
+        const { error: storageError } =
+          await supabase.storage
+            .from("shirts")
+            .remove(filesToDelete);
+
+        if (storageError) {
+          console.error(storageError);
+        }
+      }
+    }
+
+    // BORRAR ROW BD
     const { error } = await supabase
       .from("shirts")
       .delete()
       .eq("id", id);
-    
+
     if (error) {
       alert(error.message);
       return;
     }
-  
+
     await loadShirts();
-  
+
     if (editingId === id) {
       closeForm();
     }
