@@ -442,6 +442,8 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       const filesToDelete = shirt.images
         .map((img) => {
 
+          console.log("RAW URL:", img.url);
+
           if (!img.url.includes("/storage/v1/object/public/shirts/")) {
             return null;
           }
@@ -456,7 +458,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       if (filesToDelete.length) {
 
         console.log("SHIRT IMAGES:", shirt.images);
-            
+
         console.log(
           "FILES TO DELETE:",
           filesToDelete
