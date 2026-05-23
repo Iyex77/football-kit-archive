@@ -199,27 +199,14 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   }, [isSortOpen]);
 
   async function loadShirts() {
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    console.log("SESSION USER:", session?.user?.id);
-
     const { data, error } = await supabase
       .from("shirts")
-    .select("*");
-
-    console.log("RAW SHIRTS:", data);
-    console.log("RAW ERROR:", error);
-    const mine = data?.filter(
-      (s) => s.user_id === session?.user?.id
-    );
-
-    console.log("MATCHING USER SHIRTS:", mine);
-
-    if (mine) {
-      setShirts(mine as Shirt[]);
+      .select("*")
+      .order("created_at", {
+        ascending: false,
+      });
+    if (!error && data) {
+      setShirts(data as Shirt[]);
     }
   }
 
