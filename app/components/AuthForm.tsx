@@ -1,10 +1,9 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { createClient } from "../../lib/supabase-auth";
+import { supabase } from "../../lib/supabase-auth";
 
 export function AuthForm() {
-  const supabase = useMemo(() => createClient(), []);
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

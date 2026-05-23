@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createClient } from "../lib/supabase-auth";
+import { supabase } from "../lib/supabase-auth";
 import type { Session } from "@supabase/supabase-js";
 import { AuthForm } from "./components/AuthForm";
 import { ShirtCollectionApp } from "./components/ShirtCollectionApp";
 
 export default function Home() {
-  const supabase = useMemo(() => createClient(), []);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 

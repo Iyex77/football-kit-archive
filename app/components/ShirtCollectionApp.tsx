@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { supabase } from "../../lib/supabase-auth";
 import {
   catalog,
   defaultForm,
@@ -199,12 +199,22 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   }, [isSortOpen]);
 
   async function loadShirts() {
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    console.log("SESSION:", session);
+
     const { data, error } = await supabase
       .from("shirts")
       .select("*")
       .order("created_at", {
         ascending: false,
       });
+    console.log("SHIRTS:", data);
+    console.log("ERROR:", error);
+
     if (!error && data) {
       setShirts(data as Shirt[]);
     }
