@@ -370,7 +370,16 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       return;
     }
 
-    const payload: Shirt = {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("No hay sesión activa");
+    return;
+    }
+
+    const payload = {
       id: editingId || crypto.randomUUID(),
       sport: (form.sport || "football") as Sport,
       category: (form.category || "club") as ShirtCategory,
@@ -386,6 +395,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       images: form.images,
       mainImageId: form.mainImageId || form.images[0]?.id || "",
       notes: form.notes.trim(),
+      user_id: user.id,
     };
 
     let result;
