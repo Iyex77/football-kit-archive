@@ -398,8 +398,6 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       user_id: user.id,
     };
 
-    console.log("AUTH USER:", user);
-    console.log("PAYLOAD:", payload);
 
     let result;
 
@@ -416,9 +414,6 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
         .select();
     }
 
-    console.log("INSERT RESULT:", result);
-    console.log("INSERT DATA:", result.data);
-    console.log("INSERT ERROR:", result.error);
 
     if (result.error) {
       alert(result.error.message);
