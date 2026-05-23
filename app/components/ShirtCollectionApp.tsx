@@ -430,8 +430,19 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setShirts((current) => current.filter((shirt) => shirt.id !== id));
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase
+      .from("shirts")
+      .delete()
+      .eq("id", id);
+    
+    if (error) {
+      alert(error.message);
+      return;
+    }
+  
+    await loadShirts();
+  
     if (editingId === id) {
       closeForm();
     }
