@@ -135,7 +135,7 @@ img {
 .filters-grid {
   display: grid;
   flex: 1;
-  grid-template-columns: minmax(220px, 1.5fr) repeat(3, minmax(150px, 0.7fr));
+  grid-template-columns: minmax(220px, 1.5fr) repeat(4, minmax(150px, 0.7fr));
   gap: 0.75rem;
 }
 
@@ -874,11 +874,17 @@ img {
   transform: translateY(-1px);
 }
 
-.floating-add {
+.floating-actions {
   position: fixed;
   right: clamp(1rem, 3vw, 2rem);
   bottom: clamp(1rem, 3vw, 2rem);
   z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.floating-add {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -954,6 +960,81 @@ img {
   color: rgb(148 163 184);
 }
 
+.sort-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.sort-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(226 232 240);
+  cursor: pointer;
+  transition: all 120ms ease;
+  backdrop-filter: blur(12px);
+}
+
+.sort-icon-button:hover {
+  background: rgb(255 255 255 / 0.08);
+  border-color: rgb(255 255 255 / 0.15);
+}
+
+.sort-icon-button:active {
+  transform: scale(0.95);
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  background: rgb(3 8 20 / 0.98);
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 8px;
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.32);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem;
+  animation: slideInDown 160ms ease;
+}
+
+.sort-dropdown.floating-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+  animation: slideInUp 160ms ease;
+}
+
+.sort-dropdown button {
+  text-align: left;
+  padding: 0.5rem 0.65rem;
+  background: transparent;
+  border: none;
+  color: rgb(226 232 240);
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 80ms ease;
+}
+
+.sort-dropdown button:hover {
+  background: rgb(255 255 255 / 0.04);
+}
+
+.sort-dropdown button:active {
+  background: rgb(255 255 255 / 0.06);
+}
+
 @media (max-width: 1024px) {
   .collection-grid {
     grid-template-columns: repeat(3, minmax(280px, 280px));
@@ -967,6 +1048,7 @@ img {
   .hero-stats {
     justify-content: flex-start;
   }
+
 
   .filters-bar {
     align-items: stretch;
@@ -1012,6 +1094,9 @@ img {
   border: 1px solid rgb(255 255 255 / 0.08);
   border-radius: 18px;
   box-shadow: 0 24px 80px rgb(0 0 0 / 0.35);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(80vh);
   overflow: hidden;
   animation: slideInDown 220ms ease;
 }
@@ -1037,6 +1122,16 @@ img {
   display: grid;
   gap: 0.9rem;
   padding: 1rem;
+  overflow-y: auto;
+}
+
+.filters-mobile-footer {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+  padding: 0.7rem;
+  border-top: 1px solid rgb(255 255 255 / 0.04);
+  background: linear-gradient(180deg, rgba(3,8,20,0.02), rgba(3,8,20,0.04));
 }
 
 @keyframes slideInUp {

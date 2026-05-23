@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import {
   catalog,
@@ -146,6 +146,16 @@ export function ShirtCollectionApp() {
   const [shirts, setShirts] = useState<Shirt[]>(initialShirts);
   const [form, setForm] = useState<ShirtFormState>(defaultForm);
   const [filters, setFilters] = useState<ShirtFilters>(emptyFilters);
+  type SortBy =
+    | "recent"
+    | "oldest"
+    | "team-asc"
+    | "team-desc"
+    | "player-asc"
+    | "season-desc"
+    | "sport"
+    | "wishlist-first";
+  const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewingShirtId, setViewingShirtId] = useState<string | null>(null);
@@ -174,8 +184,68 @@ export function ShirtCollectionApp() {
   const filteredShirts = shirts.filter((shirt) => matchesFilters(shirt, filters));
   const filterOptions = getFilterOptions(shirts, filters);
 
+  const sortedShirts = (() => {
+    const list = filteredShirts.slice();
+
+    const seasonValue = (s: string) => {
+      const m = String(s).match(/(\d{4})/);
+      return m ? parseInt(m[1], 10) : 0;
+    };
+
+    switch (sortBy) {
+      case "recent":
+        return list; // already in recent-first order
+      case "oldest":
+        return list.reverse();
+      case "team-asc":
+        return list.sort((a, b) => a.team.localeCompare(b.team, undefined, { sensitivity: "base" }));
+      case "team-desc":
+        return list.sort((a, b) => b.team.localeCompare(a.team, undefined, { sensitivity: "base" }));
+      case "player-asc":
+        return list.sort((a, b) => (a.player || "").localeCompare(b.player || "", undefined, { sensitivity: "base" }));
+      case "season-desc":
+        return list.sort((a, b) => seasonValue(b.season) - seasonValue(a.season));
+      case "sport":
+        return list.sort((a, b) => {
+          const order = { football: 0, basketball: 1 } as Record<string, number>;
+          return (order[a.sport] || 99) - (order[b.sport] || 99);
+        });
+      case "wishlist-first":
+        return list.sort((a, b) => (a.status === b.status ? 0 : a.status === "wishlist" ? -1 : 1));
+      default:
+        return list;
+    }
+  })();
+
   const collectionCount = shirts.filter((shirt) => shirt.status === "collection").length;
   const wishlistCount = shirts.filter((shirt) => shirt.status === "wishlist").length;
+  const [isSortOpen, setIsSortOpen] = useState(false);
+
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortOpen(false);
+      }
+    };
+
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsSortOpen(false);
+      }
+    };
+
+    if (isSortOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscKey);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscKey);
+    };
+  }, [isSortOpen]);
 
   const closeForm = () => {
     setEditingId(null);
@@ -410,6 +480,8 @@ export function ShirtCollectionApp() {
             leagues={filterOptions.leagues}
             onFilterChange={handleFilterChange}
             onReset={() => setFilters(emptyFilters)}
+            sortBy={sortBy}
+            onSortChange={(v) => setSortBy(v as SortBy)}
           />
 
           <div className="collection-heading">
@@ -419,9 +491,9 @@ export function ShirtCollectionApp() {
             </div>
           </div>
 
-          {filteredShirts.length > 0 ? (
+          {sortedShirts.length > 0 ? (
             <div className="collection-grid">
-              {filteredShirts.map((shirt) => (
+              {sortedShirts.map((shirt) => (
                 <ShirtCard
                   key={shirt.id}
                   shirt={shirt}
@@ -444,9 +516,37 @@ export function ShirtCollectionApp() {
         </section>
       </div>
 
-      <button className="floating-add" type="button" onClick={openCreateForm}>
-        + Añadir camiseta
-      </button>
+      <div className="floating-actions" ref={sortDropdownRef}>
+        <button className="floating-add" type="button" onClick={openCreateForm}>
+          + Añadir camiseta
+        </button>
+
+        <div className="sort-control">
+          <button
+            type="button"
+            className="sort-icon-button"
+            aria-haspopup="menu"
+            aria-expanded={isSortOpen}
+            onClick={() => setIsSortOpen((s) => !s)}
+            title="Ordenar por"
+          >
+            ⇅
+          </button>
+
+          {isSortOpen && (
+            <div className="sort-dropdown floating-up" role="menu">
+              <button type="button" role="menuitem" onClick={() => { setSortBy("recent"); setIsSortOpen(false); }}>Más recientes</button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("oldest"); setIsSortOpen(false); }}>Más antiguas</button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("team-asc"); setIsSortOpen(false); }}>Equipo A-Z</button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("team-desc"); setIsSortOpen(false); }}>Equipo Z-A</button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("player-asc"); setIsSortOpen(false); }}>Jugador A-Z</button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("season-desc"); setIsSortOpen(false); }}>Temporada</button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("sport"); setIsSortOpen(false); }}>Deporte</button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("wishlist-first"); setIsSortOpen(false); }}>Wishlist primero</button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {isSelectModeActive && (
         <div className="floating-selection-bar" role="toolbar" aria-label="Acciones selección">

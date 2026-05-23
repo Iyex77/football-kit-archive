@@ -8,6 +8,8 @@ type FiltersBarProps = {
   leagues: string[];
   onFilterChange: <K extends keyof ShirtFilters>(field: K, value: ShirtFilters[K]) => void;
   onReset: () => void;
+  sortBy?: string;
+  onSortChange?: (value: string) => void;
 };
 
 const sportOptions: Array<"all" | Sport> = ["all", "football", "basketball"];
@@ -18,6 +20,8 @@ export function FiltersBar({
   leagues,
   onFilterChange,
   onReset,
+  sortBy,
+  onSortChange,
 }: FiltersBarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -63,6 +67,7 @@ export function FiltersBar({
           getLabel={(value) => (value === "all" ? "Todo" : statusLabels[value])}
           onChange={(value) => onFilterChange("status", value as ShirtStatus | "all")}
         />
+        {/* Sort control moved to header (compact button) */}
       </div>
       <button className="quiet-button" type="button" onClick={onReset}>
         Limpiar
@@ -105,8 +110,14 @@ export function FiltersBar({
                 getLabel={(value) => (value === "all" ? "Todo" : statusLabels[value])}
                 onChange={(value) => onFilterChange("status", value as ShirtStatus | "all")}
               />
+              {/* mobile content; footer with actions below */}
+            </div>
+            <div className="filters-mobile-footer">
               <button className="quiet-button" type="button" onClick={handleReset}>
-                Limpiar
+                Limpiar filtros
+              </button>
+              <button className="primary-button" type="button" onClick={handleCloseMobile}>
+                Cerrar
               </button>
             </div>
           </div>
