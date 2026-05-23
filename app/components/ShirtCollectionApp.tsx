@@ -24,6 +24,19 @@ import { ShirtForm } from "./ShirtForm";
 
 const createId = () => `shirt-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+type SortBy =
+  | "recent"
+  | "oldest"
+  | "team-asc"
+  | "team-desc"
+  | "player-asc"
+  | "player-desc"
+  | "number-asc"
+  | "number-desc"
+  | "season-desc"
+  | "sport"
+  | "wishlist-first";
+
 const unique = (values: string[]) => Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
 
 function createTeamOptions() {
@@ -146,23 +159,40 @@ export function ShirtCollectionApp() {
   const [shirts, setShirts] = useState<Shirt[]>(initialShirts);
   const [form, setForm] = useState<ShirtFormState>(defaultForm);
   const [filters, setFilters] = useState<ShirtFilters>(emptyFilters);
-  type SortBy =
-    | "recent"
-    | "oldest"
-    | "team-asc"
-    | "team-desc"
-    | "player-asc"
-    | "season-desc"
-    | "sport"
-    | "wishlist-first";
-  const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewingShirtId, setViewingShirtId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<SortBy>("recent");
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     loadShirts();
   }, []);
+
+  useEffect(() => {
+    if (!isSortOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setIsSortOpen(false);
+      }
+    };
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsSortOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [isSortOpen]);
 
   async function loadShirts() {
     const { data, error } = await supabase
@@ -182,70 +212,63 @@ export function ShirtCollectionApp() {
   const countryOptions = getCountryOptions(form.sport, form.category);
   const leagueOptions = getLeagueOptions(form.sport, form.category, form.country);
   const filteredShirts = shirts.filter((shirt) => matchesFilters(shirt, filters));
-  const filterOptions = getFilterOptions(shirts, filters);
+  const getIdTimestamp = (id: string) => {
+    const [, timestamp] = id.split("-");
+    const value = Number(timestamp);
+    return Number.isNaN(value) ? 0 : value;
+  };
+
+  const numberValue = (value: string | number | undefined) => {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
+  };
 
   const sortedShirts = (() => {
-    const list = filteredShirts.slice();
-
-    const seasonValue = (s: string) => {
-      const m = String(s).match(/(\d{4})/);
-      return m ? parseInt(m[1], 10) : 0;
-    };
-
+    const list = [...filteredShirts];
     switch (sortBy) {
       case "recent":
-        return list; // already in recent-first order
+        return list.sort((a, b) => getIdTimestamp(b.id) - getIdTimestamp(a.id));
       case "oldest":
-        return list.reverse();
+        return list.sort((a, b) => getIdTimestamp(a.id) - getIdTimestamp(b.id));
       case "team-asc":
         return list.sort((a, b) => a.team.localeCompare(b.team, undefined, { sensitivity: "base" }));
       case "team-desc":
         return list.sort((a, b) => b.team.localeCompare(a.team, undefined, { sensitivity: "base" }));
       case "player-asc":
-        return list.sort((a, b) => (a.player || "").localeCompare(b.player || "", undefined, { sensitivity: "base" }));
-      case "season-desc":
-        return list.sort((a, b) => seasonValue(b.season) - seasonValue(a.season));
-      case "sport":
+        return list.sort((a, b) =>
+          (a.player || "").localeCompare(b.player || "", undefined, { sensitivity: "base" }),
+        );
+      case "player-desc":
+        return list.sort((a, b) =>
+          (b.player || "").localeCompare(a.player || "", undefined, { sensitivity: "base" }),
+        );
+      case "number-asc":
+        return list.sort((a, b) => numberValue(a.number) - numberValue(b.number));
+      case "number-desc":
         return list.sort((a, b) => {
-          const order = { football: 0, basketball: 1 } as Record<string, number>;
-          return (order[a.sport] || 99) - (order[b.sport] || 99);
+          const left = numberValue(a.number);
+          const right = numberValue(b.number);
+          if (left === Number.NEGATIVE_INFINITY && right === Number.NEGATIVE_INFINITY) return 0;
+          if (left === Number.NEGATIVE_INFINITY) return -1;
+          if (right === Number.NEGATIVE_INFINITY) return -1;
+          return right - left;
         });
+      case "season-desc":
+        return list.sort((a, b) =>
+          (b.season || "").localeCompare(a.season || "", undefined, { sensitivity: "base" }),
+        );
+      case "sport":
+        return list.sort((a, b) => a.sport.localeCompare(b.sport, undefined, { sensitivity: "base" }));
       case "wishlist-first":
         return list.sort((a, b) => (a.status === b.status ? 0 : a.status === "wishlist" ? -1 : 1));
       default:
         return list;
     }
   })();
+  const filterOptions = getFilterOptions(shirts, filters);
 
   const collectionCount = shirts.filter((shirt) => shirt.status === "collection").length;
   const wishlistCount = shirts.filter((shirt) => shirt.status === "wishlist").length;
-  const [isSortOpen, setIsSortOpen] = useState(false);
-
-  const sortDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
-        setIsSortOpen(false);
-      }
-    };
-
-    const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsSortOpen(false);
-      }
-    };
-
-    if (isSortOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleEscKey);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscKey);
-    };
-  }, [isSortOpen]);
 
   const closeForm = () => {
     setEditingId(null);
@@ -480,8 +503,6 @@ export function ShirtCollectionApp() {
             leagues={filterOptions.leagues}
             onFilterChange={handleFilterChange}
             onReset={() => setFilters(emptyFilters)}
-            sortBy={sortBy}
-            onSortChange={(v) => setSortBy(v as SortBy)}
           />
 
           <div className="collection-heading">
@@ -516,18 +537,18 @@ export function ShirtCollectionApp() {
         </section>
       </div>
 
-      <div className="floating-actions" ref={sortDropdownRef}>
+      <div className="floating-actions">
         <button className="floating-add" type="button" onClick={openCreateForm}>
           + Añadir camiseta
         </button>
 
-        <div className="sort-control">
+        <div className="sort-control" ref={sortDropdownRef}>
           <button
             type="button"
             className="sort-icon-button"
             aria-haspopup="menu"
             aria-expanded={isSortOpen}
-            onClick={() => setIsSortOpen((s) => !s)}
+            onClick={() => setIsSortOpen((current) => !current)}
             title="Ordenar por"
           >
             ⇅
@@ -535,17 +556,53 @@ export function ShirtCollectionApp() {
 
           {isSortOpen && (
             <div className="sort-dropdown floating-up" role="menu">
-              <button type="button" role="menuitem" onClick={() => { setSortBy("recent"); setIsSortOpen(false); }}>Más recientes</button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("oldest"); setIsSortOpen(false); }}>Más antiguas</button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("team-asc"); setIsSortOpen(false); }}>Equipo A-Z</button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("team-desc"); setIsSortOpen(false); }}>Equipo Z-A</button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("player-asc"); setIsSortOpen(false); }}>Jugador A-Z</button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("season-desc"); setIsSortOpen(false); }}>Temporada</button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("sport"); setIsSortOpen(false); }}>Deporte</button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("wishlist-first"); setIsSortOpen(false); }}>Wishlist primero</button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("recent"); setIsSortOpen(false); }}>
+                Más recientes
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("oldest"); setIsSortOpen(false); }}>
+                Más antiguas
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("team-asc"); setIsSortOpen(false); }}>
+                Equipo A-Z
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("team-desc"); setIsSortOpen(false); }}>
+                Equipo Z-A
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("player-asc"); setIsSortOpen(false); }}>
+                Jugador A-Z
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("player-desc"); setIsSortOpen(false); }}>
+                Jugador Z-A
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("number-asc"); setIsSortOpen(false); }}>
+                Dorsal menor a mayor
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("number-desc"); setIsSortOpen(false); }}>
+                Dorsal mayor a menor
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("season-desc"); setIsSortOpen(false); }}>
+                Temporada
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("sport"); setIsSortOpen(false); }}>
+                Deporte
+              </button>
+              <button type="button" role="menuitem" onClick={() => { setSortBy("wishlist-first"); setIsSortOpen(false); }}>
+                Wishlist primero
+              </button>
             </div>
           )}
         </div>
+
+        {(filters.search.trim() !== "" || filters.sport !== "all" || filters.league !== "all" || filters.status !== "all") && (
+          <button
+            className="floating-reset-button"
+            type="button"
+            onClick={() => setFilters(emptyFilters)}
+            aria-label="Restablecer filtros"
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {isSelectModeActive && (

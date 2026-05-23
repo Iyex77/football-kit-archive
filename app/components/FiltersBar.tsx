@@ -33,10 +33,17 @@ export function FiltersBar({
     handleCloseMobile();
   };
 
+  const hasActiveFilters =
+    filters.search.trim() !== "" ||
+    filters.sport !== "all" ||
+    filters.league !== "all" ||
+    filters.status !== "all";
+
   return (
     <div className="filters-bar">
       <button className="filters-mobile-toggle" type="button" onClick={handleToggleMobile}>
         🔍 Filtros
+        {hasActiveFilters ? <span className="filters-badge">✕</span> : null}
       </button>
 
       <div className="filters-grid">
@@ -69,15 +76,21 @@ export function FiltersBar({
         />
         {/* Sort control moved to header (compact button) */}
       </div>
-      <button className="quiet-button" type="button" onClick={onReset}>
-        Limpiar
-      </button>
-
       {isMobileOpen ? (
         <div className="filters-mobile-drawer-backdrop" onClick={handleCloseMobile}>
           <div className="filters-mobile-dropdown" onClick={(event) => event.stopPropagation()}>
             <div className="filters-mobile-header">
               <span>Filtros</span>
+              {hasActiveFilters ? (
+                <button
+                  className="filters-reset-button"
+                  type="button"
+                  onClick={handleReset}
+                  aria-label="Restablecer filtros"
+                >
+                  ✕
+                </button>
+              ) : null}
               <button className="icon-button" type="button" onClick={handleCloseMobile} aria-label="Cerrar filtros">
                 ✕
               </button>
@@ -110,15 +123,6 @@ export function FiltersBar({
                 getLabel={(value) => (value === "all" ? "Todo" : statusLabels[value])}
                 onChange={(value) => onFilterChange("status", value as ShirtStatus | "all")}
               />
-              {/* mobile content; footer with actions below */}
-            </div>
-            <div className="filters-mobile-footer">
-              <button className="quiet-button" type="button" onClick={handleReset}>
-                Limpiar filtros
-              </button>
-              <button className="primary-button" type="button" onClick={handleCloseMobile}>
-                Cerrar
-              </button>
             </div>
           </div>
         </div>
