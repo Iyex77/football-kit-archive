@@ -1,5 +1,21 @@
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  arrayMove,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   categoryLabels,
   kitTypes,
   sizes,
@@ -163,6 +179,25 @@ export function ShirtForm({
   const isCustomTeam = form.team === "custom";
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const handleDragStart = (_event: DragStartEvent) => {
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setIsDragging(false);
+    const { active, over } = event;
+    if (!over) return;
+    if (active.id !== over.id) {
+      const oldIndex = form.images.findIndex((i) => i.id === String(active.id));
+      const newIndex = form.images.findIndex((i) => i.id === String(over.id));
+      if (oldIndex >= 0 && newIndex >= 0) {
+        const newImages = arrayMove(form.images, oldIndex, newIndex);
+        onFieldChange("images", newImages);
+      }
+    }
+  };
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -315,37 +350,78 @@ export function ShirtForm({
           </div>
 
           {form.images.length > 0 ? (
-            <div className="image-gallery">
-              {form.images.map((image) => (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={form.images.map((i) => i.id)}
+                strategy={horizontalListSortingStrategy}
+              >
                 <div
-                  key={image.id}
-                  className={`gallery-item ${image.id === form.mainImageId ? "is-main" : ""}`}
+                  className="image-gallery"
+                  style={{ display: "flex", gap: "0.75rem", marginTop: "0.75rem", overflowX: "auto" }}
                 >
-                  <img src={image.url} alt="Imagen camiseta" />
-                  <div className="gallery-item-actions">
-                    {image.id !== form.mainImageId && (
-                      <button
-                        type="button"
-                        className="gallery-action-btn gallery-main-btn"
-                        onClick={() => handleSetMainImage(image.id)}
-                        title="Establecer como imagen principal"
-                      >
-                        ★
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="gallery-action-btn gallery-remove-btn"
-                      onClick={() => handleRemoveImage(image.id)}
-                      title="Eliminar imagen"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  {image.id === form.mainImageId && <span className="main-badge">Principal</span>}
+                  {form.images.map((image) => {
+                    function SortableThumb() {
+                      const { attributes, listeners, setNodeRef, transform, transition, isDragging: itemDragging } = useSortable({ id: image.id });
+                      const style: React.CSSProperties = {
+                        transform: CSS.Transform.toString(transform) || undefined,
+                        transition,
+                        zIndex: itemDragging ? 40 : undefined,
+                        cursor: "grab",
+                        minWidth: 100,
+                        width: 100,
+                        flex: "0 0 100px",
+                      };
+
+                      return (
+                        <div
+                          ref={setNodeRef}
+                          style={style}
+                          className={`gallery-item ${image.id === form.mainImageId ? "is-main" : ""}`}
+                          {...attributes}
+                          {...listeners}
+                        >
+                          <img src={image.url} alt="Imagen camiseta" />
+                          <div className="gallery-item-actions">
+                            {image.id !== form.mainImageId && (
+                              <button
+                                type="button"
+                                className="gallery-action-btn gallery-main-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSetMainImage(image.id);
+                                }}
+                                title="Establecer como imagen principal"
+                              >
+                                ★
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="gallery-action-btn gallery-remove-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveImage(image.id);
+                              }}
+                              title="Eliminar imagen"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          {image.id === form.mainImageId && <span className="main-badge">Principal</span>}
+                        </div>
+                      );
+                    }
+
+                    return <SortableThumb key={image.id} />;
+                  })}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           ) : (
             <div className="image-placeholder-card">
               <img
