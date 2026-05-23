@@ -168,20 +168,26 @@ export function ShirtForm({
     if (!files) return;
 
     Array.from(files).forEach((file) => {
-      const previewUrl = URL.createObjectURL(file);
-      const newImage: ShirtImage = {
-        id: `img-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        url: previewUrl,
-        label: "",
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const newImage: ShirtImage = {
+          id: `img-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+          url: reader.result as string,
+          label: "",
+        };
+
+        onFieldChange("images", [...form.images, newImage]);
+
+        if (form.mainImageId === "") {
+          onFieldChange("mainImageId", newImage.id);
+        }
       };
 
-      onFieldChange("images", [...form.images, newImage]);
-
-      if (form.mainImageId === "") {
-        onFieldChange("mainImageId", newImage.id);
-      }
+      reader.readAsDataURL(file);
     });
   };
+
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     handleFiles(event.target.files);
