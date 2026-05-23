@@ -1,0 +1,57 @@
+import { sportLabels, statusLabels } from "../lib/collection-data";
+import type { ShirtFilters, ShirtStatus, Sport } from "../lib/types";
+import { SelectField, TextField } from "./FormControls";
+
+type FiltersBarProps = {
+  filters: ShirtFilters;
+  leagues: string[];
+  onFilterChange: <K extends keyof ShirtFilters>(field: K, value: ShirtFilters[K]) => void;
+  onReset: () => void;
+};
+
+const sportOptions: Array<"all" | Sport> = ["all", "football", "basketball"];
+const statusOptions: Array<"all" | ShirtStatus> = ["all", "collection", "wishlist"];
+
+export function FiltersBar({
+  filters,
+  leagues,
+  onFilterChange,
+  onReset,
+}: FiltersBarProps) {
+  return (
+    <div className="filters-bar">
+      <div className="filters-grid">
+        <TextField
+          label="Búsqueda"
+          value={filters.search}
+          placeholder="Buscar en la vitrina..."
+          onChange={(value) => onFilterChange("search", value)}
+        />
+        <SelectField
+          label="Deporte"
+          value={filters.sport}
+          options={sportOptions}
+          getLabel={(value) => (value === "all" ? "Todos" : sportLabels[value])}
+          onChange={(value) => onFilterChange("sport", value as Sport | "all")}
+        />
+        <SelectField
+          label="Liga"
+          value={filters.league}
+          options={["all", ...leagues]}
+          getLabel={(value) => (value === "all" ? "Todas" : value)}
+          onChange={(value) => onFilterChange("league", value as "all" | string)}
+        />
+        <SelectField
+          label="Wishlist"
+          value={filters.status}
+          options={statusOptions}
+          getLabel={(value) => (value === "all" ? "Todo" : statusLabels[value])}
+          onChange={(value) => onFilterChange("status", value as ShirtStatus | "all")}
+        />
+      </div>
+      <button className="quiet-button" type="button" onClick={onReset}>
+        Limpiar
+      </button>
+    </div>
+  );
+}
