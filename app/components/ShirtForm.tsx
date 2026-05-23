@@ -202,36 +202,43 @@ export function ShirtForm({
 
   const handleFiles = async (files: FileList | null) => {
     if (!files) return;
-    
+
     for (const file of Array.from(files)) {
-    
+
       const extension = file.name.split(".").pop();
       const fileName = `${crypto.randomUUID()}.${extension}`;
-    
-      const { error: uploadError } = await supabase.storage
-        .from("shirts")
-        .upload(fileName, file);
-    
-      if (uploadError) {
-        console.error(uploadError);
-        alert("Error subiendo imagen");
-        continue;
-      }
-    
+
+      console.log("SUBIENDO:", fileName);
+
+        const result = await supabase.storage
+          .from("shirts")
+          .upload(fileName, file);
+
+        console.log("UPLOAD RESULT:", result);
+
+        const uploadError = result.error;
+
+        if (uploadError) {
+          console.error("UPLOAD ERROR:", uploadError);
+          alert(JSON.stringify(uploadError));
+          continue;
+        }
+
+
       const { data } = supabase.storage
         .from("shirts")
         .getPublicUrl(fileName);
-    
+
       const newImage: ShirtImage = {
         id: `img-${crypto.randomUUID()}`,
         url: data.publicUrl,
         label: "",
       };
-    
+
       const updatedImages = [...form.images, newImage];
-    
+
       onFieldChange("images", updatedImages);
-    
+
       if (!form.mainImageId) {
         onFieldChange("mainImageId", newImage.id);
       }
