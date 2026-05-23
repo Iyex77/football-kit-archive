@@ -371,10 +371,28 @@ export function ShirtForm({
                         transform: CSS.Transform.toString(transform) || undefined,
                         transition,
                         zIndex: itemDragging ? 40 : undefined,
-                        cursor: "grab",
+                        cursor: "default",
                         minWidth: 100,
                         width: 100,
                         flex: "0 0 100px",
+                        position: "relative",
+                      };
+
+                      const handleStyle: React.CSSProperties = {
+                        position: "absolute",
+                        top: 6,
+                        left: 6,
+                        width: 28,
+                        height: 28,
+                        borderRadius: 6,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "rgba(0,0,0,0.35)",
+                        color: "white",
+                        cursor: "grab",
+                        zIndex: 45,
+                        border: "1px solid rgba(255,255,255,0.06)",
                       };
 
                       return (
@@ -382,9 +400,19 @@ export function ShirtForm({
                           ref={setNodeRef}
                           style={style}
                           className={`gallery-item ${image.id === form.mainImageId ? "is-main" : ""}`}
-                          {...attributes}
-                          {...listeners}
                         >
+                          <button
+                            type="button"
+                            aria-label="Reordenar imagen"
+                            title="Arrastrar para reordenar"
+                            style={handleStyle}
+                            {...attributes}
+                            {...listeners}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            ☰
+                          </button>
+
                           <img src={image.url} alt="Imagen camiseta" />
                           <div className="gallery-item-actions">
                             {image.id !== form.mainImageId && (
