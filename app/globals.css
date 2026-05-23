@@ -993,25 +993,27 @@ img {
 
 .filters-mobile-drawer-backdrop {
   position: fixed;
-  inset: 0;
-  background: rgb(0 0 0 / 0.45);
+  top: 5.5rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgb(0 0 0 / 0.42);
   backdrop-filter: blur(8px);
   z-index: 40;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  padding: 1rem;
 }
 
-.filters-mobile-drawer {
-  width: 100%;
-  max-width: 560px;
+.filters-mobile-dropdown {
+  position: absolute;
+  top: 0;
+  left: 0.75rem;
+  right: 0.75rem;
+  max-width: 720px;
   background: rgb(3 8 20 / 0.98);
   border: 1px solid rgb(255 255 255 / 0.08);
-  border-radius: 18px 18px 10px 10px;
+  border-radius: 18px;
   box-shadow: 0 24px 80px rgb(0 0 0 / 0.35);
   overflow: hidden;
-  animation: slideInUp 260ms ease;
+  animation: slideInDown 220ms ease;
 }
 
 .filters-mobile-header {
@@ -1040,6 +1042,17 @@ img {
 @keyframes slideInUp {
   from {
     transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-8px);
     opacity: 0;
   }
   to {

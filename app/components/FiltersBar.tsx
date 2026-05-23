@@ -21,7 +21,7 @@ export function FiltersBar({
 }: FiltersBarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const handleOpenMobile = () => setIsMobileOpen(true);
+  const handleToggleMobile = () => setIsMobileOpen((current) => !current);
   const handleCloseMobile = () => setIsMobileOpen(false);
 
   const handleReset = () => {
@@ -31,8 +31,8 @@ export function FiltersBar({
 
   return (
     <div className="filters-bar">
-      <button className="filters-mobile-toggle" type="button" onClick={handleOpenMobile}>
-        🔍 Filters
+      <button className="filters-mobile-toggle" type="button" onClick={handleToggleMobile}>
+        🔍 Filtros
       </button>
 
       <div className="filters-grid">
@@ -70,7 +70,7 @@ export function FiltersBar({
 
       {isMobileOpen ? (
         <div className="filters-mobile-drawer-backdrop" onClick={handleCloseMobile}>
-          <div className="filters-mobile-drawer" onClick={(event) => event.stopPropagation()}>
+          <div className="filters-mobile-dropdown" onClick={(event) => event.stopPropagation()}>
             <div className="filters-mobile-header">
               <span>Filtros</span>
               <button className="icon-button" type="button" onClick={handleCloseMobile} aria-label="Cerrar filtros">
