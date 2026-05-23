@@ -455,14 +455,22 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
 
       if (filesToDelete.length) {
 
-        const { error: storageError } =
+        console.log("SHIRT IMAGES:", shirt.images);
+            
+        console.log(
+          "FILES TO DELETE:",
+          filesToDelete
+        );
+      
+        const result =
           await supabase.storage
             .from("shirts")
             .remove(filesToDelete);
-
-        if (storageError) {
-          console.error(storageError);
-        }
+      
+        console.log(
+          "STORAGE DELETE RESULT:",
+          result
+        );
       }
     }
 
