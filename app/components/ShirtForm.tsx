@@ -33,6 +33,7 @@ import type {
 } from "../lib/types";
 import { placeholderImages } from "../lib/collection-data";
 import { SelectField, TextAreaField, TextField } from "./FormControls";
+import { supabase } from "../../lib/supabase-auth";
 
 type ShirtFormProps = {
   form: ShirtFormState;
@@ -199,28 +200,42 @@ export function ShirtForm({
     }
   };
 
-  const handleFiles = (files: FileList | null) => {
+  const handleFiles = async (files: FileList | null) => {
     if (!files) return;
-
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const newImage: ShirtImage = {
-          id: `img-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          url: reader.result as string,
-          label: "",
-        };
-
-        onFieldChange("images", [...form.images, newImage]);
-
-        if (form.mainImageId === "") {
-          onFieldChange("mainImageId", newImage.id);
-        }
+    
+    for (const file of Array.from(files)) {
+    
+      const extension = file.name.split(".").pop();
+      const fileName = `${crypto.randomUUID()}.${extension}`;
+    
+      const { error: uploadError } = await supabase.storage
+        .from("shirts")
+        .upload(fileName, file);
+    
+      if (uploadError) {
+        console.error(uploadError);
+        alert("Error subiendo imagen");
+        continue;
+      }
+    
+      const { data } = supabase.storage
+        .from("shirts")
+        .getPublicUrl(fileName);
+    
+      const newImage: ShirtImage = {
+        id: `img-${crypto.randomUUID()}`,
+        url: data.publicUrl,
+        label: "",
       };
-
-      reader.readAsDataURL(file);
-    });
+    
+      const updatedImages = [...form.images, newImage];
+    
+      onFieldChange("images", updatedImages);
+    
+      if (!form.mainImageId) {
+        onFieldChange("mainImageId", newImage.id);
+      }
+    }
   };
 
 
