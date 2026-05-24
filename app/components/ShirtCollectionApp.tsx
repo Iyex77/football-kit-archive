@@ -772,30 +772,46 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       )}
 
       {deleteConfirmation ? (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Confirmación eliminación camiseta">
-          <div className="modal-shell">
-            <div className="space-y-6 rounded-3xl bg-slate-950/95 p-6 text-slate-100 shadow-2xl shadow-slate-950/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-8 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-950/90 to-slate-900 opacity-90"></div>
+          <div className="relative z-10 w-full max-w-xl overflow-hidden rounded-[32px] border border-white/10 bg-slate-950/85 p-7 shadow-[0_40px_120px_-40px_rgba(15,23,42,0.9)] backdrop-blur-xl transition duration-300 ease-out hover:-translate-y-1">
+            <div className="flex items-center gap-4 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-sm shadow-slate-950/20 backdrop-blur-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-red-500/15 text-red-300 ring-1 ring-red-400/20">
+                <span className="text-xl">⚠️</span>
+              </div>
               <div>
-                <p className="eyebrow">Confirmar eliminación</p>
-                <h2 className="mt-2 text-2xl font-semibold">¿Seguro que quieres eliminar esta camiseta?</h2>
-                <p className="mt-3 text-sm text-slate-400">También se borrarán sus imágenes.</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Acción destructiva</p>
+                <h3 className="text-lg font-semibold text-white">Eliminar camiseta</h3>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
-                  onClick={handleCancelDelete}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="rounded-2xl bg-red-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-400"
-                  onClick={handleConfirmDelete}
-                >
-                  Aceptar
-                </button>
-              </div>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <p className="text-2xl font-semibold leading-tight text-white">¿Seguro que quieres eliminar {deleteConfirmation.type === "multiple" ? `${deleteConfirmation.count} camisetas` : "esta camiseta"}?</p>
+              <p className="text-sm leading-6 text-slate-400">
+                Esta acción no se puede deshacer. Las imágenes vinculadas también se eliminarán permanentemente.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-[1fr_auto]">
+              <button
+                type="button"
+                onClick={handleCancelDelete}
+                className="group rounded-3xl border border-slate-700/80 bg-slate-900/80 px-5 py-3 text-sm font-semibold text-slate-200 shadow-sm shadow-slate-950/20 transition duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-900"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="rounded-3xl bg-gradient-to-r from-red-500 to-pink-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/20 transition duration-200 hover:-translate-y-0.5 hover:brightness-110"
+              >
+                Eliminar ahora
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-3xl border border-slate-700/60 bg-slate-900/70 px-4 py-4 text-sm text-slate-400 shadow-inner shadow-slate-950/20">
+              <p className="font-medium text-slate-200">Consejo:</p>
+              <p className="mt-1 leading-6">Si prefieres conservar la camiseta, selecciona <span className="font-semibold text-slate-100">Cancelar</span> y revisa tu colección.</p>
             </div>
           </div>
         </div>
