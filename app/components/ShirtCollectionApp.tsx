@@ -431,6 +431,13 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   };
 
   const handleDelete = async (id: string) => {
+    const confirmed = window.confirm(
+      "¿Seguro que quieres eliminar esta camiseta?\nTambién se borrarán sus imágenes."
+    );
+
+    if (!confirmed) {
+      return;
+    }
 
     const shirt = shirts.find((s) => s.id === id);
 
