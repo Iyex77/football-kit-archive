@@ -161,7 +161,8 @@ interface ShirtCollectionAppProps {
 }
 
 export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
-  const [shirts, setShirts] = useState<Shirt[]>(initialShirts);
+  const [shirts, setShirts] = useState<Shirt[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [form, setForm] = useState<ShirtFormState>(defaultForm);
   const [filters, setFilters] = useState<ShirtFilters>(emptyFilters);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -205,14 +206,18 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   }, [isSortOpen]);
 
   async function loadShirts() {
-    const { data, error } = await supabase
-      .from("shirts")
-      .select("*")
-      .order("created_at", {
-        ascending: false,
-      });
-    if (!error && data) {
-      setShirts(data as Shirt[]);
+    try {
+      const { data, error } = await supabase
+        .from("shirts")
+        .select("*")
+        .order("created_at", {
+          ascending: false,
+        });
+      if (!error && data) {
+        setShirts(data as Shirt[]);
+      }
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -588,74 +593,108 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#142f2d_0,#090d13_36rem,#05070b_100%)] px-4 py-7 text-slate-100 sm:px-6 lg:px-10">
-      <div className="mx-auto max-w-[1560px] space-y-8">
-        <header className="hero-panel">
-          <div>
-            <p className="eyebrow">Vitrina privada</p>
-            <h1>Camisetas deportivas</h1>
-            <p>
-              Una colección visual para piezas de fútbol y baloncesto, con wishlist y edición
-              rápida cuando la necesitas.
-            </p>
-          </div>
-          <div className="hero-stats" aria-label="Resumen de la coleccion">
-            <span>{shirts.length} piezas</span>
-            <span>{collectionCount} en colección</span>
-            <span>{wishlistCount} wishlist</span>
-          </div>
-
-          {onLogout ? (
-            <div className="mt-6 sm:mt-0">
-              <button
-                type="button"
-                className="rounded-full border border-slate-600 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-slate-400 hover:bg-slate-900"
-                onClick={onLogout}
-              >
-                Cerrar sesión
-              </button>
+      {isLoading ? (
+        <div className="mx-auto max-w-[1560px] space-y-8">
+          <div className="hero-panel">
+            <div className="space-y-4">
+              <div className="h-3 w-32 animate-shimmer rounded-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
+              <div className="h-10 w-64 animate-shimmer rounded-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
+              <div className="h-5 w-full max-w-2xl animate-shimmer rounded-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
             </div>
-          ) : null}
-        </header>
-
-        <section className="space-y-7">
-          <FiltersBar
-            filters={filters}
-            leagues={filterOptions.leagues}
-            onFilterChange={handleFilterChange}
-            onReset={() => setFilters(emptyFilters)}
-          />
-
-          <div className="collection-heading">
-            <div>
-              <p className="eyebrow">Colección</p>
-              <h2>{filteredShirts.length} camisetas visibles</h2>
-            </div>
-          </div>
-
-          {sortedShirts.length > 0 ? (
-            <div className="collection-grid">
-              {sortedShirts.map((shirt) => (
-                <ShirtCard
-                  key={shirt.id}
-                  shirt={shirt}
-                  onCardClick={handleCardClick}
-                  onEdit={handleEdit}
-                  onDelete={handleDeleteRequested}
-                  onToggleWishlist={handleToggleWishlist}
-                  isSelectModeActive={isSelectModeActive}
-                  isSelected={selectedIds.includes(shirt.id)}
-                  onToggleSelect={toggleSelect}
-                />
+            <div className="flex items-center gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-8 w-24 animate-shimmer rounded-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
               ))}
             </div>
-          ) : (
-            <div className="empty-state">
-              <h3>No hay camisetas con esos filtros</h3>
-              <p>Ajusta la búsqueda o añade una nueva pieza a la vitrina.</p>
+          </div>
+
+          <section className="space-y-7">
+            <div className="h-6 w-48 animate-shimmer rounded-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
+
+            <div className="collection-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="overflow-hidden rounded-3xl border border-slate-700/30 bg-slate-900/50 shadow-lg">
+                  <div className="aspect-square animate-shimmer bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
+                  <div className="space-y-3 p-4">
+                    <div className="h-5 w-full animate-shimmer rounded-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
+                    <div className="h-4 w-3/4 animate-shimmer rounded-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
+                    <div className="h-4 w-1/2 animate-shimmer rounded-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
-        </section>
-      </div>
+          </section>
+        </div>
+      ) : (
+        <div className="mx-auto max-w-[1560px] space-y-8">
+          <header className="hero-panel">
+            <div>
+              <p className="eyebrow">Vitrina privada</p>
+              <h1>Camisetas deportivas</h1>
+              <p>
+                Una colección visual para piezas de fútbol y baloncesto, con wishlist y edición
+                rápida cuando la necesitas.
+              </p>
+            </div>
+            <div className="hero-stats" aria-label="Resumen de la coleccion">
+              <span>{shirts.length} piezas</span>
+              <span>{collectionCount} en colección</span>
+              <span>{wishlistCount} wishlist</span>
+            </div>
+
+            {onLogout ? (
+              <div className="mt-6 sm:mt-0">
+                <button
+                  type="button"
+                  className="rounded-full border border-slate-600 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-slate-400 hover:bg-slate-900"
+                  onClick={onLogout}
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            ) : null}
+          </header>
+
+          <section className="space-y-7">
+            <FiltersBar
+              filters={filters}
+              leagues={filterOptions.leagues}
+              onFilterChange={handleFilterChange}
+              onReset={() => setFilters(emptyFilters)}
+            />
+
+            <div className="collection-heading">
+              <div>
+                <p className="eyebrow">Colección</p>
+                <h2>{filteredShirts.length} camisetas visibles</h2>
+              </div>
+            </div>
+
+            {sortedShirts.length > 0 ? (
+              <div className="collection-grid">
+                {sortedShirts.map((shirt) => (
+                  <ShirtCard
+                    key={shirt.id}
+                    shirt={shirt}
+                    onCardClick={handleCardClick}
+                    onEdit={handleEdit}
+                    onDelete={handleDeleteRequested}
+                    onToggleWishlist={handleToggleWishlist}
+                    isSelectModeActive={isSelectModeActive}
+                    isSelected={selectedIds.includes(shirt.id)}
+                    onToggleSelect={toggleSelect}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <h3>No hay camisetas con esos filtros</h3>
+                <p>Ajusta la búsqueda o añade una nueva pieza a la vitrina.</p>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
 
       <div className="floating-actions">
         <button className="floating-add" type="button" onClick={openCreateForm}>

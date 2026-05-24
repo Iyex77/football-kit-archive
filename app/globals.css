@@ -1646,6 +1646,19 @@ img {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
 .gallery-nav-btn {
   position: absolute;
   top: 50%;
