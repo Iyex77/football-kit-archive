@@ -1,4 +1,5 @@
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -220,7 +221,7 @@ export function ShirtForm({
 
         if (uploadError) {
           console.error("UPLOAD ERROR:", uploadError);
-          alert(JSON.stringify(uploadError));
+          toast.error("Error subiendo imagen. Intenta otra vez.");
           continue;
         }
 

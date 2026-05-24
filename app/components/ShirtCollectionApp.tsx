@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "../../lib/supabase-auth";
 import {
   catalog,
@@ -380,8 +381,8 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      alert("No hay sesión activa");
-    return;
+      toast.error("Sesión expirada, inicia sesión otra vez.");
+      return;
     }
 
     const payload: any = {
@@ -421,12 +422,13 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
 
 
     if (result.error) {
-      alert(result.error.message);
+      toast.error(result.error.message || "Error guardando camiseta.");
       return;
     }
 
     await loadShirts();
     closeForm();
+    toast.success(editingId ? "Cambios guardados" : "Camiseta creada correctamente");
   };
 
   const handleEdit = (shirt: Shirt) => {
@@ -450,8 +452,10 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
     if (deleteConfirmation.type === "single") {
       await handleDelete(deleteConfirmation.id);
     } else {
+      const count = deleteConfirmation.count;
       setShirts((current) => current.filter((shirt) => !selectedIds.includes(shirt.id)));
       clearSelection();
+      toast.success(`${count} camisetas eliminadas`);
     }
 
     setDeleteConfirmation(null);
@@ -513,11 +517,12 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       .eq("id", id);
 
     if (error) {
-      alert(error.message);
+      toast.error(error.message || "Error eliminando camiseta.");
       return;
     }
 
     await loadShirts();
+    toast.success("Camiseta eliminada correctamente");
 
     if (editingId === id) {
       closeForm();
