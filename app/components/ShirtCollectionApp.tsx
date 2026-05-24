@@ -167,6 +167,11 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewingShirtId, setViewingShirtId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<
+    | { type: "single"; id: string }
+    | { type: "multiple"; count: number }
+    | null
+  >(null);
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
@@ -430,15 +435,33 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    const confirmed = window.confirm(
-      "¿Seguro que quieres eliminar esta camiseta?\nTambién se borrarán sus imágenes."
-    );
+  const handleDeleteRequested = (id: string) => {
+    setDeleteConfirmation({ type: "single", id });
+  };
 
-    if (!confirmed) {
-      return;
+  const handleDeleteMultipleRequested = () => {
+    if (selectedIds.length === 0) return;
+    setDeleteConfirmation({ type: "multiple", count: selectedIds.length });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmation) return;
+
+    if (deleteConfirmation.type === "single") {
+      await handleDelete(deleteConfirmation.id);
+    } else {
+      setShirts((current) => current.filter((shirt) => !selectedIds.includes(shirt.id)));
+      clearSelection();
     }
 
+    setDeleteConfirmation(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmation(null);
+  };
+
+  const handleDelete = async (id: string) => {
     const shirt = shirts.find((s) => s.id === id);
 
     if (!shirt) return;
@@ -612,7 +635,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
                   shirt={shirt}
                   onCardClick={handleCardClick}
                   onEdit={handleEdit}
-                  onDelete={handleDelete}
+                  onDelete={handleDeleteRequested}
                   onToggleWishlist={handleToggleWishlist}
                   isSelectModeActive={isSelectModeActive}
                   isSelected={selectedIds.includes(shirt.id)}
@@ -701,7 +724,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
         <div className="floating-selection-bar" role="toolbar" aria-label="Acciones selección">
           <div className="selection-count">✓ {selectedIds.length} seleccionadas</div>
           <div className="selection-actions">
-            <button className="ghost-button" type="button" onClick={handleDeleteMultiple}>
+            <button className="ghost-button" type="button" onClick={handleDeleteMultipleRequested}>
               Eliminar seleccionadas
             </button>
             <button className="primary-button" type="button" onClick={handleMoveToCollection}>
@@ -744,9 +767,39 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
           isOpen={!!viewingShirtId}
           onClose={() => setViewingShirtId(null)}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={handleDeleteRequested}
         />
       )}
+
+      {deleteConfirmation ? (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Confirmación eliminación camiseta">
+          <div className="modal-shell">
+            <div className="space-y-6 rounded-3xl bg-slate-950/95 p-6 text-slate-100 shadow-2xl shadow-slate-950/40">
+              <div>
+                <p className="eyebrow">Confirmar eliminación</p>
+                <h2 className="mt-2 text-2xl font-semibold">¿Seguro que quieres eliminar esta camiseta?</h2>
+                <p className="mt-3 text-sm text-slate-400">También se borrarán sus imágenes.</p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-slate-500"
+                  onClick={handleCancelDelete}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="rounded-2xl bg-red-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-400"
+                  onClick={handleConfirmDelete}
+                >
+                  Aceptar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
