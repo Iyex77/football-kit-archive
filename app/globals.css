@@ -475,16 +475,16 @@ img {
 }
 
 .collection-grid {
-  display: grid;
-  justify-content: center;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 360px));
-  gap: clamp(1rem, 2vw, 1.5rem);
+  display:grid;
+  gap:clamp(1rem,2vw,1.5rem);
+  justify-content:center;
+  grid-template-columns:repeat(auto-fit,minmax(320px,360px));
 }
 
 .shirt-card {
   position: relative;
-  width: 360px;
-  min-width: 360px;
+  width: 100%;
+  min-width: 0;
   max-width: 360px;
   height: 560px;
   min-height: 560px;
@@ -1217,67 +1217,49 @@ img {
   }
 }
 
-@media (max-width: 768px) {
-  .collection-grid {
-    grid-template-columns: repeat(2, minmax(280px, 280px));
+@media (max-width:768px){
+
+  .collection-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:.75rem;
   }
+
+  .shirt-card{
+    max-width:none;
+    min-height:420px;
+    height:auto;
+  }
+
 }
 
-@media (max-width: 640px) {
-  .collection-grid {
-    grid-template-columns: 1fr;
+@media (max-width:640px){
+
+  .shirt-card{
+    min-height:auto;
+    overflow:hidden;
   }
 
-  .hero-panel {
-    min-height: 260px;
+  .shirt-image-wrap{
+    height:220px;
   }
 
-  .hero-panel h1 {
-    font-size: 2.4rem;
-    line-height: 1.05;
-    white-space: normal;
-    overflow-wrap: anywhere;
+  .shirt-card-content{
+    padding:.75rem;
   }
 
-  .hero-stats {
-    max-width: 100%;
-    justify-content: flex-start;
+  .shirt-card-title{
+    font-size:1rem;
+    line-height:1.2;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
 
-  .filters-grid {
-    grid-template-columns: 1fr;
+  .shirt-card-subtitle{
+    font-size:.9rem;
+    line-height:1.2;
   }
 
-  .shirt-card {
-    min-height: 500px;
-  }
-
-  .shirt-details {
-    position: relative;
-    opacity: 1;
-    transform: none;
-  }
-
-  .shirt-image-wrap {
-    position: relative;
-    height: 430px;
-  }
-
-  .floating-add {
-    left: 1rem;
-    right: 1rem;
-    width: auto;
-  }
-
-  .modal-backdrop {
-    align-items: end;
-    padding: 0.5rem;
-  }
-
-  .modal-shell {
-    max-height: calc(100vh - 1rem);
-    width: 100%;
-  }
 }
 
 /* Gallery Modal */

@@ -119,7 +119,7 @@ export function ShirtCard({
         </div>
       </div>
 
-      <div className="shirt-card-footer">
+      <div className="shirt-card-footer flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
         <div className="shirt-card-info">
           <p className="shirt-card-team">{shirt.team}</p>
           <p className="shirt-card-player">

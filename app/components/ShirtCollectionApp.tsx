@@ -707,7 +707,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
             <div className="w-full">
               <p className="eyebrow">Vitrina privada</p>
               <h1 className="max-w-full break-words text-4xl sm:text-5xl md:text-5xl lg:text-5xl font-semibold tracking-tight">
-                Camisetas deportivas
+                Camisetas
               </h1>
             </div>
 
