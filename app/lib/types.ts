@@ -53,6 +53,7 @@ export type ShirtFilters = {
   country: string;
   league: string;
   team: string;
+  year: string;
 };
 
 export type LeagueCatalog = Record<

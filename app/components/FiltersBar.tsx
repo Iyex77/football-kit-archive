@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { sportLabels, statusLabels } from "../lib/collection-data";
-import type { ShirtFilters, ShirtStatus, Sport } from "../lib/types";
+import { sportLabels } from "../lib/collection-data";
+import type { ShirtFilters, Sport } from "../lib/types";
 import { SelectField, TextField } from "./FormControls";
 
 type FiltersBarProps = {
   filters: ShirtFilters;
   leagues: string[];
+  countries: string[];
   onFilterChange: <K extends keyof ShirtFilters>(field: K, value: ShirtFilters[K]) => void;
   onReset: () => void;
   sortBy?: string;
@@ -13,11 +14,11 @@ type FiltersBarProps = {
 };
 
 const sportOptions: Array<"all" | Sport> = ["all", "football", "basketball"];
-const statusOptions: Array<"all" | ShirtStatus> = ["all", "collection", "wishlist"];
 
 export function FiltersBar({
   filters,
   leagues,
+  countries,
   onFilterChange,
   onReset,
   sortBy,
@@ -36,8 +37,9 @@ export function FiltersBar({
   const hasActiveFilters =
     filters.search.trim() !== "" ||
     filters.sport !== "all" ||
+    filters.country !== "all" ||
     filters.league !== "all" ||
-    filters.status !== "all";
+    filters.year.trim() !== "";
 
   return (
     <div className="filters-bar">
@@ -54,6 +56,13 @@ export function FiltersBar({
           onChange={(value) => onFilterChange("search", value)}
         />
         <SelectField
+          label="País"
+          value={filters.country}
+          options={["all", ...countries]}
+          getLabel={(value) => (value === "all" ? "Todos" : value)}
+          onChange={(value) => onFilterChange("country", value as "all" | string)}
+        />
+        <SelectField
           label="Deporte"
           value={filters.sport}
           options={sportOptions}
@@ -67,12 +76,12 @@ export function FiltersBar({
           getLabel={(value) => (value === "all" ? "Todas" : value)}
           onChange={(value) => onFilterChange("league", value as "all" | string)}
         />
-        <SelectField
-          label="Wishlist"
-          value={filters.status}
-          options={statusOptions}
-          getLabel={(value) => (value === "all" ? "Todo" : statusLabels[value])}
-          onChange={(value) => onFilterChange("status", value as ShirtStatus | "all")}
+        <TextField
+          label="Año"
+          value={filters.year}
+          placeholder="2024"
+          type="text"
+          onChange={(value) => onFilterChange("year", value)}
         />
         {/* Sort control moved to header (compact button) */}
       </div>
@@ -103,6 +112,13 @@ export function FiltersBar({
                 onChange={(value) => onFilterChange("search", value)}
               />
               <SelectField
+                label="País"
+                value={filters.country}
+                options={["all", ...countries]}
+                getLabel={(value) => (value === "all" ? "Todos" : value)}
+                onChange={(value) => onFilterChange("country", value as "all" | string)}
+              />
+              <SelectField
                 label="Deporte"
                 value={filters.sport}
                 options={sportOptions}
@@ -116,12 +132,12 @@ export function FiltersBar({
                 getLabel={(value) => (value === "all" ? "Todas" : value)}
                 onChange={(value) => onFilterChange("league", value as "all" | string)}
               />
-              <SelectField
-                label="Wishlist"
-                value={filters.status}
-                options={statusOptions}
-                getLabel={(value) => (value === "all" ? "Todo" : statusLabels[value])}
-                onChange={(value) => onFilterChange("status", value as ShirtStatus | "all")}
+              <TextField
+                label="Año"
+                value={filters.year}
+                placeholder="2024"
+                type="text"
+                onChange={(value) => onFilterChange("year", value)}
               />
             </div>
           </div>

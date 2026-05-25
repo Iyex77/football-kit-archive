@@ -375,6 +375,7 @@ export const emptyFilters = {
   country: "all",
   league: "all",
   team: "all",
+  year: "",
 } as const;
 
 export const defaultForm: ShirtFormState = {

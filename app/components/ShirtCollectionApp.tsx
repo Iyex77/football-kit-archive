@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "../../lib/supabase-auth";
 import {
@@ -152,7 +152,8 @@ function matchesFilters(shirt: Shirt, filters: ShirtFilters) {
     (filters.status === "all" || shirt.status === filters.status) &&
     (filters.country === "all" || shirt.country === filters.country) &&
     (filters.league === "all" || shirt.league === filters.league) &&
-    (filters.team === "all" || shirt.team === filters.team)
+    (filters.team === "all" || shirt.team === filters.team) &&
+    (filters.year.trim() === "" || shirt.season.toLowerCase().includes(filters.year.trim().toLowerCase()))
   );
 }
 
@@ -163,6 +164,9 @@ interface ShirtCollectionAppProps {
 export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   const [shirts, setShirts] = useState<Shirt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"all" | "collection" | "wishlist" | "stats">("all");
+  const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
+  const viewDropdownRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<ShirtFormState>(defaultForm);
   const [filters, setFilters] = useState<ShirtFilters>(emptyFilters);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -177,6 +181,34 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    loadShirts();
+  }, []);
+
+  useEffect(() => {
+    if (!isViewDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (viewDropdownRef.current && !viewDropdownRef.current.contains(event.target as Node)) {
+        setIsViewDropdownOpen(false);
+      }
+    };
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsViewDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [isViewDropdownOpen]);
+
   useEffect(() => {
     loadShirts();
   }, []);
@@ -221,12 +253,56 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
     }
   }
 
+  const stats = useMemo(() => {
+    const collection = shirts.filter((s) => s.status === "collection");
+    const wishlist = shirts.filter((s) => s.status === "wishlist");
+
+    const teamCounts: Record<string, number> = {};
+    const leagueCounts: Record<string, number> = {};
+    const countrySet = new Set<string>();
+    const seasonCounts: Record<string, number> = {};
+
+    shirts.forEach((shirt) => {
+      teamCounts[shirt.team] = (teamCounts[shirt.team] || 0) + 1;
+      leagueCounts[shirt.league] = (leagueCounts[shirt.league] || 0) + 1;
+      countrySet.add(shirt.country);
+      seasonCounts[shirt.season] = (seasonCounts[shirt.season] || 0) + 1;
+    });
+
+    const topTeams = Object.entries(teamCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }));
+
+    const topLeague = Object.entries(leagueCounts).sort(([, a], [, b]) => b - a)[0];
+    const topSeason = Object.entries(seasonCounts).sort(([, a], [, b]) => b - a)[0];
+    const topTeam = Object.entries(teamCounts).sort(([, a], [, b]) => b - a)[0];
+
+    return {
+      totalShirts: shirts.length,
+      collectionCount: collection.length,
+      wishlistCount: wishlist.length,
+      topTeam: topTeam ? { name: topTeam[0], count: topTeam[1] } : null,
+      topLeague: topLeague ? { name: topLeague[0], count: topLeague[1] } : null,
+      topSeason: topSeason ? { name: topSeason[0], count: topSeason[1] } : null,
+      uniqueCountries: countrySet.size,
+      topTeams,
+    };
+  }, [shirts]);
+
   const editingShirt = shirts.find((shirt) => shirt.id === editingId);
   const viewingShirt = shirts.find((shirt) => shirt.id === viewingShirtId);
   const typeOptions = getTypeOptions(form.sport);
   const countryOptions = getCountryOptions(form.sport, form.category);
   const leagueOptions = getLeagueOptions(form.sport, form.category, form.country);
-  const filteredShirts = shirts.filter((shirt) => matchesFilters(shirt, filters));
+  
+  const viewModeFilteredShirts = shirts.filter((shirt) => {
+    if (viewMode === "collection") return shirt.status === "collection";
+    if (viewMode === "wishlist") return shirt.status === "wishlist";
+    return true;
+  });
+  
+  const filteredShirts = viewModeFilteredShirts.filter((shirt) => matchesFilters(shirt, filters));
   const getIdTimestamp = (id: string) => {
     const [, timestamp] = id.split("-");
     const value = Number(timestamp);
@@ -627,72 +703,231 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
         </div>
       ) : (
         <div className="mx-auto max-w-[1560px] space-y-8">
-          <header className="hero-panel">
-            <div>
+          <header className="hero-panel flex-col gap-6 items-start">
+            <div className="w-full">
               <p className="eyebrow">Vitrina privada</p>
-              <h1>Camisetas deportivas</h1>
-              <p>
-                Una colección visual para piezas de fútbol y baloncesto, con wishlist y edición
-                rápida cuando la necesitas.
-              </p>
-            </div>
-            <div className="hero-stats" aria-label="Resumen de la coleccion">
-              <span>{shirts.length} piezas</span>
-              <span>{collectionCount} en colección</span>
-              <span>{wishlistCount} wishlist</span>
+              <h1 className="max-w-full whitespace-nowrap text-4xl sm:text-5xl md:text-5xl lg:text-5xl font-semibold tracking-tight">
+                Camisetas deportivas
+              </h1>
             </div>
 
-            {onLogout ? (
-              <div className="mt-6 sm:mt-0">
-                <button
-                  type="button"
-                  className="rounded-full border border-slate-600 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-slate-400 hover:bg-slate-900"
-                  onClick={onLogout}
-                >
-                  Cerrar sesión
-                </button>
+            <div className="flex w-full flex-wrap items-center justify-between gap-4">
+              <div className="hero-stats" aria-label="Resumen de la coleccion" style={{ justifyContent: "flex-start" }}>
+                <span>{shirts.length} piezas</span>
+                <span>{collectionCount} en colección</span>
+                <span>{wishlistCount} wishlist</span>
               </div>
-            ) : null}
+
+              {onLogout ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative" ref={viewDropdownRef}>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-slate-400 hover:bg-slate-900"
+                      onClick={() => setIsViewDropdownOpen(!isViewDropdownOpen)}
+                    >
+                      <span>▼ {viewMode === "all" ? "Todas" : viewMode === "collection" ? "Colección" : viewMode === "wishlist" ? "Wishlist" : "Estadísticas"}</span>
+                    </button>
+                    {isViewDropdownOpen && (
+                      <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-slate-700/60 bg-slate-900/95 shadow-lg shadow-slate-950/40 backdrop-blur-xl z-50">
+                        {(["all", "collection", "wishlist", "stats"] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            type="button"
+                            className={`block w-full px-4 py-3 text-left text-sm font-medium transition first:rounded-t-2xl last:rounded-b-2xl ${
+                              viewMode === mode
+                                ? "bg-slate-800 text-white"
+                                : "text-slate-300 hover:bg-slate-800/50"
+                            }`}
+                            onClick={() => {
+                              setViewMode(mode);
+                              setIsViewDropdownOpen(false);
+                            }}
+                          >
+                            {mode === "all" ? "Todas las camisetas" : mode === "collection" ? "Colección" : mode === "wishlist" ? "Wishlist" : "Estadísticas"}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="rounded-full border border-slate-600 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-slate-400 hover:bg-slate-900"
+                    onClick={onLogout}
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </header>
 
-          <section className="space-y-7">
-            <FiltersBar
-              filters={filters}
-              leagues={filterOptions.leagues}
-              onFilterChange={handleFilterChange}
-              onReset={() => setFilters(emptyFilters)}
-            />
+          {viewMode === "stats" ? (
+            <section className="space-y-7 pb-24">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                  <p className="text-sm font-medium text-slate-400">Total camisetas</p>
+                  <p className="mt-2 text-3xl font-bold text-white">{stats.totalShirts}</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                  <p className="text-sm font-medium text-slate-400">Colección</p>
+                  <p className="mt-2 text-3xl font-bold text-white">{stats.collectionCount}</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                  <p className="text-sm font-medium text-slate-400">Wishlist</p>
+                  <p className="mt-2 text-3xl font-bold text-white">{stats.wishlistCount}</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                  <p className="text-sm font-medium text-slate-400">Países únicos</p>
+                  <p className="mt-2 text-3xl font-bold text-white">{stats.uniqueCountries}</p>
+                </div>
+              </div>
 
-            <div className="collection-heading">
-              <div>
-                <p className="eyebrow">Colección</p>
-                <h2>{filteredShirts.length} camisetas visibles</h2>
-              </div>
-            </div>
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                  <p className="text-sm font-medium text-slate-400">Club más repetido</p>
+                  {stats.topTeam ? (
+                    <>
+                      <p className="mt-2 text-2xl font-bold text-white">{stats.topTeam.name}</p>
+                      <p className="text-sm text-slate-400">{stats.topTeam.count} camiseta{stats.topTeam.count !== 1 ? 's' : ''}</p>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-slate-400">Sin datos</p>
+                  )}
+                </div>
 
-            {sortedShirts.length > 0 ? (
-              <div className="collection-grid">
-                {sortedShirts.map((shirt) => (
-                  <ShirtCard
-                    key={shirt.id}
-                    shirt={shirt}
-                    onCardClick={handleCardClick}
-                    onEdit={handleEdit}
-                    onDelete={handleDeleteRequested}
-                    onToggleWishlist={handleToggleWishlist}
-                    isSelectModeActive={isSelectModeActive}
-                    isSelected={selectedIds.includes(shirt.id)}
-                    onToggleSelect={toggleSelect}
-                  />
-                ))}
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                  <p className="text-sm font-medium text-slate-400">Liga más repetida</p>
+                  {stats.topLeague ? (
+                    <>
+                      <p className="mt-2 text-2xl font-bold text-white">{stats.topLeague.name}</p>
+                      <p className="text-sm text-slate-400">{stats.topLeague.count} camiseta{stats.topLeague.count !== 1 ? 's' : ''}</p>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-slate-400">Sin datos</p>
+                  )}
+                </div>
+
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                  <p className="text-sm font-medium text-slate-400">Temporada más repetida</p>
+                  {stats.topSeason ? (
+                    <>
+                      <p className="mt-2 text-2xl font-bold text-white">{stats.topSeason.name}</p>
+                      <p className="text-sm text-slate-400">{stats.topSeason.count} camiseta{stats.topSeason.count !== 1 ? 's' : ''}</p>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-slate-400">Sin datos</p>
+                  )}
+                </div>
+
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                  <p className="text-sm font-medium text-slate-400">Distribución</p>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 rounded-full bg-slate-800/50 overflow-hidden">
+                        <div
+                          className="bg-blue-500/70 h-2"
+                          style={{
+                            width: `${
+                              stats.totalShirts > 0
+                                ? (stats.collectionCount / stats.totalShirts) * 100
+                                : 0
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-slate-400">{Math.round((stats.collectionCount / stats.totalShirts) * 100)}%</span>
+                    </div>
+                    <p className="text-xs text-slate-500">Colección</p>
+                    <div className="flex items-center gap-2 mt-3">
+                      <div className="flex-1 rounded-full bg-slate-800/50 overflow-hidden">
+                        <div
+                          className="bg-amber-500/70 h-2"
+                          style={{
+                            width: `${
+                              stats.totalShirts > 0
+                                ? (stats.wishlistCount / stats.totalShirts) * 100
+                                : 0
+                            }%`,
+                          }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-slate-400">{Math.round((stats.wishlistCount / stats.totalShirts) * 100)}%</span>
+                    </div>
+                    <p className="text-xs text-slate-500">Wishlist</p>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="empty-state">
-                <h3>No hay camisetas con esos filtros</h3>
-                <p>Ajusta la búsqueda o añade una nueva pieza a la vitrina.</p>
+
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                <p className="text-sm font-medium text-slate-400 mb-4">Top 5 clubes</p>
+                <div className="space-y-3">
+                  {stats.topTeams.length > 0 ? (
+                    stats.topTeams.map((team, idx) => (
+                      <div key={idx} className="flex items-center justify-between">
+                        <span className="text-slate-200">{idx + 1}. {team.name}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 rounded-full bg-slate-800/50 overflow-hidden">
+                            <div
+                              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2"
+                              style={{
+                                width: `${(team.count / stats.topTeams[0].count) * 100}%`,
+                              }}
+                            ></div>
+                          </div>
+                          <span className="text-sm text-slate-400 w-8 text-right">{team.count}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-slate-400">Sin datos</p>
+                  )}
+                </div>
               </div>
-            )}
-          </section>
+            </section>
+          ) : (
+            <section className="space-y-7">
+              <FiltersBar
+                filters={filters}
+                leagues={filterOptions.leagues}
+                countries={filterOptions.countries}
+                onFilterChange={handleFilterChange}
+                onReset={() => setFilters(emptyFilters)}
+              />
+
+              <div className="collection-heading">
+                <div>
+                  <p className="eyebrow">
+                    {viewMode === "collection" ? "Colección" : viewMode === "wishlist" ? "Wishlist" : "Colección"}
+                  </p>
+                  <h2>{filteredShirts.length} camisetas visibles</h2>
+                </div>
+              </div>
+
+              {sortedShirts.length > 0 ? (
+                <div className="collection-grid">
+                  {sortedShirts.map((shirt) => (
+                    <ShirtCard
+                      key={shirt.id}
+                      shirt={shirt}
+                      onCardClick={handleCardClick}
+                      onEdit={handleEdit}
+                      onDelete={handleDeleteRequested}
+                      onToggleWishlist={handleToggleWishlist}
+                      isSelectModeActive={isSelectModeActive}
+                      isSelected={selectedIds.includes(shirt.id)}
+                      onToggleSelect={toggleSelect}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <h3>No hay camisetas con esos filtros</h3>
+                  <p>Ajusta la búsqueda o añade una nueva pieza a la vitrina.</p>
+                </div>
+              )}
+            </section>
+          )}
         </div>
       )}
 
@@ -752,7 +987,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
           )}
         </div>
 
-        {(filters.search.trim() !== "" || filters.sport !== "all" || filters.league !== "all" || filters.status !== "all") && (
+        {(filters.search.trim() !== "" || filters.sport !== "all" || filters.league !== "all" || filters.country !== "all" || filters.year.trim() !== "" || filters.status !== "all") && (
           <button
             className="floating-reset-button"
             type="button"
