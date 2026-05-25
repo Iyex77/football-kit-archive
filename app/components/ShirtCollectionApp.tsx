@@ -763,7 +763,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
           </header>
 
           {viewMode === "stats" ? (
-            <section className="space-y-7 pb-24">
+            <section className="space-y-7">
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
                   <p className="text-sm font-medium text-slate-400">Total camisetas</p>

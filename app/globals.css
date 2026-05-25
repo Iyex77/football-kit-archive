@@ -28,6 +28,10 @@ body {
   font-family: var(--font-sans);
 }
 
+main {
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+}
+
 button,
 input,
 select,
