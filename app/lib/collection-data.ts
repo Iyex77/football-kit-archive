@@ -2,11 +2,11 @@ import type { LeagueCatalog, Shirt, ShirtFormState, ShirtStatus, Sport } from ".
 
 export const placeholderImages: Record<Sport | "default", string> = {
   default:
-    "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80",
+    "/default-football-kit.png",
   football:
-    "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80",
+    "/default-football-kit.png",
   basketball:
-    "https://images.unsplash.com/photo-1517649763962-0c623066013b5?auto=format&fit=crop&w=1200&q=80",
+    "/default-football-kit.png",
 };
 
 export const catalog: LeagueCatalog = {
