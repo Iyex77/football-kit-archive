@@ -1227,8 +1227,21 @@ img {
   .collection-grid {
     grid-template-columns: 1fr;
   }
+
   .hero-panel {
     min-height: 260px;
+  }
+
+  .hero-panel h1 {
+    font-size: 2.4rem;
+    line-height: 1.05;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .hero-stats {
+    max-width: 100%;
+    justify-content: flex-start;
   }
 
   .filters-grid {

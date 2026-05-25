@@ -706,13 +706,13 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
           <header className="hero-panel flex-col gap-6 items-start">
             <div className="w-full">
               <p className="eyebrow">Vitrina privada</p>
-              <h1 className="max-w-full whitespace-nowrap text-4xl sm:text-5xl md:text-5xl lg:text-5xl font-semibold tracking-tight">
+              <h1 className="max-w-full break-words text-4xl sm:text-5xl md:text-5xl lg:text-5xl font-semibold tracking-tight">
                 Camisetas deportivas
               </h1>
             </div>
 
             <div className="flex w-full flex-wrap items-center justify-between gap-4">
-              <div className="hero-stats" aria-label="Resumen de la coleccion" style={{ justifyContent: "flex-start" }}>
+              <div className="hero-stats" aria-label="Resumen de la coleccion">
                 <span>{shirts.length} piezas</span>
                 <span>{collectionCount} en colección</span>
                 <span>{wishlistCount} wishlist</span>
@@ -729,7 +729,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
                       <span>▼ {viewMode === "all" ? "Todas" : viewMode === "collection" ? "Colección" : viewMode === "wishlist" ? "Wishlist" : "Estadísticas"}</span>
                     </button>
                     {isViewDropdownOpen && (
-                      <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-slate-700/60 bg-slate-900/95 shadow-lg shadow-slate-950/40 backdrop-blur-xl z-50">
+                      <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-48 sm:w-56 rounded-2xl border border-slate-700/60 bg-slate-900/95 shadow-lg shadow-slate-950/40 backdrop-blur-xl z-50">
                         {(["all", "collection", "wishlist", "stats"] as const).map((mode) => (
                           <button
                             key={mode}
