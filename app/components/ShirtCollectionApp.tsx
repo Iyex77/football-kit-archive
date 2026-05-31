@@ -38,7 +38,10 @@ type SortBy =
   | "sport"
   | "wishlist-first";
 
-const unique = (values: string[]) => Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
+const unique = (values: string[]) =>
+  Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
 function createTeamOptions() {
   const options: TeamOption[] = [];
@@ -118,16 +121,27 @@ function formFromShirt(shirt: Shirt): ShirtFormState {
 
 function getFilterOptions(shirts: Shirt[], filters: ShirtFilters) {
   const bySport = shirts.filter((shirt) => filters.sport === "all" || shirt.sport === filters.sport);
-  const byCountry = bySport.filter(
+  const byCategory = bySport.filter(
+    (shirt) => filters.category === "all" || shirt.category === filters.category,
+  );
+  const countrySource =
+    filters.category === "all"
+      ? bySport.filter((shirt) => shirt.category === "club")
+      : byCategory;
+  const byCountry = byCategory.filter(
     (shirt) => filters.country === "all" || shirt.country === filters.country,
   );
+  const leagueSource =
+    filters.category === "all"
+      ? byCountry.filter((shirt) => shirt.category === "club")
+      : byCountry;
   const byLeague = byCountry.filter(
     (shirt) => filters.league === "all" || shirt.league === filters.league,
   );
 
   return {
-    countries: unique(bySport.map((shirt) => shirt.country)),
-    leagues: unique(byCountry.map((shirt) => shirt.league)),
+    countries: unique(countrySource.map((shirt) => shirt.country)),
+    leagues: unique(leagueSource.map((shirt) => shirt.league)),
     teams: unique(byLeague.map((shirt) => shirt.team)),
   };
 }
@@ -149,6 +163,7 @@ function matchesFilters(shirt: Shirt, filters: ShirtFilters) {
   return (
     haystack.includes(filters.search.trim().toLowerCase()) &&
     (filters.sport === "all" || shirt.sport === filters.sport) &&
+    (filters.category === "all" || shirt.category === filters.category) &&
     (filters.status === "all" || shirt.status === filters.status) &&
     (filters.country === "all" || shirt.country === filters.country) &&
     (filters.league === "all" || shirt.league === filters.league) &&
@@ -453,7 +468,8 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   const handleSubmit = async () => {
     const team = form.team === "custom" ? form.customTeam.trim() : form.team;
 
-    if (!team || !form.season.trim() || !form.kitType) {
+    if (!team || !form.sport || !form.category || !form.season.trim() || !form.kitType) {
+      toast.error("Completa equipo, deporte, tipo, temporada y equipación.");
       return;
     }
 
@@ -466,12 +482,12 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
       return;
     }
 
-    const payload: any = {
+    const payload = {
       id: editingId || crypto.randomUUID(),
       sport: (form.sport || "football") as Sport,
       category: (form.category || "club") as ShirtCategory,
-      country: form.country,
-      league: form.league,
+      country: form.country.trim(),
+      league: form.league.trim(),
       team,
       season: form.season.trim(),
       player: form.player.trim(),
@@ -649,6 +665,17 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
         return {
           ...current,
           sport: value as ShirtFilters["sport"],
+          category: "all",
+          country: "all",
+          league: "all",
+          team: "all",
+        };
+      }
+
+      if (field === "category") {
+        return {
+          ...current,
+          category: value as ShirtFilters["category"],
           country: "all",
           league: "all",
           team: "all",
@@ -987,7 +1014,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
           )}
         </div>
 
-        {(filters.search.trim() !== "" || filters.sport !== "all" || filters.league !== "all" || filters.country !== "all" || filters.year.trim() !== "" || filters.status !== "all") && (
+        {(filters.search.trim() !== "" || filters.sport !== "all" || filters.category !== "all" || filters.league !== "all" || filters.country !== "all" || filters.year.trim() !== "" || filters.status !== "all") && (
           <button
             className="floating-reset-button"
             type="button"

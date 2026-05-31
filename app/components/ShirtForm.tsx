@@ -33,7 +33,7 @@ import type {
   TeamOption,
 } from "../lib/types";
 import { placeholderImages } from "../lib/collection-data";
-import { SelectField, TextAreaField, TextField } from "./FormControls";
+import { DatalistField, SelectField, TextAreaField, TextField } from "./FormControls";
 import { supabase } from "../../lib/supabase-auth";
 
 type ShirtFormProps = {
@@ -313,18 +313,20 @@ export function ShirtForm({
               getLabel={(value) => categoryLabels[value]}
               onChange={onCategoryChange}
             />
-            <SelectField
+            <DatalistField
               label="País"
               value={form.country}
               options={countryOptions}
-              placeholder="Selecciona país"
+              listId="shirt-country-options"
+              placeholder="País del club o selección"
               onChange={onCountryChange}
             />
-            <SelectField
+            <DatalistField
               label="Liga"
               value={form.league}
               options={leagueOptions}
-              placeholder="Selecciona liga"
+              listId="shirt-league-options"
+              placeholder="Liga o competición"
               onChange={onLeagueChange}
             />
           </>

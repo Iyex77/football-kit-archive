@@ -17,6 +17,11 @@ type TextFieldProps = {
   onChange: (value: string) => void;
 };
 
+type DatalistFieldProps = TextFieldProps & {
+  options: readonly string[];
+  listId: string;
+};
+
 type TextAreaFieldProps = {
   label: string;
   value: string;
@@ -72,6 +77,38 @@ export function TextField({
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
       />
+    </label>
+  );
+}
+
+export function DatalistField({
+  label,
+  value,
+  placeholder,
+  type = "text",
+  required,
+  onChange,
+  options,
+  listId,
+}: DatalistFieldProps) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+      <input
+        required={required}
+        type={type}
+        value={value}
+        list={listId}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <datalist id={listId}>
+        {options
+          .filter((option) => option.trim() !== "")
+          .map((option) => (
+            <option key={option} value={option} />
+          ))}
+      </datalist>
     </label>
   );
 }

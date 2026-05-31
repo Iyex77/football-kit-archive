@@ -371,6 +371,7 @@ export const sizes = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
 export const emptyFilters = {
   search: "",
   sport: "all",
+  category: "all",
   status: "all",
   country: "all",
   league: "all",

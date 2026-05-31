@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { sportLabels } from "../lib/collection-data";
-import type { ShirtFilters, Sport } from "../lib/types";
+import { categoryLabels, sportLabels } from "../lib/collection-data";
+import type { ShirtCategory, ShirtFilters, Sport } from "../lib/types";
 import { SelectField, TextField } from "./FormControls";
 
 type FiltersBarProps = {
@@ -9,11 +9,10 @@ type FiltersBarProps = {
   countries: string[];
   onFilterChange: <K extends keyof ShirtFilters>(field: K, value: ShirtFilters[K]) => void;
   onReset: () => void;
-  sortBy?: string;
-  onSortChange?: (value: string) => void;
 };
 
 const sportOptions: Array<"all" | Sport> = ["all", "football", "basketball"];
+const categoryOptions: Array<"all" | ShirtCategory> = ["all", "club", "national"];
 
 export function FiltersBar({
   filters,
@@ -21,8 +20,6 @@ export function FiltersBar({
   countries,
   onFilterChange,
   onReset,
-  sortBy,
-  onSortChange,
 }: FiltersBarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -37,6 +34,7 @@ export function FiltersBar({
   const hasActiveFilters =
     filters.search.trim() !== "" ||
     filters.sport !== "all" ||
+    filters.category !== "all" ||
     filters.country !== "all" ||
     filters.league !== "all" ||
     filters.year.trim() !== "";
@@ -68,6 +66,13 @@ export function FiltersBar({
           options={sportOptions}
           getLabel={(value) => (value === "all" ? "Todos" : sportLabels[value])}
           onChange={(value) => onFilterChange("sport", value as Sport | "all")}
+        />
+        <SelectField
+          label="Tipo"
+          value={filters.category}
+          options={categoryOptions}
+          getLabel={(value) => (value === "all" ? "Todos" : categoryLabels[value])}
+          onChange={(value) => onFilterChange("category", value as ShirtCategory | "all")}
         />
         <SelectField
           label="Liga"
@@ -124,6 +129,13 @@ export function FiltersBar({
                 options={sportOptions}
                 getLabel={(value) => (value === "all" ? "Todos" : sportLabels[value])}
                 onChange={(value) => onFilterChange("sport", value as Sport | "all")}
+              />
+              <SelectField
+                label="Tipo"
+                value={filters.category}
+                options={categoryOptions}
+                getLabel={(value) => (value === "all" ? "Todos" : categoryLabels[value])}
+                onChange={(value) => onFilterChange("category", value as ShirtCategory | "all")}
               />
               <SelectField
                 label="Liga"

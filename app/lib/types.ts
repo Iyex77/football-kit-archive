@@ -49,6 +49,7 @@ export type ShirtFormState = {
 export type ShirtFilters = {
   search: string;
   sport: "all" | Sport;
+  category: "all" | ShirtCategory;
   status: "all" | ShirtStatus;
   country: string;
   league: string;
