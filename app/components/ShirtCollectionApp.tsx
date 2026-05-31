@@ -43,6 +43,11 @@ const unique = (values: string[]) =>
     a.localeCompare(b),
   );
 
+const optionKey = (option: TeamOption) =>
+  [option.sport, option.category, option.country, option.league, option.team]
+    .map((value) => value.trim().toLowerCase())
+    .join("|");
+
 function createTeamOptions() {
   const options: TeamOption[] = [];
 
@@ -69,6 +74,31 @@ function createTeamOptions() {
 }
 
 const allTeamOptions = createTeamOptions();
+
+function createTeamOptionsFromShirts(shirts: Shirt[]) {
+  return shirts
+    .filter((shirt) => shirt.team.trim() !== "")
+    .map((shirt) => ({
+      id: `saved-${shirt.id}`,
+      team: shirt.team.trim(),
+      sport: shirt.sport,
+      category: shirt.category,
+      country: shirt.country.trim(),
+      league: shirt.league.trim(),
+    }));
+}
+
+function mergeTeamOptions(options: TeamOption[]) {
+  const seen = new Set<string>();
+  return options.filter((option) => {
+    const key = optionKey(option);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
 
 function getTypeOptions(sport: string) {
   if (!sport || !(sport in catalog)) {
@@ -310,6 +340,10 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   const typeOptions = getTypeOptions(form.sport);
   const countryOptions = getCountryOptions(form.sport, form.category);
   const leagueOptions = getLeagueOptions(form.sport, form.category, form.country);
+  const teamOptions = useMemo(
+    () => mergeTeamOptions([...createTeamOptionsFromShirts(shirts), ...allTeamOptions]),
+    [shirts],
+  );
   
   const viewModeFilteredShirts = shirts.filter((shirt) => {
     if (viewMode === "collection") return shirt.status === "collection";
@@ -458,6 +492,25 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   };
 
   const handleCustomTeam = (value: string) => {
+    const normalizedValue = value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toLowerCase();
+    const matches = teamOptions.filter((option) =>
+      option.team
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toLowerCase()
+        .includes(normalizedValue),
+    );
+
+    if (normalizedValue.length >= 3 && matches.length === 1) {
+      handleTeamSelect(matches[0]);
+      return;
+    }
+
     setForm((current) => ({
       ...current,
       team: "custom",
@@ -661,35 +714,6 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
 
   const handleFilterChange = <K extends keyof ShirtFilters>(field: K, value: ShirtFilters[K]) => {
     setFilters((current) => {
-      if (field === "sport") {
-        return {
-          ...current,
-          sport: value as ShirtFilters["sport"],
-          category: "all",
-          country: "all",
-          league: "all",
-          team: "all",
-        };
-      }
-
-      if (field === "category") {
-        return {
-          ...current,
-          category: value as ShirtFilters["category"],
-          country: "all",
-          league: "all",
-          team: "all",
-        };
-      }
-
-      if (field === "country") {
-        return { ...current, country: value as string, league: "all", team: "all" };
-      }
-
-      if (field === "league") {
-        return { ...current, league: value as string, team: "all" };
-      }
-
       return { ...current, [field]: value };
     });
   };
@@ -1052,7 +1076,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
               typeOptions={typeOptions}
               countryOptions={countryOptions}
               leagueOptions={leagueOptions}
-              allTeamOptions={allTeamOptions}
+              allTeamOptions={teamOptions}
               onSubmit={handleSubmit}
               onCancel={closeForm}
               onSportChange={handleSportChange}

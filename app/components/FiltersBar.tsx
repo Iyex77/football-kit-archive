@@ -14,6 +14,14 @@ type FiltersBarProps = {
 const sportOptions: Array<"all" | Sport> = ["all", "football", "basketball"];
 const categoryOptions: Array<"all" | ShirtCategory> = ["all", "club", "national"];
 
+const withSelectedOption = (options: string[], selected: string) => {
+  if (selected === "all" || selected.trim() === "" || options.includes(selected)) {
+    return options;
+  }
+
+  return [selected, ...options];
+};
+
 export function FiltersBar({
   filters,
   leagues,
@@ -22,6 +30,8 @@ export function FiltersBar({
   onReset,
 }: FiltersBarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const countryOptions = withSelectedOption(countries, filters.country);
+  const leagueOptions = withSelectedOption(leagues, filters.league);
 
   const handleToggleMobile = () => setIsMobileOpen((current) => !current);
   const handleCloseMobile = () => setIsMobileOpen(false);
@@ -56,7 +66,7 @@ export function FiltersBar({
         <SelectField
           label="País"
           value={filters.country}
-          options={["all", ...countries]}
+          options={["all", ...countryOptions]}
           getLabel={(value) => (value === "all" ? "Todos" : value)}
           onChange={(value) => onFilterChange("country", value as "all" | string)}
         />
@@ -77,7 +87,7 @@ export function FiltersBar({
         <SelectField
           label="Liga"
           value={filters.league}
-          options={["all", ...leagues]}
+          options={["all", ...leagueOptions]}
           getLabel={(value) => (value === "all" ? "Todas" : value)}
           onChange={(value) => onFilterChange("league", value as "all" | string)}
         />
@@ -119,7 +129,7 @@ export function FiltersBar({
               <SelectField
                 label="País"
                 value={filters.country}
-                options={["all", ...countries]}
+                options={["all", ...countryOptions]}
                 getLabel={(value) => (value === "all" ? "Todos" : value)}
                 onChange={(value) => onFilterChange("country", value as "all" | string)}
               />
@@ -140,7 +150,7 @@ export function FiltersBar({
               <SelectField
                 label="Liga"
                 value={filters.league}
-                options={["all", ...leagues]}
+                options={["all", ...leagueOptions]}
                 getLabel={(value) => (value === "all" ? "Todas" : value)}
                 onChange={(value) => onFilterChange("league", value as "all" | string)}
               />
