@@ -8,6 +8,7 @@ import {
   defaultForm,
   emptyFilters,
   initialShirts,
+  placeholderImages,
 } from "../lib/collection-data";
 import type {
   Shirt,
@@ -38,10 +39,48 @@ type SortBy =
   | "sport"
   | "wishlist-first";
 
+type StatsDetailKey =
+  | "all"
+  | "collection"
+  | "wishlist"
+  | "countries"
+  | "teams"
+  | "leagues"
+  | "seasons"
+  | "players"
+  | "numbers"
+  | "kitTypes"
+  | "sizes";
+
+type StatsRankingEntry = {
+  name: string;
+  count: number;
+};
+
+type SelectedStatsItem = {
+  key: StatsDetailKey;
+  entry: StatsRankingEntry;
+};
+
 const unique = (values: string[]) =>
   Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).sort((a, b) =>
     a.localeCompare(b),
   );
+
+const countBy = (shirts: Shirt[], getValue: (shirt: Shirt) => string) =>
+  Object.entries(
+    shirts.reduce<Record<string, number>>((counts, shirt) => {
+      const value = getValue(shirt).trim();
+      if (!value) return counts;
+      counts[value] = (counts[value] || 0) + 1;
+      return counts;
+    }, {}),
+  )
+    .sort(([nameA, countA], [nameB, countB]) => {
+      if (countA !== countB) return countB - countA;
+      return nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
+    })
+    .map(([name, count]) => ({ name, count }));
 
 const optionKey = (option: TeamOption) =>
   [option.sport, option.category, option.country, option.league, option.team]
@@ -226,6 +265,8 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const [statsDetailKey, setStatsDetailKey] = useState<StatsDetailKey | null>(null);
+  const [selectedStatsItem, setSelectedStatsItem] = useState<SelectedStatsItem | null>(null);
   useEffect(() => {
     loadShirts();
   }, []);
@@ -302,36 +343,36 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
     const collection = shirts.filter((s) => s.status === "collection");
     const wishlist = shirts.filter((s) => s.status === "wishlist");
 
-    const teamCounts: Record<string, number> = {};
-    const leagueCounts: Record<string, number> = {};
-    const countrySet = new Set<string>();
-    const seasonCounts: Record<string, number> = {};
-
-    shirts.forEach((shirt) => {
-      teamCounts[shirt.team] = (teamCounts[shirt.team] || 0) + 1;
-      leagueCounts[shirt.league] = (leagueCounts[shirt.league] || 0) + 1;
-      countrySet.add(shirt.country);
-      seasonCounts[shirt.season] = (seasonCounts[shirt.season] || 0) + 1;
-    });
-
-    const topTeams = Object.entries(teamCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
-      .map(([name, count]) => ({ name, count }));
-
-    const topLeague = Object.entries(leagueCounts).sort(([, a], [, b]) => b - a)[0];
-    const topSeason = Object.entries(seasonCounts).sort(([, a], [, b]) => b - a)[0];
-    const topTeam = Object.entries(teamCounts).sort(([, a], [, b]) => b - a)[0];
+    const topTeams = countBy(shirts, (shirt) => shirt.team);
+    const topLeagues = countBy(shirts, (shirt) => shirt.league);
+    const topSeasons = countBy(shirts, (shirt) => shirt.season);
+    const topPlayers = countBy(shirts, (shirt) => shirt.player);
+    const topNumbers = countBy(shirts, (shirt) => shirt.number);
+    const topCountries = countBy(shirts, (shirt) => shirt.country);
+    const topKitTypes = countBy(shirts, (shirt) => shirt.kitType);
+    const topSizes = countBy(shirts, (shirt) => shirt.size);
 
     return {
       totalShirts: shirts.length,
       collectionCount: collection.length,
       wishlistCount: wishlist.length,
-      topTeam: topTeam ? { name: topTeam[0], count: topTeam[1] } : null,
-      topLeague: topLeague ? { name: topLeague[0], count: topLeague[1] } : null,
-      topSeason: topSeason ? { name: topSeason[0], count: topSeason[1] } : null,
-      uniqueCountries: countrySet.size,
+      topTeam: topTeams[0] ?? null,
+      topLeague: topLeagues[0] ?? null,
+      topSeason: topSeasons[0] ?? null,
+      topPlayer: topPlayers[0] ?? null,
+      topNumber: topNumbers[0] ?? null,
+      topCountry: topCountries[0] ?? null,
+      topKitType: topKitTypes[0] ?? null,
+      topSize: topSizes[0] ?? null,
+      uniqueCountries: topCountries.length,
       topTeams,
+      topLeagues,
+      topSeasons,
+      topPlayers,
+      topNumbers,
+      topCountries,
+      topKitTypes,
+      topSizes,
     };
   }, [shirts]);
 
@@ -718,6 +759,204 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
     });
   };
 
+  const statsDetail = (() => {
+    if (!statsDetailKey) return null;
+
+    const shirtListByKey: Partial<Record<StatsDetailKey, Shirt[]>> = {
+      all: shirts,
+      collection: shirts.filter((shirt) => shirt.status === "collection"),
+      wishlist: shirts.filter((shirt) => shirt.status === "wishlist"),
+    };
+
+    const rankingByKey: Partial<Record<StatsDetailKey, StatsRankingEntry[]>> = {
+      countries: stats.topCountries,
+      teams: stats.topTeams,
+      leagues: stats.topLeagues,
+      seasons: stats.topSeasons,
+      players: stats.topPlayers,
+      numbers: stats.topNumbers,
+      kitTypes: stats.topKitTypes,
+      sizes: stats.topSizes,
+    };
+
+    const titleByKey: Record<StatsDetailKey, string> = {
+      all: "Todas las camisetas",
+      collection: "Camisetas en coleccion",
+      wishlist: "Camisetas en wishlist",
+      countries: "Paises completos",
+      teams: "Clubes completos",
+      leagues: "Ligas completas",
+      seasons: "Temporadas completas",
+      players: "Jugadores completos",
+      numbers: "Dorsales completos",
+      kitTypes: "Equipaciones completas",
+      sizes: "Tallas completas",
+    };
+
+    return {
+      key: statsDetailKey,
+      title: titleByKey[statsDetailKey],
+      shirts: shirtListByKey[statsDetailKey],
+      entries: rankingByKey[statsDetailKey],
+    };
+  })();
+
+  useEffect(() => {
+    if (!statsDetailKey && !selectedStatsItem) return;
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (selectedStatsItem) {
+          setSelectedStatsItem(null);
+          return;
+        }
+        setStatsDetailKey(null);
+      }
+    };
+
+    document.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [selectedStatsItem, statsDetailKey]);
+
+  const getShirtsForStatsItem = (key: StatsDetailKey, value: string) => {
+    switch (key) {
+      case "teams":
+        return shirts.filter((shirt) => shirt.team === value);
+      case "leagues":
+        return shirts.filter((shirt) => shirt.league === value);
+      case "countries":
+        return shirts.filter((shirt) => shirt.country === value);
+      case "players":
+        return shirts.filter((shirt) => shirt.player === value);
+      case "seasons":
+        return shirts.filter((shirt) => shirt.season === value);
+      case "numbers":
+        return shirts.filter((shirt) => shirt.number === value);
+      case "sizes":
+        return shirts.filter((shirt) => shirt.size === value);
+      case "kitTypes":
+        return shirts.filter((shirt) => shirt.kitType === value);
+      default:
+        return [];
+    }
+  };
+
+  const getStatsItemTitle = (key: StatsDetailKey, name: string) => {
+    if (key === "numbers") return `Dorsal #${name}`;
+    return name;
+  };
+
+  const getShirtImageUrl = (shirt: Shirt) => {
+    const mainImage = shirt.images.find((img) => img.id === shirt.mainImageId) || shirt.images[0];
+    return mainImage?.url || placeholderImages[shirt.sport] || placeholderImages.default;
+  };
+
+  const handleStatsItemOpen = (key: StatsDetailKey, entry: StatsRankingEntry) => {
+    setSelectedStatsItem({ key, entry });
+  };
+
+  const closeStatsDetail = () => {
+    setStatsDetailKey(null);
+  };
+
+  const closeSelectedStatsItem = () => {
+    setSelectedStatsItem(null);
+  };
+
+  const renderStatButton = (
+    key: StatsDetailKey,
+    label: string,
+    value: string | number,
+    helper?: string,
+    className = "",
+  ) => (
+    <button
+      type="button"
+      className={`stats-card rounded-3xl border border-white/10 bg-white/5 p-6 text-left shadow-lg shadow-slate-950/20 backdrop-blur-xl ${className}`}
+      onClick={() => setStatsDetailKey(key)}
+    >
+      <span className="text-sm font-medium text-slate-400">{label}</span>
+      <span className="mt-2 block text-3xl font-bold text-white">{value}</span>
+      {helper ? <span className="mt-1 block text-sm text-slate-400">{helper}</span> : null}
+      <span className="mt-4 inline-flex text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
+        Ver listado
+      </span>
+    </button>
+  );
+
+  const renderTopCard = (
+    key: StatsDetailKey,
+    label: string,
+    entry: StatsRankingEntry | null,
+    className = "",
+  ) => (
+    <button
+      type="button"
+      className={`stats-card rounded-3xl border border-white/10 bg-white/5 p-6 text-left shadow-lg shadow-slate-950/20 backdrop-blur-xl ${className}`}
+      onClick={() => setStatsDetailKey(key)}
+    >
+      <span className="text-sm font-medium text-slate-400">{label}</span>
+      {entry ? (
+        <>
+          <span className="mt-2 block text-2xl font-bold text-white">{entry.name}</span>
+          <span className="block text-sm text-slate-400">
+            {entry.count} camiseta{entry.count !== 1 ? "s" : ""}
+          </span>
+        </>
+      ) : (
+        <span className="mt-2 block text-slate-400">Sin datos</span>
+      )}
+      <span className="mt-4 inline-flex text-xs font-semibold uppercase tracking-[0.16em] text-teal-200">
+        Ver ranking
+      </span>
+    </button>
+  );
+
+  const renderRankingList = (title: string, key: StatsDetailKey, entries: StatsRankingEntry[]) => (
+    <div className="stats-ranking-card rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+      <div className="stats-ranking-header">
+        <p className="text-sm font-medium text-slate-400">{title}</p>
+        <button type="button" className="stats-link-button" onClick={() => setStatsDetailKey(key)}>
+          Ver todo
+        </button>
+      </div>
+      <div className="stats-ranking-list">
+        {entries.length > 0 ? (
+          entries.slice(0, 5).map((entry, idx) => (
+            <button
+              key={`${key}-${entry.name}`}
+              type="button"
+              className="stats-ranking-row"
+              onClick={() => handleStatsItemOpen(key, entry)}
+            >
+              <span className="stats-ranking-main">
+                <span className="stats-ranking-position">{idx + 1}</span>
+                <span className="stats-ranking-name">{entry.name}</span>
+                <span className="stats-ranking-count">{entry.count}</span>
+              </span>
+              <span className="stats-ranking-bar" aria-hidden="true">
+                <span
+                  style={{
+                    width: `${entries[0].count > 0 ? (entry.count / entries[0].count) * 100 : 0}%`,
+                  }}
+                ></span>
+              </span>
+            </button>
+          ))
+        ) : (
+          <p className="text-slate-400">Sin datos</p>
+        )}
+      </div>
+    </div>
+  );
+
+  const selectedStatsShirts = selectedStatsItem
+    ? getShirtsForStatsItem(selectedStatsItem.key, selectedStatsItem.entry.name)
+    : [];
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#142f2d_0,#090d13_36rem,#05070b_100%)] px-4 py-7 text-slate-100 sm:px-6 lg:px-10">
       {isLoading ? (
@@ -814,7 +1053,84 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
           </header>
 
           {viewMode === "stats" ? (
-            <section className="space-y-7">
+            <>
+              <section className="space-y-7">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {renderStatButton("all", "Total camisetas", stats.totalShirts)}
+                  {renderStatButton("collection", "Coleccion", stats.collectionCount)}
+                  {renderStatButton("wishlist", "Wishlist", stats.wishlistCount)}
+                  {renderStatButton("countries", "Paises unicos", stats.uniqueCountries)}
+                </div>
+
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {renderTopCard("teams", "Club mas repetido", stats.topTeam)}
+                  {renderTopCard("leagues", "Liga mas repetida", stats.topLeague)}
+                  {renderTopCard("seasons", "Temporada mas repetida", stats.topSeason)}
+                  {renderTopCard("players", "Jugador mas repetido", stats.topPlayer)}
+                  {renderTopCard("numbers", "Dorsal mas repetido", stats.topNumber)}
+                  {renderTopCard("kitTypes", "Equipacion mas repetida", stats.topKitType)}
+
+                  <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
+                    <p className="text-sm font-medium text-slate-400">Distribucion</p>
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 rounded-full bg-slate-800/50 overflow-hidden">
+                          <div
+                            className="bg-blue-500/70 h-2"
+                            style={{
+                              width: `${
+                                stats.totalShirts > 0
+                                  ? (stats.collectionCount / stats.totalShirts) * 100
+                                  : 0
+                              }%`,
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-slate-400">
+                          {stats.totalShirts > 0
+                            ? Math.round((stats.collectionCount / stats.totalShirts) * 100)
+                            : 0}
+                          %
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">Coleccion</p>
+                      <div className="flex items-center gap-2 mt-3">
+                        <div className="flex-1 rounded-full bg-slate-800/50 overflow-hidden">
+                          <div
+                            className="bg-amber-500/70 h-2"
+                            style={{
+                              width: `${
+                                stats.totalShirts > 0
+                                  ? (stats.wishlistCount / stats.totalShirts) * 100
+                                  : 0
+                              }%`,
+                            }}
+                          ></div>
+                        </div>
+                        <span className="text-xs text-slate-400">
+                          {stats.totalShirts > 0
+                            ? Math.round((stats.wishlistCount / stats.totalShirts) * 100)
+                            : 0}
+                          %
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500">Wishlist</p>
+                    </div>
+                  </div>
+                  {renderTopCard("sizes", "Talla mas repetida", stats.topSize)}
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                  {renderRankingList("Top clubes", "teams", stats.topTeams)}
+                  {renderRankingList("Top ligas", "leagues", stats.topLeagues)}
+                  {renderRankingList("Top temporadas", "seasons", stats.topSeasons)}
+                  {renderRankingList("Top jugadores", "players", stats.topPlayers)}
+                  {renderRankingList("Top dorsales", "numbers", stats.topNumbers)}
+                  {renderRankingList("Top paises", "countries", stats.topCountries)}
+                </div>
+              </section>
+
+              <section className="hidden">
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/20 backdrop-blur-xl">
                   <p className="text-sm font-medium text-slate-400">Total camisetas</p>
@@ -936,6 +1252,7 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
                 </div>
               </div>
             </section>
+            </>
           ) : (
             <section className="space-y-7">
               <FiltersBar
@@ -1087,6 +1404,162 @@ export function ShirtCollectionApp({ onLogout }: ShirtCollectionAppProps) {
               onCustomTeam={handleCustomTeam}
               onFieldChange={handleFieldChange}
             />
+          </div>
+        </div>
+      ) : null}
+
+      {statsDetail ? (
+        <div
+          className="modal-backdrop stats-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label={statsDetail.title}
+          onClick={closeStatsDetail}
+        >
+          <div className="stats-detail-shell" onClick={(event) => event.stopPropagation()}>
+            <div className="stats-detail-header">
+              <div>
+                <p className="eyebrow">Estadisticas</p>
+                <h3>{statsDetail.title}</h3>
+                <p>
+                  {statsDetail.entries
+                    ? `${statsDetail.entries.length} entradas`
+                    : `${statsDetail.shirts?.length ?? 0} camisetas`}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="stats-modal-close"
+                onClick={closeStatsDetail}
+                aria-label="Cerrar estadistica"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="stats-detail-content">
+              {statsDetail.entries ? (
+                statsDetail.entries.length > 0 ? (
+                  <div className="stats-detail-ranking-list">
+                    {statsDetail.entries.map((entry, index) => (
+                      <button
+                        key={`${statsDetail.key}-${entry.name}`}
+                        type="button"
+                        className="stats-detail-ranking-row"
+                        onClick={() => handleStatsItemOpen(statsDetail.key, entry)}
+                      >
+                        <div className="stats-detail-ranking-main">
+                          <span className="stats-ranking-position">{index + 1}</span>
+                          <span className="stats-ranking-name">{entry.name}</span>
+                          <span className="stats-ranking-count">{entry.count}</span>
+                        </div>
+                        <div className="stats-ranking-bar" aria-hidden="true">
+                          <span
+                            style={{
+                              width: `${
+                                statsDetail.entries?.[0]?.count
+                                  ? (entry.count / statsDetail.entries[0].count) * 100
+                                  : 0
+                              }%`,
+                            }}
+                          ></span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-400">Sin datos</p>
+                )
+              ) : statsDetail.shirts && statsDetail.shirts.length > 0 ? (
+                <div className="stats-shirt-list">
+                  {statsDetail.shirts.map((shirt) => (
+                    <button
+                      key={shirt.id}
+                      type="button"
+                      onClick={() => {
+                        setStatsDetailKey(null);
+                        setViewingShirtId(shirt.id);
+                      }}
+                    >
+                      <span>{shirt.team}</span>
+                      <small>
+                        {[shirt.season, shirt.player || shirt.number ? `${shirt.player} ${shirt.number}`.trim() : "", shirt.status]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </small>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-slate-400">Sin camisetas</p>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {selectedStatsItem ? (
+        <div
+          className="modal-backdrop stats-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label={getStatsItemTitle(selectedStatsItem.key, selectedStatsItem.entry.name)}
+          onClick={closeSelectedStatsItem}
+        >
+          <div className="stats-item-shell" onClick={(event) => event.stopPropagation()}>
+            <div className="stats-detail-header">
+              <div className="min-w-0">
+                <p className="eyebrow">Detalle</p>
+                <h3>{getStatsItemTitle(selectedStatsItem.key, selectedStatsItem.entry.name)}</h3>
+                <p>
+                  {selectedStatsShirts.length} camiseta{selectedStatsShirts.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="stats-modal-close"
+                onClick={closeSelectedStatsItem}
+                aria-label="Cerrar detalle"
+              >
+                x
+              </button>
+            </div>
+
+            <div className="stats-item-shirt-list">
+              {selectedStatsShirts.length > 0 ? (
+                selectedStatsShirts.map((shirt) => (
+                  <button
+                    key={shirt.id}
+                    type="button"
+                    className="stats-item-shirt-row"
+                    onClick={() => {
+                      closeSelectedStatsItem();
+                      closeStatsDetail();
+                      setViewingShirtId(shirt.id);
+                    }}
+                  >
+                    <img
+                      src={getShirtImageUrl(shirt)}
+                      alt={`${shirt.team} ${shirt.season}`}
+                      loading="lazy"
+                    />
+                    <span className="stats-item-shirt-copy">
+                      <span className="stats-item-shirt-title">{shirt.team}</span>
+                      <span className="stats-item-shirt-meta">
+                        <span>{shirt.player || "Sin jugador"}</span>
+                        <span>{shirt.number ? `#${shirt.number}` : "Sin dorsal"}</span>
+                        <span>{shirt.season}</span>
+                      </span>
+                    </span>
+                    <span className={`stats-item-status ${shirt.status === "wishlist" ? "is-wishlist" : ""}`}>
+                      {shirt.status === "wishlist" ? "Wishlist" : "Coleccion"}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <p className="text-slate-400">No hay camisetas asociadas.</p>
+              )}
+            </div>
           </div>
         </div>
       ) : null}

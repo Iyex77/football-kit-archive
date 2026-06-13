@@ -1070,6 +1070,413 @@ img {
   background: rgb(255 255 255 / 0.06);
 }
 
+.stats-card {
+  display: block;
+  width: 100%;
+  min-height: 10rem;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  border-color: rgb(94 234 212 / 0.36);
+  background: rgb(255 255 255 / 0.075);
+}
+
+.stats-ranking-card {
+  min-width: 0;
+}
+
+.stats-ranking-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stats-link-button {
+  flex: 0 0 auto;
+  border: 1px solid rgb(94 234 212 / 0.25);
+  border-radius: 999px;
+  background: rgb(20 184 166 / 0.1);
+  color: rgb(153 246 228);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.stats-ranking-list,
+.stats-detail-ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stats-ranking-row {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.55rem;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 8px;
+  background: rgb(2 6 23 / 0.24);
+  padding: 0.8rem 0.85rem;
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.stats-ranking-row:hover {
+  transform: translateY(-1px);
+  border-color: rgb(94 234 212 / 0.22);
+  background: rgb(15 23 42 / 0.54);
+}
+
+.stats-ranking-main,
+.stats-detail-ranking-main {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.stats-ranking-position {
+  display: inline-flex;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgb(20 184 166 / 0.14);
+  color: rgb(153 246 228);
+  font-size: 0.8rem;
+  font-weight: 820;
+}
+
+.stats-ranking-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: rgb(226 232 240);
+  font-weight: 760;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-ranking-count {
+  flex: 0 0 auto;
+  min-width: 2.5rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(226 232 240);
+  padding: 0.3rem 0.55rem;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 820;
+}
+
+.stats-ranking-bar {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgb(30 41 59 / 0.64);
+}
+
+.stats-ranking-bar span {
+  display: block;
+  height: 0.5rem;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+}
+
+.stats-detail-ranking-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.055), rgb(15 23 42 / 0.44));
+  padding: 0.9rem;
+}
+
+.stats-detail-ranking-row .stats-ranking-bar span,
+.stats-ranking-row .stats-ranking-bar span {
+  min-width: 0.25rem;
+}
+
+.stats-detail-shell {
+  width: min(100%, 980px);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 8px;
+  background: rgb(8 13 22 / 0.98);
+  box-shadow: 0 34px 120px rgb(0 0 0 / 0.58);
+}
+
+.stats-modal-backdrop {
+  background: rgb(0 0 0 / 0.72);
+  backdrop-filter: blur(18px);
+  animation: statsBackdropIn 180ms ease both;
+}
+
+.stats-detail-shell,
+.stats-item-shell {
+  animation: statsModalIn 200ms ease both;
+}
+
+.stats-item-shell {
+  width: min(100%, 860px);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 0.08), transparent 42%),
+    rgb(8 13 22 / 0.98);
+  box-shadow: 0 34px 120px rgb(0 0 0 / 0.58);
+}
+
+.stats-detail-header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.stats-detail-header h3 {
+  margin-top: 0.35rem;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 780;
+}
+
+.stats-detail-header p:last-child {
+  margin-top: 0.25rem;
+  color: rgb(148 163 184);
+  font-size: 0.9rem;
+}
+
+.stats-modal-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 2.4rem;
+  height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(226 232 240);
+  font-size: 1rem;
+  font-weight: 760;
+  line-height: 1;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.stats-modal-close:hover {
+  transform: translateY(-1px);
+  border-color: rgb(255 255 255 / 0.26);
+  background: rgb(255 255 255 / 0.1);
+}
+
+.stats-detail-content {
+  display: grid;
+  gap: 0.85rem;
+  max-height: calc(100vh - 10rem);
+  overflow-y: auto;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.stats-detail-entry {
+  display: grid;
+  gap: 0.9rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 8px;
+  background: rgb(15 23 42 / 0.52);
+  padding: 1rem;
+}
+
+.stats-detail-entry-main {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.stats-detail-entry-main > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgb(20 184 166 / 0.14);
+  color: rgb(153 246 228);
+  font-size: 0.82rem;
+  font-weight: 780;
+}
+
+.stats-detail-entry-main p,
+.stats-shirt-list span {
+  color: white;
+  font-weight: 760;
+}
+
+.stats-detail-entry-main small,
+.stats-detail-shirts small,
+.stats-shirt-list small {
+  color: rgb(148 163 184);
+}
+
+.stats-detail-shirts,
+.stats-shirt-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.stats-detail-shirts button,
+.stats-shirt-list button {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 8px;
+  background: rgb(2 6 23 / 0.48);
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+}
+
+.stats-detail-shirts button:hover,
+.stats-shirt-list button:hover {
+  border-color: rgb(94 234 212 / 0.25);
+  background: rgb(15 23 42 / 0.8);
+}
+
+.stats-item-shirt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: calc(100vh - 10.5rem);
+  overflow-y: auto;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.stats-item-shirt-row {
+  display: grid;
+  grid-template-columns: 4.25rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.95rem;
+  width: 100%;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 8px;
+  background: rgb(2 6 23 / 0.42);
+  padding: 0.75rem;
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.stats-item-shirt-row:hover {
+  transform: translateY(-1px);
+  border-color: rgb(94 234 212 / 0.28);
+  background: rgb(15 23 42 / 0.72);
+}
+
+.stats-item-shirt-row img {
+  width: 4.25rem;
+  height: 4.25rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 8px;
+  object-fit: cover;
+  background: rgb(15 23 42);
+}
+
+.stats-item-shirt-copy {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.stats-item-shirt-title {
+  overflow: hidden;
+  color: white;
+  font-size: 0.98rem;
+  font-weight: 820;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-item-shirt-meta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  color: rgb(148 163 184);
+  font-size: 0.82rem;
+}
+
+.stats-item-shirt-meta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-item-status {
+  justify-self: end;
+  border: 1px solid rgb(56 189 248 / 0.32);
+  border-radius: 999px;
+  background: rgb(14 165 233 / 0.14);
+  color: rgb(191 219 254);
+  padding: 0.38rem 0.62rem;
+  font-size: 0.72rem;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
+.stats-item-status.is-wishlist {
+  border-color: rgb(250 204 21 / 0.38);
+  background: rgb(250 204 21 / 0.13);
+  color: rgb(255 242 171);
+}
+
+@keyframes statsBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes statsModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 @media (max-width: 1024px) {
   .collection-grid {
     grid-template-columns: repeat(3, minmax(280px, 280px));
@@ -1273,6 +1680,67 @@ img {
   .shirt-card-subtitle{
     font-size:.9rem;
     line-height:1.2;
+  }
+
+  .stats-ranking-card {
+    padding: 1rem;
+  }
+
+  .stats-ranking-row,
+  .stats-detail-ranking-row {
+    padding: 0.75rem;
+  }
+
+  .stats-ranking-main,
+  .stats-detail-ranking-main {
+    gap: 0.55rem;
+  }
+
+  .stats-ranking-position {
+    flex-basis: 1.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.72rem;
+  }
+
+  .stats-ranking-count {
+    min-width: 2.15rem;
+    padding: 0.25rem 0.45rem;
+    font-size: 0.76rem;
+  }
+
+  .stats-detail-shell {
+    max-height: calc(100vh - 1rem);
+  }
+
+  .stats-item-shell {
+    max-height: calc(100vh - 1rem);
+  }
+
+  .stats-item-shirt-list {
+    max-height: calc(100vh - 9.5rem);
+    padding: 1rem;
+  }
+
+  .stats-item-shirt-row {
+    grid-template-columns: 3.6rem minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .stats-item-shirt-row img {
+    width: 3.6rem;
+    height: 3.6rem;
+  }
+
+  .stats-item-status {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: -0.15rem;
+  }
+
+  .stats-item-shirt-meta {
+    gap: 0.25rem 0.45rem;
+    font-size: 0.76rem;
   }
 
 }
