@@ -1,5 +1,4 @@
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -35,6 +34,7 @@ import type {
 import { placeholderImages } from "../lib/collection-data";
 import { DatalistField, SelectField, TextAreaField, TextField } from "./FormControls";
 import { supabase } from "../../lib/supabase-auth";
+import { notify } from "../lib/notify";
 
 type ShirtFormProps = {
   form: ShirtFormState;
@@ -221,7 +221,7 @@ export function ShirtForm({
 
         if (uploadError) {
           console.error("UPLOAD ERROR:", uploadError);
-          toast.error("Error subiendo imagen. Intenta otra vez.");
+          notify.error("Error subiendo imagen. Intenta otra vez.");
           continue;
         }
 

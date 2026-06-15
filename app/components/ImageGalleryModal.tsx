@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Shirt } from "../lib/types";
 import { placeholderImages } from "../lib/collection-data";
 
@@ -10,6 +10,7 @@ type ImageGalleryModalProps = {
   onClose: () => void;
   onEdit: (shirt: Shirt) => void;
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 };
 
 export function ImageGalleryModal({
@@ -18,67 +19,35 @@ export function ImageGalleryModal({
   onClose,
   onEdit,
   onDelete,
+  readOnly = false,
 }: ImageGalleryModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState(0);
-  const [touchEnd, setTouchEnd] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const touchStart = useRef(0);
 
-  // Reset index cuando se abre un nuevo shirt
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentIndex(0);
-    }
-  }, [isOpen, shirt.id]);
+  const safeCurrentIndex = currentIndex >= shirt.images.length ? 0 : currentIndex;
+
+  const handlePrev = useCallback(() => {
+    if (shirt.images.length <= 1) return;
+    setCurrentIndex((current) => (current === 0 ? shirt.images.length - 1 : current - 1));
+  }, [shirt.images.length]);
+
+  const handleNext = useCallback(() => {
+    if (shirt.images.length <= 1) return;
+    setCurrentIndex((current) => (current === shirt.images.length - 1 ? 0 : current + 1));
+  }, [shirt.images.length]);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isOpen) return;
-
-      if (event.key === "Escape") {
-        onClose();
-      } else if (event.key === "ArrowLeft") {
-        handlePrev();
-      } else if (event.key === "ArrowRight") {
-        handleNext();
-      }
+      if (event.key === "Escape") onClose();
+      if (event.key === "ArrowLeft") handlePrev();
+      if (event.key === "ArrowRight") handleNext();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  const handlePrev = () => {
-    if (shirt.images.length <= 1) return;
-    setCurrentIndex((prev) => (prev === 0 ? shirt.images.length - 1 : prev - 1));
-  };
-
-  const handleNext = () => {
-    if (shirt.images.length <= 1) return;
-    setCurrentIndex((prev) => (prev === shirt.images.length - 1 ? 0 : prev + 1));
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    setTouchEnd(e.changedTouches[0].clientX);
-    handleSwipe();
-  };
-
-  const handleSwipe = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe) {
-      handleNext();
-    } else if (isRightSwipe) {
-      handlePrev();
-    }
-  };
+  }, [handleNext, handlePrev, isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -87,104 +56,99 @@ export function ImageGalleryModal({
     url: placeholderImages[shirt.sport] || placeholderImages.default,
     label: "Placeholder",
   };
-  const currentImage = shirt.images[currentIndex] || shirt.images[0] || placeholderImage;
+  const currentImage = shirt.images[safeCurrentIndex] || shirt.images[0] || placeholderImage;
 
   return (
     <div className="gallery-modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="gallery-modal-shell gallery-shell-premium" onClick={(e) => e.stopPropagation()}>
-        <button
-          className="gallery-modal-close"
-          type="button"
-          onClick={onClose}
-          aria-label="Cerrar galería"
-        >
+      <div className="gallery-modal-shell gallery-shell-premium" onClick={(event) => event.stopPropagation()}>
+        <button className="gallery-modal-close" type="button" onClick={onClose} aria-label="Cerrar galería">
           ✕
         </button>
 
         <div className="gallery-premium-container">
-          {/* Thumbnails vertical on the left */}
-          {shirt.images.length > 1 && (
+          {shirt.images.length > 1 ? (
             <div className="gallery-thumbnails-vertical">
               {shirt.images.map((image, index) => (
                 <button
                   key={image.id}
-                  className={`gallery-thumbnail-vertical ${index === currentIndex ? "is-active" : ""}`}
+                  className={`gallery-thumbnail-vertical ${index === safeCurrentIndex ? "is-active" : ""}`}
                   onClick={() => setCurrentIndex(index)}
                   aria-label={`Imagen ${index + 1}`}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={image.url} alt={`Thumbnail ${index + 1}`} />
                 </button>
               ))}
             </div>
-          )}
+          ) : null}
 
-          {/* Main image viewer centered */}
           <div className="gallery-premium-viewer">
             <div
               className="gallery-image-container"
-              ref={containerRef}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchEnd}
+              onTouchStart={(event) => {
+                touchStart.current = event.targetTouches[0].clientX;
+              }}
+              onTouchEnd={(event) => {
+                const distance = touchStart.current - event.changedTouches[0].clientX;
+                if (distance > 50) handleNext();
+                if (distance < -50) handlePrev();
+              }}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={currentImage.url}
-                alt={`${shirt.team} ${currentIndex + 1}`}
+                alt={`${shirt.team} ${safeCurrentIndex + 1}`}
                 className="gallery-main-image"
               />
 
-              {shirt.images.length > 1 && (
+              {shirt.images.length > 1 ? (
                 <>
-                  <button
-                    className="gallery-nav-btn gallery-nav-prev"
-                    onClick={handlePrev}
-                    aria-label="Imagen anterior"
-                  >
+                  <button className="gallery-nav-btn gallery-nav-prev" onClick={handlePrev} aria-label="Imagen anterior">
                     ◀
                   </button>
-                  <button
-                    className="gallery-nav-btn gallery-nav-next"
-                    onClick={handleNext}
-                    aria-label="Imagen siguiente"
-                  >
+                  <button className="gallery-nav-btn gallery-nav-next" onClick={handleNext} aria-label="Imagen siguiente">
                     ▶
                   </button>
                   <div className="gallery-counter">
-                    {currentIndex + 1} / {shirt.images.length}
+                    {safeCurrentIndex + 1} / {shirt.images.length}
                   </div>
                 </>
-              )}
+              ) : null}
             </div>
 
-            {/* Header with metadata at top right */}
             <div className="gallery-premium-header">
               <div className="gallery-meta-compact">
-                <p>{shirt.season} • {shirt.team}</p>
+                <p>
+                  {shirt.season} • {shirt.team}
+                </p>
                 <p>
                   {shirt.player || "Sin nombre"}
                   {shirt.number ? ` • #${shirt.number}` : ""}
                 </p>
               </div>
-              <div className="gallery-header-actions">
-                <button
-                  className="gallery-icon-button"
-                  type="button"
-                  onClick={() => onEdit(shirt)}
-                  aria-label="Editar camiseta"
-                >
-                  ✎
-                </button>
-                <button
-                  className="gallery-icon-button"
-                  type="button"
-                  onClick={() => onDelete(shirt.id)}
-                  aria-label="Eliminar camiseta"
-                >
-                  🗑
-                </button>
-              </div>
+
+              {!readOnly ? (
+                <div className="gallery-header-actions">
+                  <button
+                    className="gallery-icon-button"
+                    type="button"
+                    onClick={() => onEdit(shirt)}
+                    aria-label="Editar camiseta"
+                  >
+                    ✎
+                  </button>
+                  <button
+                    className="gallery-icon-button"
+                    type="button"
+                    onClick={() => onDelete(shirt.id)}
+                    aria-label="Eliminar camiseta"
+                  >
+                    🗑
+                  </button>
+                </div>
+              ) : null}
             </div>
 
-            {/* Details section below */}
             <div className="gallery-details-compact">
               <div className="detail-compact-item">
                 <span className="detail-label">Equipación</span>

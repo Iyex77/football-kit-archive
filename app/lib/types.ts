@@ -12,6 +12,7 @@ export type ShirtImage = {
 
 export type Shirt = {
   id: string;
+  user_id?: string;
   sport: Sport;
   category: ShirtCategory;
   country: string;
@@ -26,6 +27,16 @@ export type Shirt = {
   images: ShirtImage[];
   mainImageId: string;
   notes: string;
+};
+
+export type Profile = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  is_public: boolean;
+  show_collection: boolean;
+  show_wishlist: boolean;
+  created_at?: string;
 };
 
 export type ShirtFormState = {

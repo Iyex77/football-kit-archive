@@ -4,14 +4,14 @@ import { placeholderImages } from "../lib/collection-data";
 
 type ShirtCardProps = {
   shirt: Shirt;
-  onCardClick: (id: string) => void; // click behaviour delegated to parent (open or select)
+  onCardClick: (id: string) => void;
   onEdit: (shirt: Shirt) => void;
   onDelete: (id: string) => void;
   onToggleWishlist: (id: string) => void;
-  // multi-select props
   isSelectModeActive?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (id: string) => void;
+  readOnly?: boolean;
 };
 
 export function ShirtCard({
@@ -23,42 +23,35 @@ export function ShirtCard({
   isSelectModeActive = false,
   isSelected = false,
   onToggleSelect,
+  readOnly = false,
 }: ShirtCardProps) {
   const isWishlist = shirt.status === "wishlist";
   const mainImage = shirt.images.find((img) => img.id === shirt.mainImageId) || shirt.images[0];
   const imageUrl = mainImage?.url || placeholderImages[shirt.sport] || placeholderImages.default;
+  const touchTimerRef = useRef<number | null>(null);
 
-  const handleBadgeClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    // Solo permitir Wishlist → Colección, no al revés
-    if (isWishlist) {
+  const handleBadgeClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    if (!readOnly && isWishlist) {
       onToggleWishlist(shirt.id);
     }
   };
 
-  const handleCardClick = () => {
-    // if long-press triggered selection, skip opening
-    onCardClick?.(shirt.id);
+  const handleToggleSelect = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!readOnly) {
+      onToggleSelect?.(shirt.id);
+    }
   };
 
-  const handleToggleSelect = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onToggleSelect?.(shirt.id);
-  };
-
-  // long-press support for touch devices to enter selection mode
-  const touchTimerRef = useRef<number | null>(null);
-  const longPressedRef = useRef(false);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    longPressedRef.current = false;
+  const handleTouchStart = () => {
+    if (readOnly) return;
     touchTimerRef.current = window.setTimeout(() => {
-      longPressedRef.current = true;
       onToggleSelect?.(shirt.id);
     }, 350);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = () => {
     if (touchTimerRef.current) {
       clearTimeout(touchTimerRef.current);
       touchTimerRef.current = null;
@@ -68,23 +61,24 @@ export function ShirtCard({
   return (
     <article
       className={`shirt-card ${isSelectModeActive ? "selection-active" : ""} ${isSelected ? "is-selected" : ""}`}
-      onClick={handleCardClick}
+      onClick={() => onCardClick(shirt.id)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
       <div className="shirt-image-wrap">
-        <button
-          className={`select-checkbox ${isSelected ? "checked" : ""}`}
-          type="button"
-          aria-pressed={isSelected}
-          aria-label={isSelected ? "Deseleccionar" : "Seleccionar"}
-          onClick={handleToggleSelect}
-        >
-          {isSelected ? "✓" : ""}
-        </button>
-        {/* image here */}
-        
+        {!readOnly ? (
+          <button
+            className={`select-checkbox ${isSelected ? "checked" : ""}`}
+            type="button"
+            aria-pressed={isSelected}
+            aria-label={isSelected ? "Deseleccionar" : "Seleccionar"}
+            onClick={handleToggleSelect}
+          >
+            {isSelected ? "✓" : ""}
+          </button>
+        ) : null}
+
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imageUrl}
@@ -93,33 +87,35 @@ export function ShirtCard({
           loading="lazy"
         />
 
-        <div className="shirt-card-actions">
-          <button
-            className="shirt-card-action-icon"
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(shirt);
-            }}
-            aria-label="Editar camiseta"
-          >
-            ✎
-          </button>
-          <button
-            className="shirt-card-action-icon"
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(shirt.id);
-            }}
-            aria-label="Eliminar camiseta"
-          >
-            🗑
-          </button>
-        </div>
+        {!readOnly ? (
+          <div className="shirt-card-actions">
+            <button
+              className="shirt-card-action-icon"
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onEdit(shirt);
+              }}
+              aria-label="Editar camiseta"
+            >
+              ✎
+            </button>
+            <button
+              className="shirt-card-action-icon"
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onDelete(shirt.id);
+              }}
+              aria-label="Eliminar camiseta"
+            >
+              🗑
+            </button>
+          </div>
+        ) : null}
       </div>
 
-      <div className="shirt-card-footer flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+      <div className="shirt-card-footer flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="shirt-card-info">
           <p className="shirt-card-team">{shirt.team}</p>
           <p className="shirt-card-player">
@@ -132,7 +128,7 @@ export function ShirtCard({
           type="button"
           onClick={handleBadgeClick}
           aria-label={isWishlist ? "Mover a colección" : "Estado colección"}
-          disabled={!isWishlist}
+          disabled={readOnly || !isWishlist}
         >
           {isWishlist ? "☆ Wishlist" : "✓ Colección"}
         </button>

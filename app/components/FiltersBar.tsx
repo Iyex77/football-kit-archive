@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { categoryLabels, sportLabels } from "../lib/collection-data";
-import type { ShirtCategory, ShirtFilters, Sport } from "../lib/types";
+import { categoryLabels, sportLabels, statusLabels } from "../lib/collection-data";
+import type { ShirtCategory, ShirtFilters, ShirtStatus, Sport } from "../lib/types";
 import { SelectField, TextField } from "./FormControls";
 
 type FiltersBarProps = {
@@ -9,10 +9,12 @@ type FiltersBarProps = {
   countries: string[];
   onFilterChange: <K extends keyof ShirtFilters>(field: K, value: ShirtFilters[K]) => void;
   onReset: () => void;
+  showStatusFilter?: boolean;
 };
 
 const sportOptions: Array<"all" | Sport> = ["all", "football", "basketball"];
 const categoryOptions: Array<"all" | ShirtCategory> = ["all", "club", "national"];
+const statusOptions: Array<"all" | ShirtStatus> = ["all", "collection", "wishlist"];
 
 const withSelectedOption = (options: string[], selected: string) => {
   if (selected === "all" || selected.trim() === "" || options.includes(selected)) {
@@ -28,6 +30,7 @@ export function FiltersBar({
   countries,
   onFilterChange,
   onReset,
+  showStatusFilter = false,
 }: FiltersBarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const countryOptions = withSelectedOption(countries, filters.country);
@@ -45,6 +48,7 @@ export function FiltersBar({
     filters.search.trim() !== "" ||
     filters.sport !== "all" ||
     filters.category !== "all" ||
+    filters.status !== "all" ||
     filters.country !== "all" ||
     filters.league !== "all" ||
     filters.year.trim() !== "";
@@ -70,6 +74,15 @@ export function FiltersBar({
           getLabel={(value) => (value === "all" ? "Todos" : value)}
           onChange={(value) => onFilterChange("country", value as "all" | string)}
         />
+        {showStatusFilter ? (
+          <SelectField
+            label="Estado"
+            value={filters.status}
+            options={statusOptions}
+            getLabel={(value) => (value === "all" ? "Todas" : statusLabels[value])}
+            onChange={(value) => onFilterChange("status", value as "all" | ShirtStatus)}
+          />
+        ) : null}
         <SelectField
           label="Deporte"
           value={filters.sport}
@@ -133,6 +146,15 @@ export function FiltersBar({
                 getLabel={(value) => (value === "all" ? "Todos" : value)}
                 onChange={(value) => onFilterChange("country", value as "all" | string)}
               />
+              {showStatusFilter ? (
+                <SelectField
+                  label="Estado"
+                  value={filters.status}
+                  options={statusOptions}
+                  getLabel={(value) => (value === "all" ? "Todas" : statusLabels[value])}
+                  onChange={(value) => onFilterChange("status", value as "all" | ShirtStatus)}
+                />
+              ) : null}
               <SelectField
                 label="Deporte"
                 value={filters.sport}
