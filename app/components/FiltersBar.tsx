@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { categoryLabels, sportLabels, statusLabels } from "../lib/collection-data";
 import type { ShirtCategory, ShirtFilters, ShirtStatus, Sport } from "../lib/types";
 import { SelectField, TextField } from "./FormControls";
@@ -44,6 +44,19 @@ export function FiltersBar({
     handleCloseMobile();
   };
 
+  useEffect(() => {
+    if (!isMobileOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        handleCloseMobile();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileOpen]);
+
   const hasActiveFilters =
     filters.search.trim() !== "" ||
     filters.sport !== "all" ||
@@ -56,8 +69,8 @@ export function FiltersBar({
   return (
     <div className="filters-bar">
       <button className="filters-mobile-toggle" type="button" onClick={handleToggleMobile}>
-        🔍 Filtros
-        {hasActiveFilters ? <span className="filters-badge">✕</span> : null}
+        Filtros
+        {hasActiveFilters ? <span className="filters-badge">×</span> : null}
       </button>
 
       <div className="filters-grid">
@@ -111,7 +124,6 @@ export function FiltersBar({
           type="text"
           onChange={(value) => onFilterChange("year", value)}
         />
-        {/* Sort control moved to header (compact button) */}
       </div>
       {isMobileOpen ? (
         <div className="filters-mobile-drawer-backdrop" onClick={handleCloseMobile}>
@@ -125,11 +137,11 @@ export function FiltersBar({
                   onClick={handleReset}
                   aria-label="Restablecer filtros"
                 >
-                  ✕
+                  ×
                 </button>
               ) : null}
               <button className="icon-button" type="button" onClick={handleCloseMobile} aria-label="Cerrar filtros">
-                ✕
+                ×
               </button>
             </div>
             <div className="filters-mobile-content">

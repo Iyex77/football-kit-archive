@@ -140,10 +140,31 @@ img {
   margin-top: 0.85rem;
   max-width: 920px;
   color: white;
-  font-size: clamp(3rem, 8vw, 7.8rem);
+  font-size: clamp(2.35rem, 5.8vw, 5.4rem);
   font-weight: 780;
   letter-spacing: 0;
-  line-height: 0.88;
+  line-height: 0.94;
+  text-wrap: balance;
+}
+
+.hero-title {
+  max-width: min(920px, 100%);
+  overflow-wrap: normal;
+}
+
+.hero-context {
+  display: inline-flex;
+  margin-top: 0.85rem;
+  border: 1px solid rgb(94 234 212 / 0.25);
+  border-radius: 999px;
+  background: rgb(45 212 191 / 0.08);
+  color: rgb(204 251 241);
+  padding: 0.38rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 780;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .hero-panel p:last-child {
@@ -152,6 +173,14 @@ img {
   color: rgb(203 213 225 / 0.82);
   font-size: clamp(1rem, 1.4vw, 1.2rem);
   line-height: 1.75;
+}
+
+.hero-panel .hero-context {
+  margin-top: 0.85rem;
+  max-width: max-content;
+  color: rgb(204 251 241);
+  font-size: 0.78rem;
+  line-height: 1;
 }
 
 .eyebrow,
@@ -319,6 +348,61 @@ img {
 
 .drawer-link:hover {
   transform: translateX(-2px);
+}
+
+.drawer-filter-group {
+  position: relative;
+}
+
+.drawer-filter-button {
+  cursor: pointer;
+}
+
+.drawer-filter-button span:nth-of-type(1) {
+  min-width: 0;
+  flex: 1;
+}
+
+.drawer-filter-chevron {
+  margin-left: auto;
+  color: rgb(148 163 184);
+  font-size: 0.58rem;
+  letter-spacing: 0;
+}
+
+.drawer-sport-dropdown {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0.35rem;
+  left: 3.05rem;
+  z-index: 110;
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid rgb(94 234 212 / 0.18);
+  border-radius: 8px;
+  background: rgb(3 8 20 / 0.98);
+  box-shadow: 0 18px 60px rgb(0 0 0 / 0.42);
+  padding: 0.35rem;
+}
+
+.drawer-sport-option {
+  border-radius: 6px;
+  color: rgb(203 213 225);
+  padding: 0.58rem 0.65rem;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 760;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.drawer-sport-option:hover,
+.drawer-sport-option:focus-visible,
+.drawer-sport-option.is-active {
+  background: rgb(45 212 191 / 0.12);
+  color: rgb(204 251 241);
+  outline: none;
 }
 
 .drawer-logout {
@@ -2422,17 +2506,19 @@ img {
 }
 
 .gallery-icon-button {
-  width: 2.6rem;
-  height: 2.6rem;
-  border-radius: 50%;
+  min-height: 2.35rem;
+  border-radius: 8px;
   border: 1px solid rgb(255 255 255 / 0.16);
   background: rgb(0 0 0 / 0.55);
   color: white;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  padding: 0 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 780;
   transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+  white-space: nowrap;
 }
 
 .gallery-icon-button:hover {

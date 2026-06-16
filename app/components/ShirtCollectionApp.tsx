@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase-auth";
 import {
@@ -8,6 +9,7 @@ import {
   defaultForm,
   emptyFilters,
   placeholderImages,
+  sportLabels,
 } from "../lib/collection-data";
 import type {
   Shirt,
@@ -70,6 +72,11 @@ const unique = (values: string[]) =>
   Array.from(new Set(values.map((value) => value.trim()).filter(Boolean))).sort((a, b) =>
     a.localeCompare(b),
   );
+
+const getSportFilterFromSearch = (search: string): "all" | Sport => {
+  const sport = new URLSearchParams(search).get("sport");
+  return sport === "football" || sport === "basketball" ? sport : "all";
+};
 
 const compactLabel = (value: string) => value.trim().replace(/\s+/g, " ");
 
@@ -364,13 +371,20 @@ export function ShirtCollectionApp({
   readOnly = false,
   defaultViewMode = "collection",
 }: ShirtCollectionAppProps) {
+  const searchParams = useSearchParams();
+  const sportFromUrl = searchParams.get("sport");
+  const routeSportFilter: "all" | Sport =
+    sportFromUrl === "football" || sportFromUrl === "basketball" ? sportFromUrl : "all";
   const [shirts, setShirts] = useState<Shirt[]>(initialShirts ?? []);
   const [isLoading, setIsLoading] = useState(!initialShirts);
   const [profile, setProfile] = useState<Profile | null>(publicProfile ?? null);
   const [isViewingOwnPublicProfile, setIsViewingOwnPublicProfile] = useState(false);
   const viewMode = defaultViewMode;
   const [form, setForm] = useState<ShirtFormState>(defaultForm);
-  const [filters, setFilters] = useState<ShirtFilters>(emptyFilters);
+  const [filters, setFilters] = useState<ShirtFilters>(() => ({
+    ...emptyFilters,
+    sport: routeSportFilter,
+  }));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewingShirtId, setViewingShirtId] = useState<string | null>(null);
@@ -413,6 +427,18 @@ export function ShirtCollectionApp({
       isMounted = false;
     };
   }, [profile?.id, readOnly]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setFilters((current) => ({
+        ...current,
+        sport: getSportFilterFromSearch(window.location.search),
+      }));
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     if (!isSortOpen) return;
@@ -598,8 +624,14 @@ export function ShirtCollectionApp({
 
   const openCreateForm = () => {
     if (readOnly) return;
+    const nextForm: ShirtFormState = {
+      ...defaultForm,
+      status: viewMode === "wishlist" ? "wishlist" : viewMode === "collection" ? "collection" : defaultForm.status,
+      sport: filters.sport === "football" || filters.sport === "basketball" ? filters.sport : defaultForm.sport,
+    };
+
     setEditingId(null);
-    setForm(defaultForm);
+    setForm(nextForm);
     setIsFormOpen(true);
   };
 
@@ -791,6 +823,26 @@ export function ShirtCollectionApp({
   const handleCancelDelete = () => {
     setDeleteConfirmation(null);
   };
+
+  useEffect(() => {
+    if (!isFormOpen && !deleteConfirmation) return;
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      if (deleteConfirmation) {
+        handleCancelDelete();
+        return;
+      }
+
+      if (isFormOpen) {
+        closeForm();
+      }
+    };
+
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [deleteConfirmation, isFormOpen]);
 
   const handleDelete = async (id: string) => {
     const shirt = shirts.find((s) => s.id === id);
@@ -1114,10 +1166,24 @@ export function ShirtCollectionApp({
           : viewMode === "all"
             ? "Todas las camisetas"
             : "Mi colección";
+  const sportContextLabel =
+    filters.sport === "football" || filters.sport === "basketball" ? sportLabels[filters.sport] : "Todo";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#142f2d_0,#090d13_36rem,#05070b_100%)] px-4 py-7 text-slate-100 sm:px-6 lg:px-10">
-      {!readOnly && onLogout ? <AppDrawer profile={profile} onLogout={onLogout} /> : null}
+      {!readOnly && onLogout ? (
+        <AppDrawer
+          profile={profile}
+          onLogout={onLogout}
+          activeSport={filters.sport}
+          onSportSelect={(sport) => {
+            setFilters((current) => ({
+              ...current,
+              sport,
+            }));
+          }}
+        />
+      ) : null}
       {isLoading ? (
         <div className="mx-auto max-w-[1560px] space-y-8">
           <div className="hero-panel">
@@ -1162,9 +1228,12 @@ export function ShirtCollectionApp({
           <header className="hero-panel flex-col gap-6 items-start">
             <div className="w-full">
               <p className="eyebrow">{readOnly ? "Vitrina pública" : "Vitrina privada"}</p>
-              <h1 className="max-w-full break-words text-4xl sm:text-5xl md:text-5xl lg:text-5xl font-semibold tracking-tight">
+              <h1 className="hero-title">
                 {pageTitle}
               </h1>
+              {!readOnly && viewMode !== "stats" ? (
+                <p className="hero-context">{sportContextLabel}</p>
+              ) : null}
               {readOnly && profile?.username ? (
                 <p>@{profile.username}</p>
               ) : null}
@@ -1353,8 +1422,14 @@ export function ShirtCollectionApp({
       )}
 
       {!readOnly && isFormOpen ? (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Formulario camiseta">
-          <div className="modal-shell">
+        <div
+          className="modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Formulario camiseta"
+          onClick={closeForm}
+        >
+          <div className="modal-shell" onClick={(event) => event.stopPropagation()}>
             <ShirtForm
               form={form}
               editingShirt={editingShirt}
@@ -1544,9 +1619,18 @@ export function ShirtCollectionApp({
       )}
 
       {!readOnly && deleteConfirmation ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-8 backdrop-blur-sm">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-8 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirmar eliminación"
+          onClick={handleCancelDelete}
+        >
           <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-950/90 to-slate-900 opacity-90"></div>
-          <div className="relative z-10 w-full max-w-xl overflow-hidden rounded-[32px] border border-white/10 bg-slate-950/85 p-7 shadow-[0_40px_120px_-40px_rgba(15,23,42,0.9)] backdrop-blur-xl transition duration-300 ease-out hover:-translate-y-1">
+          <div
+            className="relative z-10 w-full max-w-xl overflow-hidden rounded-[32px] border border-white/10 bg-slate-950/85 p-7 shadow-[0_40px_120px_-40px_rgba(15,23,42,0.9)] backdrop-blur-xl transition duration-300 ease-out hover:-translate-y-1"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="flex items-center gap-4 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-sm shadow-slate-950/20 backdrop-blur-sm">
               <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-red-500/15 text-red-300 ring-1 ring-red-400/20">
                 <span className="text-xl" aria-hidden="true">!</span>

@@ -62,7 +62,7 @@ export function ImageGalleryModal({
     <div className="gallery-modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="gallery-modal-shell gallery-shell-premium" onClick={(event) => event.stopPropagation()}>
         <button className="gallery-modal-close" type="button" onClick={onClose} aria-label="Cerrar galería">
-          ✕
+          ×
         </button>
 
         <div className="gallery-premium-container">
@@ -104,10 +104,10 @@ export function ImageGalleryModal({
               {shirt.images.length > 1 ? (
                 <>
                   <button className="gallery-nav-btn gallery-nav-prev" onClick={handlePrev} aria-label="Imagen anterior">
-                    ◀
+                    ‹
                   </button>
                   <button className="gallery-nav-btn gallery-nav-next" onClick={handleNext} aria-label="Imagen siguiente">
-                    ▶
+                    ›
                   </button>
                   <div className="gallery-counter">
                     {safeCurrentIndex + 1} / {shirt.images.length}
@@ -119,11 +119,11 @@ export function ImageGalleryModal({
             <div className="gallery-premium-header">
               <div className="gallery-meta-compact">
                 <p>
-                  {shirt.season} • {shirt.team}
+                  {shirt.season} · {shirt.team}
                 </p>
                 <p>
                   {shirt.player || "Sin nombre"}
-                  {shirt.number ? ` • #${shirt.number}` : ""}
+                  {shirt.number ? ` · #${shirt.number}` : ""}
                 </p>
               </div>
 
@@ -135,7 +135,7 @@ export function ImageGalleryModal({
                     onClick={() => onEdit(shirt)}
                     aria-label="Editar camiseta"
                   >
-                    ✎
+                    Editar
                   </button>
                   <button
                     className="gallery-icon-button"
@@ -143,7 +143,7 @@ export function ImageGalleryModal({
                     onClick={() => onDelete(shirt.id)}
                     aria-label="Eliminar camiseta"
                   >
-                    🗑
+                    Eliminar
                   </button>
                 </div>
               ) : null}

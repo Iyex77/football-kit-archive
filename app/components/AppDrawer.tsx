@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
-import type { Profile } from "../lib/types";
+import type { Profile, Sport } from "../lib/types";
+
+type DrawerSport = "all" | Sport;
+type DrawerFilterPath = "/" | "/coleccion" | "/wishlist";
 
 type AppDrawerProps = {
   profile: Profile | null;
   onLogout: () => Promise<void> | void;
+  activeSport?: DrawerSport;
+  onSportSelect?: (sport: DrawerSport) => void;
 };
 
 type IconName =
@@ -20,6 +25,21 @@ type IconName =
   | "chart"
   | "spark"
   | "logout";
+
+const sportSubmenu: Array<{ label: string; value: DrawerSport }> = [
+  { label: "Todo", value: "all" },
+  { label: "Fútbol", value: "football" },
+  { label: "Baloncesto", value: "basketball" },
+];
+
+const filterSections: Array<{ href: DrawerFilterPath; label: string; icon: IconName }> = [
+  { href: "/", label: "Todas las camisetas", icon: "layers" },
+  { href: "/coleccion", label: "Mi colección", icon: "grid" },
+  { href: "/wishlist", label: "Wishlist", icon: "star" },
+];
+
+const sportHref = (basePath: string, sport: DrawerSport) =>
+  sport === "all" ? basePath : `${basePath}?sport=${sport}`;
 
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -41,17 +61,94 @@ function Icon({ name }: { name: IconName }) {
   );
 }
 
-export function AppDrawer({ profile, onLogout }: AppDrawerProps) {
+export function AppDrawer({ profile, onLogout, activeSport = "all", onSportSelect }: AppDrawerProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [openSportMenu, setOpenSportMenu] = useState<DrawerFilterPath | null>(null);
   const publicPath = profile?.username ? `/u/${profile.username}` : "";
 
-  const close = () => setIsOpen(false);
+  const close = () => {
+    setOpenSportMenu(null);
+    setIsOpen(false);
+  };
 
   const itemClass = (href: string) => `drawer-link ${pathname === href ? "is-active" : ""}`;
+  const filterButtonClass = (href: string) => `drawer-link drawer-filter-button ${pathname === href ? "is-active" : ""}`;
+  const sportItemClass = (href: string, sport: DrawerSport) =>
+    `drawer-sport-option ${pathname === href && activeSport === sport ? "is-active" : ""}`;
+
   const open = () => {
     toast.dismiss();
     setIsOpen(true);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (openSportMenu) {
+          setOpenSportMenu(null);
+          return;
+        }
+        close();
+      }
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest("[data-drawer-sport-menu]")) return;
+      setOpenSportMenu(null);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isOpen, openSportMenu]);
+
+  const renderFilterSection = ({ href, label, icon }: { href: DrawerFilterPath; label: string; icon: IconName }) => {
+    const isMenuOpen = openSportMenu === href;
+
+    return (
+      <div className="drawer-filter-group" data-drawer-sport-menu>
+        <button
+          type="button"
+          className={filterButtonClass(href)}
+          aria-haspopup="menu"
+          aria-expanded={isMenuOpen}
+          onClick={() => setOpenSportMenu((current) => (current === href ? null : href))}
+        >
+          <Icon name={icon} />
+          <span>{label}</span>
+          <span className="drawer-filter-chevron" aria-hidden="true">
+            {isMenuOpen ? "▲" : "▼"}
+          </span>
+        </button>
+
+        {isMenuOpen ? (
+          <div className="drawer-sport-dropdown" role="menu">
+            {sportSubmenu.map((item) => (
+              <Link
+                key={`${href}-${item.value}`}
+                className={sportItemClass(href, item.value)}
+                href={sportHref(href, item.value)}
+                role="menuitem"
+                onClick={() => {
+                  onSportSelect?.(item.value);
+                  close();
+                }}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
   };
 
   return (
@@ -59,7 +156,7 @@ export function AppDrawer({ profile, onLogout }: AppDrawerProps) {
       <button
         className="app-menu-button"
         type="button"
-        aria-label="Abrir menu"
+        aria-label="Abrir menú"
         aria-expanded={isOpen}
         onClick={open}
       >
@@ -68,7 +165,7 @@ export function AppDrawer({ profile, onLogout }: AppDrawerProps) {
         <span></span>
       </button>
 
-      {isOpen ? <button className="drawer-backdrop" type="button" aria-label="Cerrar menu" onClick={close} /> : null}
+      {isOpen ? <button className="drawer-backdrop" type="button" aria-label="Cerrar menú" onClick={close} /> : null}
 
       <aside className={`app-drawer ${isOpen ? "is-open" : ""}`} aria-hidden={!isOpen}>
         <div className="drawer-header">
@@ -76,24 +173,14 @@ export function AppDrawer({ profile, onLogout }: AppDrawerProps) {
             <p className="eyebrow">Football Kit Archive</p>
             <h2>{profile?.display_name || profile?.username || "Mi cuenta"}</h2>
           </div>
-          <button className="drawer-close" type="button" aria-label="Cerrar menu" onClick={close}>
+          <button className="drawer-close" type="button" aria-label="Cerrar menú" onClick={close}>
             x
           </button>
         </div>
 
-        <nav className="drawer-nav" aria-label="Navegacion principal">
-          <Link className={itemClass("/")} href="/" onClick={close}>
-            <Icon name="layers" />
-            Todas las camisetas
-          </Link>
-          <Link className={itemClass("/coleccion")} href="/coleccion" onClick={close}>
-            <Icon name="grid" />
-            Mi colección
-          </Link>
-          <Link className={itemClass("/wishlist")} href="/wishlist" onClick={close}>
-            <Icon name="star" />
-            Wishlist
-          </Link>
+        <nav className="drawer-nav" aria-label="Navegación principal">
+          {filterSections.map((section) => renderFilterSection(section))}
+
           <Link className={itemClass("/estadisticas")} href="/estadisticas" onClick={close}>
             <Icon name="chart" />
             Estadísticas
