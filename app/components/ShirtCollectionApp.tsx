@@ -696,7 +696,7 @@ export function ShirtCollectionApp({
     const team = form.team === "custom" ? form.customTeam.trim() : form.team;
 
     if (!team || !form.sport || !form.category || !form.season.trim() || !form.kitType) {
-      notify.error("Completa equipo, deporte, tipo, temporada y equipaciÃ³n.");
+      notify.error("Completa equipo, deporte, tipo, temporada y equipación.");
       return;
     }
 
@@ -705,7 +705,7 @@ export function ShirtCollectionApp({
     } = await supabase.auth.getUser();
 
     if (!user) {
-      notify.error("SesiÃ³n expirada, inicia sesiÃ³n otra vez.");
+      notify.error("Sesión expirada, inicia sesión otra vez.");
       return;
     }
 
@@ -797,7 +797,7 @@ export function ShirtCollectionApp({
 
     if (!shirt) return;
 
-    // BORRAR IMÃGENES STORAGE
+    // BORRAR IMAGENES STORAGE
     if (shirt.images?.length) {
 
       const filesToDelete = shirt.images
@@ -918,9 +918,9 @@ export function ShirtCollectionApp({
 
     const titleByKey: Record<StatsDetailKey, string> = {
       all: "Todas las camisetas",
-      collection: "Camisetas en coleccion",
+      collection: "Camisetas en colección",
       wishlist: "Camisetas en wishlist",
-      countries: "Paises completos",
+      countries: "Países completos",
       teams: "Clubes completos",
       leagues: "Ligas completas",
       seasons: "Temporadas completas",
@@ -972,9 +972,9 @@ export function ShirtCollectionApp({
   };
 
   const getRankingPresenceIcons = (entry: StatsRankingEntry) => {
-    if (entry.collection > 0 && entry.wishlist > 0) return "â­ ðŸŽ¯";
-    if (entry.collection > 0) return "â­";
-    return "ðŸŽ¯";
+    if (entry.collection > 0 && entry.wishlist > 0) return "Colección + Wishlist";
+    if (entry.collection > 0) return "Colección";
+    return "Wishlist";
   };
 
   const renderStatsDistribution = (entry: StatsRankingEntry) => {
@@ -984,7 +984,7 @@ export function ShirtCollectionApp({
     return (
       <span className="stats-distribution">
         <span className="stats-breakdown">
-          <span className="stats-breakdown-item is-collection">ColecciÃ³n: {entry.collection}</span>
+          <span className="stats-breakdown-item is-collection">Colección: {entry.collection}</span>
           <span className="stats-breakdown-item is-wishlist">Wishlist: {entry.wishlist}</span>
           <span className="stats-breakdown-item">Total: {entry.total}</span>
         </span>
@@ -1012,11 +1012,11 @@ export function ShirtCollectionApp({
         className="stats-card rounded-3xl border border-white/10 bg-white/5 p-6 text-left shadow-lg shadow-slate-950/20 backdrop-blur-xl"
         onClick={() => setStatsDetailKey("all")}
       >
-        <span className="text-sm font-medium text-slate-400">Distribucion coleccion/wishlist</span>
+        <span className="text-sm font-medium text-slate-400">Distribución colección/wishlist</span>
         <span className="mt-2 block text-3xl font-bold text-white">{stats.totalShirts}</span>
         <span className="stats-distribution">
           <span className="stats-breakdown">
-            <span className="stats-breakdown-item is-collection">Coleccion: {stats.collectionCount}</span>
+            <span className="stats-breakdown-item is-collection">Colección: {stats.collectionCount}</span>
             <span className="stats-breakdown-item is-wishlist">Wishlist: {stats.wishlistCount}</span>
           </span>
           <span className="stats-stacked-bar" aria-hidden="true">
@@ -1085,7 +1085,7 @@ export function ShirtCollectionApp({
       {entry ? (
         <>
           <span className="mt-2 block text-2xl font-bold text-white">{entry.name}</span>
-          <span className="stats-presence-icons" aria-label="Presencia en colecciÃ³n y wishlist">
+          <span className="stats-presence-icons" aria-label="Presencia en colección y wishlist">
             {getRankingPresenceIcons(entry)}
           </span>
           {renderStatsDistribution(entry)}
@@ -1110,10 +1110,10 @@ export function ShirtCollectionApp({
       : viewMode === "wishlist"
         ? "Wishlist"
         : viewMode === "stats"
-          ? "Estadisticas"
+          ? "Estadísticas"
           : viewMode === "all"
             ? "Todas las camisetas"
-            : "Mi coleccion";
+            : "Mi colección";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#142f2d_0,#090d13_36rem,#05070b_100%)] px-4 py-7 text-slate-100 sm:px-6 lg:px-10">
@@ -1154,14 +1154,14 @@ export function ShirtCollectionApp({
         <div className="mx-auto max-w-[1560px] space-y-8">
           {isViewingOwnPublicProfile ? (
             <div className="public-owner-banner">
-              <span>Estas viendo tu vitrina publica</span>
-              <Link href="/">â† Volver a mi coleccion</Link>
+              <span>Estás viendo tu vitrina pública</span>
+              <Link href="/">← Volver a mi colección</Link>
             </div>
           ) : null}
 
           <header className="hero-panel flex-col gap-6 items-start">
             <div className="w-full">
-              <p className="eyebrow">{readOnly ? "Vitrina publica" : "Vitrina privada"}</p>
+              <p className="eyebrow">{readOnly ? "Vitrina pública" : "Vitrina privada"}</p>
               <h1 className="max-w-full break-words text-4xl sm:text-5xl md:text-5xl lg:text-5xl font-semibold tracking-tight">
                 {pageTitle}
               </h1>
@@ -1171,9 +1171,9 @@ export function ShirtCollectionApp({
             </div>
 
             <div className="flex w-full flex-wrap items-center justify-between gap-4">
-              <div className="hero-stats" aria-label="Resumen de la coleccion">
+              <div className="hero-stats" aria-label="Resumen de la colección">
                 <span>{stats.totalShirts} piezas</span>
-                <span>{stats.collectionCount} en coleccion</span>
+                <span>{stats.collectionCount} en colección</span>
                 <span>{stats.wishlistCount} wishlist</span>
               </div>
             </div>
@@ -1184,9 +1184,9 @@ export function ShirtCollectionApp({
               <section className="space-y-7">
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                   {renderStatButton("all", "Total camisetas", stats.totalShirts)}
-                  {renderStatButton("collection", "Coleccion", stats.collectionCount)}
+                  {renderStatButton("collection", "Colección", stats.collectionCount)}
                   {renderStatButton("wishlist", "Wishlist", stats.wishlistCount)}
-                  {renderStatButton("countries", "Paises unicos", stats.uniqueCountries)}
+                  {renderStatButton("countries", "Países únicos", stats.uniqueCountries)}
                   {renderCollectionWishlistDistribution()}
                 </div>
 
@@ -1217,7 +1217,7 @@ export function ShirtCollectionApp({
               <div className="collection-heading">
                 <div>
                   <p className="eyebrow">
-                    {viewMode === "all" ? "Todas las camisetas" : viewMode === "collection" ? "Coleccion" : "Wishlist"}
+                    {viewMode === "all" ? "Todas las camisetas" : viewMode === "collection" ? "Colección" : "Wishlist"}
                   </p>
                   <h2>{filteredShirts.length} camisetas visibles</h2>
                 </div>
@@ -1244,16 +1244,16 @@ export function ShirtCollectionApp({
                 <div className="empty-state">
                   {hasNoPublicSections ? (
                     <>
-                      <h3>Este usuario no comparte ninguna secciÃ³n de su colecciÃ³n.</h3>
-                      <p>El perfil pÃºblico estÃ¡ activo, pero la colecciÃ³n y la wishlist no estÃ¡n visibles.</p>
+                      <h3>Este usuario no comparte ninguna sección de su colección.</h3>
+                      <p>El perfil público está activo, pero la colección y la wishlist no están visibles.</p>
                     </>
                   ) : (
                     <>
                       <h3>No hay camisetas con esos filtros</h3>
                       <p>
                         {readOnly
-                          ? "Ajusta la bÃºsqueda o cambia los filtros de la vitrina."
-                          : "Ajusta la bÃºsqueda o aÃ±ade una nueva pieza a la vitrina."}
+                          ? "Ajusta la búsqueda o cambia los filtros de la vitrina."
+                          : "Ajusta la búsqueda o añade una nueva pieza a la vitrina."}
                       </p>
                     </>
                   )}
@@ -1336,17 +1336,17 @@ export function ShirtCollectionApp({
       </div>
 
       {!readOnly && isSelectModeActive && (
-        <div className="floating-selection-bar" role="toolbar" aria-label="Acciones selecciÃ³n">
-          <div className="selection-count">âœ“ {selectedIds.length} seleccionadas</div>
+        <div className="floating-selection-bar" role="toolbar" aria-label="Acciones selección">
+          <div className="selection-count">✓ {selectedIds.length} seleccionadas</div>
           <div className="selection-actions">
             <button className="ghost-button" type="button" onClick={handleDeleteMultipleRequested}>
               Eliminar seleccionadas
             </button>
             <button className="primary-button" type="button" onClick={handleMoveToCollection}>
-              Mover a ColecciÃ³n
+              Mover a Colección
             </button>
             <button className="ghost-button" type="button" onClick={clearSelection}>
-              Cancelar selecciÃ³n
+              Cancelar selección
             </button>
           </div>
         </div>
@@ -1387,7 +1387,7 @@ export function ShirtCollectionApp({
           <div className="stats-detail-shell" onClick={(event) => event.stopPropagation()}>
             <div className="stats-detail-header">
               <div>
-                <p className="eyebrow">Estadisticas</p>
+                <p className="eyebrow">Estadísticas</p>
                 <h3>{statsDetail.title}</h3>
                 <p>
                   {statsDetail.entries
@@ -1446,7 +1446,7 @@ export function ShirtCollectionApp({
                       <small>
                         {[shirt.season, shirt.player || shirt.number ? `${shirt.player} ${shirt.number}`.trim() : "", shirt.status]
                           .filter(Boolean)
-                          .join(" Â· ")}
+                          .join(" · ")}
                       </small>
                     </button>
                   ))}
@@ -1473,7 +1473,7 @@ export function ShirtCollectionApp({
                 <p className="eyebrow">Detalle</p>
                 <h3>{getStatsItemTitle(selectedStatsItem.key, selectedStatsItem.entry.name)}</h3>
                 <p>
-                  Total: {selectedStatsItem.entry.total} Â· ColecciÃ³n: {selectedStatsItem.entry.collection} Â· Wishlist: {selectedStatsItem.entry.wishlist}
+                  Total: {selectedStatsItem.entry.total} · Colección: {selectedStatsItem.entry.collection} · Wishlist: {selectedStatsItem.entry.wishlist}
                 </p>
               </div>
               <button
@@ -1488,7 +1488,7 @@ export function ShirtCollectionApp({
 
             <div className="stats-item-summary">
               <span className="stats-breakdown-item">Total: {selectedStatsItem.entry.total}</span>
-              <span className="stats-breakdown-item is-collection">ColecciÃ³n: {selectedStatsItem.entry.collection}</span>
+              <span className="stats-breakdown-item is-collection">Colección: {selectedStatsItem.entry.collection}</span>
               <span className="stats-breakdown-item is-wishlist">Wishlist: {selectedStatsItem.entry.wishlist}</span>
               <span className="stats-presence-icons">{getRankingPresenceIcons(selectedStatsItem.entry)}</span>
             </div>
@@ -1520,7 +1520,7 @@ export function ShirtCollectionApp({
                       </span>
                     </span>
                     <span className={`stats-item-status ${shirt.status === "wishlist" ? "is-wishlist" : ""}`}>
-                      {shirt.status === "wishlist" ? "Wishlist" : "Coleccion"}
+                      {shirt.status === "wishlist" ? "Wishlist" : "Colección"}
                     </span>
                   </button>
                 ))
@@ -1549,18 +1549,18 @@ export function ShirtCollectionApp({
           <div className="relative z-10 w-full max-w-xl overflow-hidden rounded-[32px] border border-white/10 bg-slate-950/85 p-7 shadow-[0_40px_120px_-40px_rgba(15,23,42,0.9)] backdrop-blur-xl transition duration-300 ease-out hover:-translate-y-1">
             <div className="flex items-center gap-4 rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-sm shadow-slate-950/20 backdrop-blur-sm">
               <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-red-500/15 text-red-300 ring-1 ring-red-400/20">
-                <span className="text-xl">âš ï¸</span>
+                <span className="text-xl" aria-hidden="true">!</span>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">AcciÃ³n destructiva</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Acción destructiva</p>
                 <h3 className="text-lg font-semibold text-white">Eliminar camiseta</h3>
               </div>
             </div>
 
             <div className="mt-6 space-y-4">
-              <p className="text-2xl font-semibold leading-tight text-white">Â¿Seguro que quieres eliminar {deleteConfirmation.type === "multiple" ? `${deleteConfirmation.count} camisetas` : "esta camiseta"}?</p>
+              <p className="text-2xl font-semibold leading-tight text-white">¿Seguro que quieres eliminar {deleteConfirmation.type === "multiple" ? `${deleteConfirmation.count} camisetas` : "esta camiseta"}?</p>
               <p className="text-sm leading-6 text-slate-400">
-                Esta acciÃ³n no se puede deshacer. Las imÃ¡genes vinculadas tambiÃ©n se eliminarÃ¡n permanentemente.
+                Esta acción no se puede deshacer. Las imágenes vinculadas también se eliminarán permanentemente.
               </p>
             </div>
 
@@ -1583,7 +1583,7 @@ export function ShirtCollectionApp({
 
             <div className="mt-6 rounded-3xl border border-slate-700/60 bg-slate-900/70 px-4 py-4 text-sm text-slate-400 shadow-inner shadow-slate-950/20">
               <p className="font-medium text-slate-200">Consejo:</p>
-              <p className="mt-1 leading-6">Si prefieres conservar la camiseta, selecciona <span className="font-semibold text-slate-100">Cancelar</span> y revisa tu colecciÃ³n.</p>
+              <p className="mt-1 leading-6">Si prefieres conservar la camiseta, selecciona <span className="font-semibold text-slate-100">Cancelar</span> y revisa tu colección.</p>
             </div>
           </div>
         </div>

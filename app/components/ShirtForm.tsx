@@ -32,6 +32,7 @@ import type {
   TeamOption,
 } from "../lib/types";
 import { placeholderImages } from "../lib/collection-data";
+import { createSmartAutofillPatch, parseSmartAutofillText } from "../lib/smart-autofill";
 import { DatalistField, SelectField, TextAreaField, TextField } from "./FormControls";
 import { supabase } from "../../lib/supabase-auth";
 import { notify } from "../lib/notify";
@@ -56,6 +57,29 @@ type ShirtFormProps = {
 
 const sportOptions: Sport[] = ["football", "basketball"];
 const statusOptions: ShirtStatus[] = ["collection", "wishlist"];
+const createGoogleImageSearchQuery = (form: ShirtFormState) => {
+  const team = form.team === "custom" ? form.customTeam : form.team;
+  const query = [team, form.season, form.player, "football shirt front png"]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(" ");
+
+  return query;
+};
+
+const smartAutofillLabels: Partial<Record<keyof ShirtFormState, string>> = {
+  sport: "deporte",
+  category: "tipo",
+  country: "país",
+  league: "liga",
+  team: "equipo",
+  customTeam: "equipo",
+  season: "temporada",
+  player: "jugador",
+  number: "dorsal",
+  kitType: "equipación",
+  size: "talla",
+};
 
 const normalize = (value: string) =>
   value
@@ -180,6 +204,10 @@ export function ShirtForm({
 }: ShirtFormProps) {
   const isCustomTeam = form.team === "custom";
   const [isDragging, setIsDragging] = useState(false);
+  const [smartAutofillText, setSmartAutofillText] = useState("");
+  const [suggestedImageSearch, setSuggestedImageSearch] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [isImportingImage, setIsImportingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -275,6 +303,119 @@ export function ShirtForm({
     onSubmit();
   };
 
+  const handleSmartAutofill = () => {
+    const sourceText = smartAutofillText.trim();
+    if (!sourceText) {
+      notify.error("Pega o escribe un texto para autorrellenar.");
+      return;
+    }
+
+    const parsed = parseSmartAutofillText(sourceText, allTeamOptions);
+    const patch = createSmartAutofillPatch(form, parsed);
+    const fields = Object.keys(patch) as (keyof ShirtFormState)[];
+    const parsedUsefulData = Boolean(
+      parsed.teamOption ||
+        parsed.customTeam ||
+        parsed.country ||
+        parsed.league ||
+        parsed.season ||
+        parsed.player,
+    );
+    const nextForm = { ...form, ...patch };
+
+    if (fields.length > 0 || parsedUsefulData) {
+      setSuggestedImageSearch(createGoogleImageSearchQuery(nextForm));
+    }
+
+    if (fields.length === 0) {
+      notify.error("No se han encontrado campos nuevos para rellenar.");
+      return;
+    }
+
+    fields.forEach((field) => {
+      onFieldChange(field, patch[field] as ShirtFormState[typeof field]);
+    });
+
+    const fieldList = fields
+      .map((field) => smartAutofillLabels[field])
+      .filter(Boolean)
+      .filter((label, index, labels) => labels.indexOf(label) === index)
+      .join(", ");
+
+    notify.success(`Autorrellenado: ${fieldList}.`);
+  };
+
+  const handleGoogleImageSearch = () => {
+    const query = suggestedImageSearch.trim();
+    if (!query) return;
+
+    window.open(
+      `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(query)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const handleImportImageUrl = async () => {
+    const sourceUrl = imageUrl.trim();
+    if (!sourceUrl) {
+      notify.error("Pega una URL directa de imagen.");
+      return;
+    }
+
+    setIsImportingImage(true);
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch("/api/import-image", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ imageUrl: sourceUrl }),
+      });
+      const data = (await response.json().catch(() => null)) as {
+        id?: string;
+        label?: string;
+        path?: string;
+        publicUrl?: string;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.publicUrl) {
+        notify.error(data?.error ?? "No se pudo importar esta imagen. Prueba con otra URL directa.");
+        return;
+      }
+
+      const newImage: ShirtImage = {
+        id: data.id ?? `img-${crypto.randomUUID()}`,
+        url: data.publicUrl,
+        label: data.label ?? "",
+      };
+
+      onFieldChange("images", [...form.images, newImage]);
+
+      if (!form.mainImageId) {
+        onFieldChange("mainImageId", newImage.id);
+      }
+
+      setImageUrl("");
+      notify.success("Imagen importada correctamente.");
+    } catch {
+      notify.error("Error importando la imagen.");
+    } finally {
+      setIsImportingImage(false);
+    }
+  };
+
   return (
     <form className="modal-form" onSubmit={handleSubmit}>
       <div className="section-heading">
@@ -288,6 +429,50 @@ export function ShirtForm({
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="smart-autofill sm:col-span-2">
+          <div className="smart-autofill-row">
+            <label className="field">
+              <span>Autorrellenar desde texto</span>
+              <textarea
+                value={smartAutofillText}
+                placeholder="Ej: Atlético de Madrid 2020/21 Koke 6 Local 4XL"
+                rows={2}
+                onChange={(event) => setSmartAutofillText(event.target.value)}
+              />
+            </label>
+            <div className="smart-actions">
+              <button className="smart-autofill-button" type="button" onClick={handleSmartAutofill}>
+                Autorrellenar
+              </button>
+              {suggestedImageSearch ? (
+                <button className="smart-secondary-button" type="button" onClick={handleGoogleImageSearch}>
+                  Buscar imagen en Google
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="smart-autofill-row">
+            <label className="field">
+              <span>URL de imagen</span>
+              <input
+                type="url"
+                value={imageUrl}
+                placeholder="https://..."
+                onChange={(event) => setImageUrl(event.target.value)}
+              />
+            </label>
+            <button
+              className="smart-autofill-button"
+              type="button"
+              onClick={handleImportImageUrl}
+              disabled={isImportingImage}
+            >
+              {isImportingImage ? "Importando..." : "Importar"}
+            </button>
+          </div>
+        </div>
+
         <TeamAutocomplete
           value={isCustomTeam ? form.customTeam : form.team}
           options={allTeamOptions}

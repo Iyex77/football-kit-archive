@@ -73,7 +73,7 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
 
   const handleSave = async () => {
     if (!userId) {
-      notify.error("Sesion expirada, inicia sesion otra vez.");
+      notify.error("Sesión expirada, inicia sesión otra vez.");
       return;
     }
 
@@ -127,8 +127,8 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
         <header className="hero-panel profile-hero">
           <div>
             <p className="eyebrow">Perfil y vitrina</p>
-            <h1>Perfil publico</h1>
-            <p>Gestiona tu identidad, enlace compartible y visibilidad publica desde un unico sitio.</p>
+            <h1>Perfil público</h1>
+            <p>Gestiona tu identidad, enlace compartible y visibilidad pública desde un único sitio.</p>
           </div>
         </header>
 
@@ -141,7 +141,7 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
             <div className="section-heading">
               <div>
                 <p>Perfil</p>
-                <h2>Identidad publica</h2>
+                <h2>Identidad pública</h2>
               </div>
             </div>
 
@@ -172,7 +172,7 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
 
             <div className="profile-share-card">
               <label className="field">
-                <span>Enlace publico</span>
+                <span>Enlace público</span>
                 <input value={publicUrl} readOnly onFocus={(event) => event.currentTarget.select()} />
               </label>
               <div className="profile-actions">
@@ -188,9 +188,9 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
             <div className="profile-public-card">
               <div>
                 <p className="eyebrow">Visibilidad</p>
-                <h3>Vitrina publica</h3>
+                <h3>Vitrina pública</h3>
                 <p>
-                  Estos controles afectan a tu URL publica. Si ocultas coleccion y wishlist, el perfil seguira visible
+                  Estos controles afectan a tu URL pública. Si ocultas colección y wishlist, el perfil seguirá visible
                   con un aviso.
                 </p>
               </div>
@@ -201,7 +201,7 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
                     checked={isPublic}
                     onChange={(event) => setIsPublic(event.target.checked)}
                   />
-                  <span>Perfil publico</span>
+                  <span>Perfil público</span>
                 </label>
                 <label className="profile-toggle">
                   <input
@@ -209,7 +209,7 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
                     checked={showCollection}
                     onChange={(event) => setShowCollection(event.target.checked)}
                   />
-                  <span>Mostrar coleccion</span>
+                  <span>Mostrar colección</span>
                 </label>
                 <label className="profile-toggle">
                   <input
@@ -223,8 +223,8 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
             </div>
 
             <div className="profile-future-card">
-              <h3>Preferencias e informacion de cuenta</h3>
-              <p>Espacio preparado para idioma, orden por defecto, campos visibles e imagenes destacadas.</p>
+              <h3>Preferencias e información de cuenta</h3>
+              <p>Espacio preparado para idioma, orden por defecto, campos visibles e imágenes destacadas.</p>
               <p>ID de usuario: {userId || "No disponible"}</p>
             </div>
 

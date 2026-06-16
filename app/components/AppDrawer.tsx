@@ -88,7 +88,7 @@ export function AppDrawer({ profile, onLogout }: AppDrawerProps) {
           </Link>
           <Link className={itemClass("/coleccion")} href="/coleccion" onClick={close}>
             <Icon name="grid" />
-            Mi coleccion
+            Mi colección
           </Link>
           <Link className={itemClass("/wishlist")} href="/wishlist" onClick={close}>
             <Icon name="star" />
@@ -96,7 +96,7 @@ export function AppDrawer({ profile, onLogout }: AppDrawerProps) {
           </Link>
           <Link className={itemClass("/estadisticas")} href="/estadisticas" onClick={close}>
             <Icon name="chart" />
-            Estadisticas
+            Estadísticas
           </Link>
           <Link className={itemClass("/perfil")} href="/perfil" onClick={close}>
             <Icon name="user" />
@@ -108,12 +108,12 @@ export function AppDrawer({ profile, onLogout }: AppDrawerProps) {
           {publicPath ? (
             <Link className={itemClass(publicPath)} href={publicPath} onClick={close}>
               <Icon name="spark" />
-              Mi vitrina publica
+              Mi vitrina pública
             </Link>
           ) : (
             <span className="drawer-link is-disabled">
               <Icon name="spark" />
-              Mi vitrina publica
+              Mi vitrina pública
             </span>
           )}
 
@@ -128,7 +128,7 @@ export function AppDrawer({ profile, onLogout }: AppDrawerProps) {
             }}
           >
             <Icon name="logout" />
-            Cerrar sesion
+            Cerrar sesión
           </button>
         </nav>
       </aside>

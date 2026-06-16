@@ -548,6 +548,70 @@ img {
   box-shadow: 0 0 0 4px rgb(45 212 191 / 0.11);
 }
 
+.smart-autofill {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid rgb(94 234 212 / 0.14);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgb(45 212 191 / 0.1), transparent 48%),
+    rgb(15 23 42 / 0.54);
+  padding: 0.85rem;
+}
+
+.smart-autofill-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.smart-autofill .field textarea {
+  min-height: 4rem;
+}
+
+.smart-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.smart-autofill-button,
+.smart-secondary-button {
+  min-height: 2.8rem;
+  border: 1px solid rgb(94 234 212 / 0.28);
+  border-radius: 8px;
+  color: rgb(204 251 241);
+  padding: 0.72rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 760;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+  white-space: nowrap;
+}
+
+.smart-autofill-button {
+  background: rgb(45 212 191 / 0.14);
+}
+
+.smart-secondary-button {
+  background: rgb(15 23 42 / 0.66);
+}
+
+.smart-autofill-button:hover,
+.smart-secondary-button:hover {
+  border-color: rgb(94 234 212 / 0.5);
+  background: rgb(45 212 191 / 0.22);
+  transform: translateY(-1px);
+}
+
+.smart-autofill-button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+  transform: none;
+}
+
 .filters-grid .field {
   gap: 0.26rem;
   font-size: 0.7rem;
@@ -2115,6 +2179,15 @@ img {
 }
 
 @media (max-width:640px){
+
+  .smart-autofill-row {
+    grid-template-columns: 1fr;
+  }
+
+  .smart-autofill-button,
+  .smart-secondary-button {
+    width: 100%;
+  }
 
   .shirt-card{
     min-height:auto;
