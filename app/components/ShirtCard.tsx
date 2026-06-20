@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import type { Shirt } from "../lib/types";
-import { placeholderImages } from "../lib/collection-data";
+import { placeholderImages, statusLabels } from "../lib/collection-data";
 
 type ShirtCardProps = {
   shirt: Shirt;
@@ -29,6 +29,9 @@ export function ShirtCard({
   const mainImage = shirt.images.find((img) => img.id === shirt.mainImageId) || shirt.images[0];
   const imageUrl = mainImage?.url || placeholderImages[shirt.sport] || placeholderImages.default;
   const touchTimerRef = useRef<number | null>(null);
+  const playerLabel = shirt.player.trim() || "Sin nombre";
+  const playerNumberLabel = shirt.number.trim() ? `${playerLabel} · #${shirt.number.trim()}` : playerLabel;
+  const locationLabel = [shirt.league.trim(), shirt.country.trim()].filter(Boolean).join(" · ");
 
   const handleBadgeClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -109,28 +112,26 @@ export function ShirtCard({
               }}
               aria-label="Eliminar camiseta"
             >
-              🗑
+              ×
             </button>
           </div>
         ) : null}
       </div>
 
-      <div className="shirt-card-footer flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="shirt-card-footer">
         <div className="shirt-card-info">
-          <p className="shirt-card-team">{shirt.team}</p>
-          <p className="shirt-card-player">
-            {shirt.player || "Sin nombre"}
-            {shirt.number ? ` • #${shirt.number}` : ""}
-          </p>
+          <p className="shirt-card-team">{shirt.team} - {shirt.season}</p>
+          <p className="shirt-card-player">{playerNumberLabel}</p>
+          <p className="shirt-card-meta">{locationLabel || "Sin liga"}</p>
         </div>
         <button
           className={`shirt-card-badge ${isWishlist ? "badge-wishlist" : "badge-collection"}`}
           type="button"
           onClick={handleBadgeClick}
-          aria-label={isWishlist ? "Mover a colección" : "Estado colección"}
+          aria-label={isWishlist ? "Mover a coleccion" : "Estado coleccion"}
           disabled={readOnly || !isWishlist}
         >
-          {isWishlist ? "☆ Wishlist" : "✓ Colección"}
+          {statusLabels[shirt.status]}
         </button>
       </div>
     </article>

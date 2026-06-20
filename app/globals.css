@@ -128,23 +128,27 @@ img {
 
 .hero-panel {
   display: flex;
-  min-height: 320px;
-  align-items: flex-end;
+  min-height: 230px;
+  align-items: end;
   justify-content: space-between;
-  gap: 2rem;
+  gap: clamp(1rem, 3vw, 2rem);
   border-bottom: 1px solid rgb(255 255 255 / 0.1);
-  padding: clamp(2rem, 7vw, 6rem) 0 clamp(1.75rem, 4vw, 3.75rem);
+  padding: clamp(1.7rem, 4.5vw, 4rem) 0 clamp(1.2rem, 2.7vw, 2.2rem);
 }
 
 .hero-panel h1 {
-  margin-top: 0.85rem;
+  margin-top: 0.55rem;
   max-width: 920px;
   color: white;
-  font-size: clamp(2.35rem, 5.8vw, 5.4rem);
+  font-size: clamp(2rem, 4vw, 3.45rem);
   font-weight: 780;
   letter-spacing: 0;
-  line-height: 0.94;
+  line-height: 1.02;
   text-wrap: balance;
+}
+
+.hero-copy {
+  min-width: 0;
 }
 
 .hero-title {
@@ -154,15 +158,15 @@ img {
 
 .hero-context {
   display: inline-flex;
-  margin-top: 0.85rem;
+  margin-top: 0.68rem;
   border: 1px solid rgb(94 234 212 / 0.25);
   border-radius: 999px;
   background: rgb(45 212 191 / 0.08);
   color: rgb(204 251 241);
-  padding: 0.38rem 0.7rem;
-  font-size: 0.78rem;
+  padding: 0.32rem 0.62rem;
+  font-size: 0.68rem;
   font-weight: 780;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -176,10 +180,10 @@ img {
 }
 
 .hero-panel .hero-context {
-  margin-top: 0.85rem;
+  margin-top: 0.68rem;
   max-width: max-content;
   color: rgb(204 251 241);
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   line-height: 1;
 }
 
@@ -193,11 +197,12 @@ img {
 }
 
 .hero-stats {
-  display: flex;
+  display: grid;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.65rem;
-  max-width: 360px;
+  grid-template-columns: repeat(3, max-content);
+  justify-content: end;
+  gap: 0.55rem;
+  max-width: min(100%, 620px);
 }
 
 .hero-stats span,
@@ -206,12 +211,13 @@ img {
   border-radius: 999px;
   background: rgb(255 255 255 / 0.06);
   color: rgb(226 232 240);
-  padding: 0.55rem 0.8rem;
-  font-size: 0.72rem;
+  padding: 0.5rem 0.72rem;
+  font-size: 0.68rem;
   font-weight: 760;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   backdrop-filter: blur(12px);
+  white-space: nowrap;
 }
 
 .app-menu-button {
@@ -568,6 +574,7 @@ img {
   top: 1rem;
   z-index: 20;
   display: flex;
+  width: 100%;
   align-items: end;
   gap: 0.85rem;
   border: 1px solid rgb(255 255 255 / 0.1);
@@ -581,8 +588,9 @@ img {
 .filters-grid {
   display: grid;
   flex: 1;
-  grid-template-columns: minmax(150px, 1.08fr) minmax(104px, 0.86fr) minmax(104px, 0.82fr) minmax(104px, 0.86fr) minmax(104px, 0.82fr) minmax(118px, 0.94fr) minmax(82px, 0.55fr);
-  gap: 0.45rem;
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 0.55rem;
   align-items: end;
 }
 
@@ -699,6 +707,7 @@ img {
 .filters-grid .field {
   gap: 0.26rem;
   font-size: 0.7rem;
+  width: 100%;
 }
 
 .filters-grid .field input,
@@ -998,27 +1007,38 @@ img {
 }
 
 .collection-grid {
-  display:grid;
-  gap:clamp(1rem,2vw,1.5rem);
-  justify-content:center;
-  grid-template-columns:repeat(auto-fit,minmax(320px,360px));
+  display: grid;
+  gap: clamp(0.9rem, 1.6vw, 1.25rem);
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  padding-bottom: 5rem;
 }
 
 .shirt-card {
   position: relative;
   width: 100%;
   min-width: 0;
-  max-width: 360px;
-  height: 560px;
-  min-height: 560px;
-  max-height: 560px;
+  max-width: none;
+  height: 520px;
+  min-height: 520px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 0.08);
-  border-radius: 20px;
-  background: rgb(6 13 20 / 0.95);
-  box-shadow: 0 30px 100px rgb(0 0 0 / 0.28);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.045), transparent 34%),
+    rgb(6 13 20 / 0.96);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.26);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.shirt-card:hover {
+  border-color: rgb(94 234 212 / 0.18);
+  box-shadow: 0 28px 90px rgb(0 0 0 / 0.34);
+  transform: translateY(-2px);
 }
 
 .shirt-image-wrap {
@@ -1213,29 +1233,26 @@ img {
 }
 
 .shirt-card-footer {
-  padding: 1rem 1.2rem;
-  background: rgb(4 9 18 / 0.92);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.95rem 1rem 1rem;
+  border-top: 1px solid rgb(255 255 255 / 0.07);
+  background: linear-gradient(180deg, rgb(7 14 25 / 0.94), rgb(3 8 17 / 0.98));
 }
 
 .shirt-card-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.35rem;
+  display: grid;
+  gap: 0.26rem;
   min-width: 0;
 }
 
 .shirt-card-team {
   margin: 0;
   color: white;
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
+  line-height: 1.22;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1243,19 +1260,35 @@ img {
 
 .shirt-card-player {
   margin: 0;
-  color: rgb(203 213 225);
-  font-size: 0.9rem;
+  color: rgb(218 226 237);
+  font-size: 0.84rem;
   font-weight: 600;
+  line-height: 1.28;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shirt-card-meta {
+  margin: 0;
+  color: rgb(148 163 184);
+  font-size: 0.78rem;
+  font-weight: 560;
+  line-height: 1.28;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .shirt-card-badge {
+  justify-self: start;
   flex-shrink: 0;
-  padding: 0.4rem 0.7rem;
-  border-radius: 5px;
+  padding: 0.34rem 0.58rem;
+  border-radius: 999px;
   border: 1px solid transparent;
-  font-size: 0.75rem;
+  font-size: 0.66rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
   transition: all 180ms ease;
@@ -1523,7 +1556,7 @@ img {
   padding: 0;
   font-size: 0.86rem;
   font-weight: 900;
-  letter-spacing: -0.08em;
+  letter-spacing: 0;
   border: 1px solid rgb(255 255 255 / 0.12);
   border-radius: 999px;
   background: rgb(255 255 255 / 0.06);
@@ -1567,8 +1600,10 @@ img {
 }
 
 .sort-dropdown button {
+  display: grid;
+  gap: 0.15rem;
   text-align: left;
-  padding: 0.5rem 0.65rem;
+  padding: 0.55rem 0.7rem;
   background: transparent;
   border: none;
   color: rgb(226 232 240);
@@ -1580,6 +1615,24 @@ img {
 
 .sort-dropdown button:hover {
   background: rgb(255 255 255 / 0.04);
+}
+
+.sort-dropdown button.is-active {
+  background: rgb(45 212 191 / 0.12);
+  color: rgb(240 253 250);
+}
+
+.sort-dropdown button span {
+  font-weight: 760;
+}
+
+.sort-dropdown button small {
+  color: rgb(148 163 184);
+  font-size: 0.72rem;
+}
+
+.sort-dropdown button.is-active small {
+  color: rgb(153 246 228);
 }
 
 .sort-dropdown button:active {
@@ -2069,16 +2122,18 @@ img {
 
 @media (max-width: 1024px) {
   .collection-grid {
-    grid-template-columns: repeat(3, minmax(280px, 280px));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
 
   .hero-panel {
     align-items: flex-start;
     flex-direction: column;
+    min-height: 0;
   }
 
   .hero-stats {
     justify-content: flex-start;
+    grid-template-columns: repeat(3, max-content);
   }
 
 
@@ -2094,8 +2149,8 @@ img {
 
 @media (min-width: 1025px) and (max-width: 1280px) {
   .filters-grid {
-    grid-template-columns: minmax(130px, 1.05fr) repeat(5, minmax(92px, 0.82fr)) minmax(72px, 0.55fr);
-    gap: 0.38rem;
+    grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+    gap: 0.45rem;
   }
 
   .filters-grid .field {
@@ -2251,18 +2306,40 @@ img {
 
   .collection-grid{
     grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:.75rem;
+    gap:.7rem;
+    padding-bottom: 6rem;
   }
 
   .shirt-card{
     max-width:none;
-    min-height:420px;
+    min-height:390px;
     height:auto;
   }
 
 }
 
 @media (max-width:640px){
+  .hero-panel {
+    gap: 1rem;
+    padding-top: 1.45rem;
+  }
+
+  .hero-panel h1 {
+    font-size: clamp(1.75rem, 9vw, 2.35rem);
+  }
+
+  .hero-stats {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .hero-stats span {
+    display: inline-flex;
+    justify-content: center;
+    padding-inline: 0.5rem;
+    text-align: center;
+  }
 
   .smart-autofill-row {
     grid-template-columns: 1fr;
@@ -2279,24 +2356,30 @@ img {
   }
 
   .shirt-image-wrap{
-    height:220px;
+    height:210px;
+    flex: 0 0 210px;
   }
 
-  .shirt-card-content{
-    padding:.75rem;
+  .shirt-card-footer {
+    gap: 0.55rem;
+    padding: 0.75rem;
   }
 
-  .shirt-card-title{
-    font-size:1rem;
-    line-height:1.2;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+  .shirt-card-team {
+    font-size: 0.82rem;
   }
 
-  .shirt-card-subtitle{
-    font-size:.9rem;
-    line-height:1.2;
+  .shirt-card-player {
+    font-size: 0.74rem;
+  }
+
+  .shirt-card-meta {
+    font-size: 0.7rem;
+  }
+
+  .shirt-card-badge {
+    padding: 0.28rem 0.48rem;
+    font-size: 0.58rem;
   }
 
   .stats-ranking-card {

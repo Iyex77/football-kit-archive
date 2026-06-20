@@ -28,18 +28,13 @@ import { ImageGalleryModal } from "./ImageGalleryModal";
 import { ShirtCard } from "./ShirtCard";
 import { ShirtForm } from "./ShirtForm";
 
-type SortBy =
-  | "recent"
-  | "oldest"
-  | "team-asc"
-  | "team-desc"
-  | "player-asc"
-  | "player-desc"
-  | "number-asc"
-  | "number-desc"
-  | "season-desc"
-  | "sport"
-  | "wishlist-first";
+type SortField = "added" | "team" | "player" | "number" | "season";
+type SortDirection = "asc" | "desc";
+
+type SortBy = {
+  field: SortField;
+  direction: SortDirection;
+};
 
 type StatsDetailKey =
   | "all"
@@ -77,6 +72,22 @@ const getSportFilterFromSearch = (search: string): "all" | Sport => {
   const sport = new URLSearchParams(search).get("sport");
   return sport === "football" || sport === "basketball" ? sport : "all";
 };
+
+const defaultSortDirectionByField: Record<SortField, SortDirection> = {
+  added: "desc",
+  team: "asc",
+  player: "asc",
+  number: "asc",
+  season: "desc",
+};
+
+const sortOptions: Array<{ field: SortField; label: string; ascLabel: string; descLabel: string }> = [
+  { field: "added", label: "Añadidas", ascLabel: "Antiguas primero", descLabel: "Recientes primero" },
+  { field: "team", label: "Equipo", ascLabel: "A-Z", descLabel: "Z-A" },
+  { field: "player", label: "Jugador", ascLabel: "A-Z", descLabel: "Z-A" },
+  { field: "number", label: "Dorsal", ascLabel: "0-99", descLabel: "99-0" },
+  { field: "season", label: "Temporada", ascLabel: "Antigua primero", descLabel: "Reciente primero" },
+];
 
 const compactLabel = (value: string) => value.trim().replace(/\s+/g, " ");
 
@@ -394,7 +405,7 @@ export function ShirtCollectionApp({
     | { type: "multiple"; count: number }
     | null
   >(null);
-  const [sortBy, setSortBy] = useState<SortBy>("recent");
+  const [sortBy, setSortBy] = useState<SortBy>({ field: "added", direction: "desc" });
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const formBackdropPointerStartedInsideRef = useRef(false);
@@ -553,57 +564,74 @@ export function ShirtCollectionApp({
       topSizes,
     };
   }, [filteredShirts]);
-  const getIdTimestamp = (id: string) => {
-    const [, timestamp] = id.split("-");
-    const value = Number(timestamp);
+  const getCreatedTimestamp = (shirt: Shirt) => {
+    const value = Date.parse(shirt.created_at ?? "");
     return Number.isNaN(value) ? 0 : value;
   };
 
   const numberValue = (value: string | number | undefined) => {
     const parsed = Number(value);
-    return Number.isNaN(parsed) ? Number.NEGATIVE_INFINITY : parsed;
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
+  const seasonValue = (value: string | undefined) => {
+    const match = value?.match(/\d{4}/);
+    return match ? Number(match[0]) : null;
+  };
+
+  const compareNullableNumbers = (left: number | null, right: number | null, direction: SortDirection) => {
+    if (left === null && right === null) return 0;
+    if (left === null) return 1;
+    if (right === null) return -1;
+    return direction === "asc" ? left - right : right - left;
+  };
+
+  const toggleSort = (field: SortField) => {
+    setSortBy((current) => {
+      if (current.field !== field) {
+        return {
+          field,
+          direction: defaultSortDirectionByField[field],
+        };
+      }
+
+      return {
+        field,
+        direction: current.direction === "asc" ? "desc" : "asc",
+      };
+    });
+    setIsSortOpen(false);
   };
 
   const sortedShirts = (() => {
     const list = [...filteredShirts];
-    switch (sortBy) {
-      case "recent":
-        return list.sort((a, b) => getIdTimestamp(b.id) - getIdTimestamp(a.id));
-      case "oldest":
-        return list.sort((a, b) => getIdTimestamp(a.id) - getIdTimestamp(b.id));
-      case "team-asc":
-        return list.sort((a, b) => a.team.localeCompare(b.team, undefined, { sensitivity: "base" }));
-      case "team-desc":
-        return list.sort((a, b) => b.team.localeCompare(a.team, undefined, { sensitivity: "base" }));
-      case "player-asc":
-        return list.sort((a, b) =>
-          (a.player || "").localeCompare(b.player || "", undefined, { sensitivity: "base" }),
+    const directionFactor = sortBy.direction === "asc" ? 1 : -1;
+
+    switch (sortBy.field) {
+      case "added":
+        return list.sort((a, b) => (getCreatedTimestamp(a) - getCreatedTimestamp(b)) * directionFactor);
+      case "team":
+        return list.sort(
+          (a, b) => a.team.localeCompare(b.team, undefined, { sensitivity: "base" }) * directionFactor,
         );
-      case "player-desc":
-        return list.sort((a, b) =>
-          (b.player || "").localeCompare(a.player || "", undefined, { sensitivity: "base" }),
+      case "player":
+        return list.sort(
+          (a, b) =>
+            (a.player || "").localeCompare(b.player || "", undefined, { sensitivity: "base" }) *
+            directionFactor,
         );
-      case "number-asc":
-        return list.sort((a, b) => numberValue(a.number) - numberValue(b.number));
-      case "number-desc":
+      case "number":
         return list.sort((a, b) => {
-          const left = numberValue(a.number);
-          const right = numberValue(b.number);
-          if (left === Number.NEGATIVE_INFINITY && right === Number.NEGATIVE_INFINITY) return 0;
-          if (left === Number.NEGATIVE_INFINITY) return -1;
-          if (right === Number.NEGATIVE_INFINITY) return -1;
-          return right - left;
+          const numberComparison = compareNullableNumbers(numberValue(a.number), numberValue(b.number), sortBy.direction);
+          if (numberComparison !== 0) return numberComparison;
+          return (a.number || "").localeCompare(b.number || "", undefined, { sensitivity: "base" });
         });
-      case "season-desc":
-        return list.sort((a, b) =>
-          (b.season || "").localeCompare(a.season || "", undefined, { sensitivity: "base" }),
-        );
-      case "sport":
-        return list.sort((a, b) => a.sport.localeCompare(b.sport, undefined, { sensitivity: "base" }));
-      case "wishlist-first":
-        return list.sort((a, b) => (a.status === b.status ? 0 : a.status === "wishlist" ? -1 : 1));
-      default:
-        return list;
+      case "season":
+        return list.sort((a, b) => {
+          const seasonComparison = compareNullableNumbers(seasonValue(a.season), seasonValue(b.season), sortBy.direction);
+          if (seasonComparison !== 0) return seasonComparison;
+          return (a.season || "").localeCompare(b.season || "", undefined, { sensitivity: "base" }) * directionFactor;
+        });
     }
   })();
   const filterOptions = getFilterOptions(viewModeFilteredShirts, filters);
@@ -1207,8 +1235,8 @@ export function ShirtCollectionApp({
             </div>
           ) : null}
 
-          <header className="hero-panel flex-col gap-6 items-start">
-            <div className="w-full">
+          <header className="hero-panel">
+            <div className="hero-copy">
               <p className="eyebrow">{readOnly ? "Vitrina pública" : "Vitrina privada"}</p>
               <h1 className="hero-title">
                 {pageTitle}
@@ -1221,12 +1249,10 @@ export function ShirtCollectionApp({
               ) : null}
             </div>
 
-            <div className="flex w-full flex-wrap items-center justify-between gap-4">
-              <div className="hero-stats" aria-label="Resumen de la colección">
-                <span>{stats.totalShirts} piezas</span>
-                <span>{stats.collectionCount} en colección</span>
-                <span>{stats.wishlistCount} wishlist</span>
-              </div>
+            <div className="hero-stats" aria-label="Resumen de la colección">
+              <span>{stats.totalShirts} piezas</span>
+              <span>{stats.collectionCount} en colección</span>
+              <span>{stats.wishlistCount} wishlist</span>
             </div>
           </header>
 
@@ -1336,39 +1362,23 @@ export function ShirtCollectionApp({
 
           {isSortOpen && (
             <div className="sort-dropdown floating-up" role="menu">
-              <button type="button" role="menuitem" onClick={() => { setSortBy("recent"); setIsSortOpen(false); }}>
-                Más recientes
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("oldest"); setIsSortOpen(false); }}>
-                Más antiguas
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("team-asc"); setIsSortOpen(false); }}>
-                Equipo A-Z
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("team-desc"); setIsSortOpen(false); }}>
-                Equipo Z-A
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("player-asc"); setIsSortOpen(false); }}>
-                Jugador A-Z
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("player-desc"); setIsSortOpen(false); }}>
-                Jugador Z-A
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("number-asc"); setIsSortOpen(false); }}>
-                Dorsal menor a mayor
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("number-desc"); setIsSortOpen(false); }}>
-                Dorsal mayor a menor
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("season-desc"); setIsSortOpen(false); }}>
-                Temporada
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("sport"); setIsSortOpen(false); }}>
-                Deporte
-              </button>
-              <button type="button" role="menuitem" onClick={() => { setSortBy("wishlist-first"); setIsSortOpen(false); }}>
-                Wishlist primero
-              </button>
+              {sortOptions.map((option) => {
+                const isActive = sortBy.field === option.field;
+                const directionLabel = sortBy.direction === "asc" ? option.ascLabel : option.descLabel;
+
+                return (
+                  <button
+                    key={option.field}
+                    type="button"
+                    role="menuitem"
+                    className={isActive ? "is-active" : ""}
+                    onClick={() => toggleSort(option.field)}
+                  >
+                    <span>{option.label}</span>
+                    <small>{isActive ? directionLabel : option.ascLabel}</small>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

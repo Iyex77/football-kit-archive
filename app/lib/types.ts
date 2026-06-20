@@ -13,6 +13,7 @@ export type ShirtImage = {
 export type Shirt = {
   id: string;
   user_id?: string;
+  created_at?: string;
   sport: Sport;
   category: ShirtCategory;
   country: string;
