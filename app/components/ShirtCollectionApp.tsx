@@ -397,6 +397,7 @@ export function ShirtCollectionApp({
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const formBackdropPointerStartedInsideRef = useRef(false);
   const [statsDetailKey, setStatsDetailKey] = useState<StatsDetailKey | null>(null);
   const [selectedStatsItem, setSelectedStatsItem] = useState<SelectedStatsItem | null>(null);
   useEffect(() => {
@@ -697,25 +698,6 @@ export function ShirtCollectionApp({
   };
 
   const handleCustomTeam = (value: string) => {
-    const normalizedValue = value
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .toLowerCase();
-    const matches = teamOptions.filter((option) =>
-      option.team
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-zA-Z0-9]/g, "")
-        .toLowerCase()
-        .includes(normalizedValue),
-    );
-
-    if (normalizedValue.length >= 3 && matches.length === 1) {
-      handleTeamSelect(matches[0]);
-      return;
-    }
-
     setForm((current) => ({
       ...current,
       team: "custom",
@@ -1427,7 +1409,17 @@ export function ShirtCollectionApp({
           role="dialog"
           aria-modal="true"
           aria-label="Formulario camiseta"
-          onClick={closeForm}
+          onPointerDown={(event) => {
+            formBackdropPointerStartedInsideRef.current = event.target !== event.currentTarget;
+          }}
+          onClick={(event) => {
+            if (event.target !== event.currentTarget) return;
+            if (formBackdropPointerStartedInsideRef.current) {
+              formBackdropPointerStartedInsideRef.current = false;
+              return;
+            }
+            closeForm();
+          }}
         >
           <div className="modal-shell" onClick={(event) => event.stopPropagation()}>
             <ShirtForm
