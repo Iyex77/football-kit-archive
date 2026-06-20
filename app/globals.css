@@ -2529,7 +2529,7 @@ img {
 .gallery-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 120;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2578,7 +2578,7 @@ img {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  z-index: 10;
+  z-index: 130;
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 8px;
@@ -3092,7 +3092,7 @@ img {
 @media (max-width: 768px) {
   .gallery-modal-backdrop {
     align-items: stretch;
-    padding: max(0.5rem, env(safe-area-inset-top)) 0.5rem max(0.5rem, env(safe-area-inset-bottom));
+    padding: max(0.85rem, env(safe-area-inset-top)) 0.5rem max(0.5rem, env(safe-area-inset-bottom));
   }
 
   .gallery-modal-shell {
@@ -3113,12 +3113,12 @@ img {
     position: sticky;
     top: max(0.55rem, env(safe-area-inset-top));
     right: auto;
-    z-index: 30;
+    z-index: 140;
     flex: 0 0 auto;
     align-self: flex-end;
-    width: 2.35rem;
-    height: 2.35rem;
-    margin: 0.55rem 0.55rem -2.75rem auto;
+    width: 2.6rem;
+    height: 2.6rem;
+    margin: 0.55rem 0.55rem -2.95rem auto;
     background: rgb(2 6 23 / 0.82);
     backdrop-filter: blur(14px);
   }

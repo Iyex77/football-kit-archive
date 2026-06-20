@@ -514,6 +514,7 @@ export function ShirtCollectionApp({
 
   const editingShirt = shirts.find((shirt) => shirt.id === editingId);
   const viewingShirt = shirts.find((shirt) => shirt.id === viewingShirtId);
+  const isShirtDetailOpen = Boolean(viewingShirt);
   const typeOptions = getTypeOptions(form.sport);
   const countryOptions = getCountryOptions(form.sport, form.category);
   const leagueOptions = getLeagueOptions(form.sport, form.category, form.country);
@@ -938,6 +939,7 @@ export function ShirtCollectionApp({
       toggleSelect(id);
       return;
     }
+    setIsSortOpen(false);
     setViewingShirtId(id);
   };
 
@@ -1186,6 +1188,7 @@ export function ShirtCollectionApp({
         <AppDrawer
           profile={profile}
           onLogout={onLogout}
+          isSuppressed={isShirtDetailOpen}
           onSectionSelect={() => {
             setFilters((current) => ({
               ...current,
@@ -1341,62 +1344,63 @@ export function ShirtCollectionApp({
         </div>
       )}
 
-      <div className="floating-actions">
-        {!readOnly ? (
-          <button className="floating-add" type="button" onClick={openCreateForm}>
-            + Añadir camiseta
-          </button>
-        ) : null}
+      {!isShirtDetailOpen ? (
+        <div className="floating-actions">
+          {!readOnly ? (
+            <button className="floating-add" type="button" onClick={openCreateForm}>
+              + Añadir camiseta
+            </button>
+          ) : null}
 
-        <div className="sort-control" ref={sortDropdownRef}>
-          <button
-            type="button"
-            className="sort-icon-button"
-            aria-haspopup="menu"
-            aria-expanded={isSortOpen}
-            onClick={() => setIsSortOpen((current) => !current)}
-            title="Ordenar por"
-          >
-            ↑↓
-          </button>
+          <div className="sort-control" ref={sortDropdownRef}>
+            <button
+              type="button"
+              className="sort-icon-button"
+              aria-haspopup="menu"
+              aria-expanded={isSortOpen}
+              onClick={() => setIsSortOpen((current) => !current)}
+              title="Ordenar por"
+            >
+              ↑↓
+            </button>
 
-          {isSortOpen && (
-            <div className="sort-dropdown floating-up" role="menu">
-              {sortOptions.map((option) => {
-                const isActive = sortBy.field === option.field;
-                const directionLabel = sortBy.direction === "asc" ? option.ascLabel : option.descLabel;
+            {isSortOpen && (
+              <div className="sort-dropdown floating-up" role="menu">
+                {sortOptions.map((option) => {
+                  const isActive = sortBy.field === option.field;
+                  const directionLabel = sortBy.direction === "asc" ? option.ascLabel : option.descLabel;
 
-                return (
-                  <button
-                    key={option.field}
-                    type="button"
-                    role="menuitem"
-                    className={isActive ? "is-active" : ""}
-                    onClick={() => toggleSort(option.field)}
-                  >
-                    <span>{option.label}</span>
-                    <small>{isActive ? directionLabel : option.ascLabel}</small>
-                  </button>
-                );
-              })}
-            </div>
+                  return (
+                    <button
+                      key={option.field}
+                      type="button"
+                      role="menuitem"
+                      className={isActive ? "is-active" : ""}
+                      onClick={() => toggleSort(option.field)}
+                    >
+                      <span>{option.label}</span>
+                      <small>{isActive ? directionLabel : option.ascLabel}</small>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {(filters.search.trim() !== "" || filters.sport !== "all" || filters.category !== "all" || filters.league !== "all" || filters.country !== "all" || filters.year.trim() !== "" || filters.status !== "all") && (
+            <button
+              className="floating-reset-button"
+              type="button"
+              onClick={() => setFilters(emptyFilters)}
+              aria-label="Restablecer filtros"
+            >
+              ×
+            </button>
           )}
         </div>
+      ) : null}
 
-        {(filters.search.trim() !== "" || filters.sport !== "all" || filters.category !== "all" || filters.league !== "all" || filters.country !== "all" || filters.year.trim() !== "" || filters.status !== "all") && (
-          <button
-            className="floating-reset-button"
-            type="button"
-            onClick={() => setFilters(emptyFilters)}
-            aria-label="Restablecer filtros"
-          >
-            ×
-          </button>
-        )}
-
-      </div>
-
-      {!readOnly && isSelectModeActive && (
+      {!isShirtDetailOpen && !readOnly && isSelectModeActive && (
         <div className="floating-selection-bar" role="toolbar" aria-label="Acciones selección">
           <div className="selection-count">✓ {selectedIds.length} seleccionadas</div>
           <div className="selection-actions">
@@ -1516,6 +1520,7 @@ export function ShirtCollectionApp({
                       type="button"
                       onClick={() => {
                         setStatsDetailKey(null);
+                        setIsSortOpen(false);
                         setViewingShirtId(shirt.id);
                       }}
                     >
@@ -1580,6 +1585,7 @@ export function ShirtCollectionApp({
                     onClick={() => {
                       closeSelectedStatsItem();
                       closeStatsDetail();
+                      setIsSortOpen(false);
                       setViewingShirtId(shirt.id);
                     }}
                   >

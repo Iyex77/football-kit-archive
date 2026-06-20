@@ -13,6 +13,7 @@ type AppDrawerProps = {
   profile: Profile | null;
   onLogout: () => Promise<void> | void;
   onSectionSelect?: () => void;
+  isSuppressed?: boolean;
 };
 
 type IconName =
@@ -50,10 +51,11 @@ function Icon({ name }: { name: IconName }) {
   );
 }
 
-export function AppDrawer({ profile, onLogout, onSectionSelect }: AppDrawerProps) {
+export function AppDrawer({ profile, onLogout, onSectionSelect, isSuppressed = false }: AppDrawerProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const publicPath = profile?.username ? `/u/${profile.username}` : "";
+  const shouldShowDrawer = isOpen && !isSuppressed;
 
   const close = () => setIsOpen(false);
   const itemClass = (href: string) => `drawer-link ${pathname === href ? "is-active" : ""}`;
@@ -78,21 +80,23 @@ export function AppDrawer({ profile, onLogout, onSectionSelect }: AppDrawerProps
 
   return (
     <>
-      <button
-        className="app-menu-button"
-        type="button"
-        aria-label="Abrir menú"
-        aria-expanded={isOpen}
-        onClick={open}
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+      {!isSuppressed ? (
+        <button
+          className="app-menu-button"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded={isOpen}
+          onClick={open}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      ) : null}
 
-      {isOpen ? <button className="drawer-backdrop" type="button" aria-label="Cerrar menú" onClick={close} /> : null}
+      {shouldShowDrawer ? <button className="drawer-backdrop" type="button" aria-label="Cerrar menú" onClick={close} /> : null}
 
-      <aside className={`app-drawer ${isOpen ? "is-open" : ""}`} aria-hidden={!isOpen}>
+      <aside className={`app-drawer ${shouldShowDrawer ? "is-open" : ""}`} aria-hidden={!shouldShowDrawer}>
         <div className="drawer-header">
           <div>
             <p className="eyebrow">Football Kit Archive</p>
