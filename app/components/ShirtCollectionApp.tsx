@@ -120,6 +120,7 @@ const getKitTypeStatsValue = (value: string) => {
   if (["local", "home", "primera", "primeraequipacion", "1", "1st"].includes(key)) return "Local";
   if (["visitante", "away", "segunda", "segundaequipacion", "2", "2nd"].includes(key)) return "Visitante";
   if (["tercera", "third", "terceraequipacion", "3", "3rd"].includes(key)) return "Tercera";
+  if (["cuarta", "fourth", "cuartaequipacion", "4", "4th"].includes(key)) return "Cuarta";
   if (["portero", "goalkeeper", "gk", "keeper"].includes(key)) return "Portero";
   if (
     ["especial", "special", "edicionespecial", "edition", "fourth", "cuarta", "alternativa", "cup"].includes(key)
@@ -1180,16 +1181,15 @@ export function ShirtCollectionApp({
     filters.sport === "football" || filters.sport === "basketball" ? sportLabels[filters.sport] : "Todo";
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#142f2d_0,#090d13_36rem,#05070b_100%)] px-4 py-7 text-slate-100 sm:px-6 lg:px-10">
+    <main className="app-shell min-h-screen px-4 py-7 text-slate-100 sm:px-6 lg:px-10">
       {!readOnly && onLogout ? (
         <AppDrawer
           profile={profile}
           onLogout={onLogout}
-          activeSport={filters.sport}
-          onSportSelect={(sport) => {
+          onSectionSelect={() => {
             setFilters((current) => ({
               ...current,
-              sport,
+              sport: "all",
             }));
           }}
         />

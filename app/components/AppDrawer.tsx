@@ -5,16 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
-import type { Profile, Sport } from "../lib/types";
+import type { Profile } from "../lib/types";
 
-type DrawerSport = "all" | Sport;
 type DrawerFilterPath = "/" | "/coleccion" | "/wishlist";
 
 type AppDrawerProps = {
   profile: Profile | null;
   onLogout: () => Promise<void> | void;
-  activeSport?: DrawerSport;
-  onSportSelect?: (sport: DrawerSport) => void;
+  onSectionSelect?: () => void;
 };
 
 type IconName =
@@ -26,20 +24,11 @@ type IconName =
   | "spark"
   | "logout";
 
-const sportSubmenu: Array<{ label: string; value: DrawerSport }> = [
-  { label: "Todo", value: "all" },
-  { label: "Fútbol", value: "football" },
-  { label: "Baloncesto", value: "basketball" },
-];
-
 const filterSections: Array<{ href: DrawerFilterPath; label: string; icon: IconName }> = [
   { href: "/", label: "Todas las camisetas", icon: "layers" },
   { href: "/coleccion", label: "Mi colección", icon: "grid" },
   { href: "/wishlist", label: "Wishlist", icon: "star" },
 ];
-
-const sportHref = (basePath: string, sport: DrawerSport) =>
-  sport === "all" ? basePath : `${basePath}?sport=${sport}`;
 
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -61,21 +50,13 @@ function Icon({ name }: { name: IconName }) {
   );
 }
 
-export function AppDrawer({ profile, onLogout, activeSport = "all", onSportSelect }: AppDrawerProps) {
+export function AppDrawer({ profile, onLogout, onSectionSelect }: AppDrawerProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [openSportMenu, setOpenSportMenu] = useState<DrawerFilterPath | null>(null);
   const publicPath = profile?.username ? `/u/${profile.username}` : "";
 
-  const close = () => {
-    setOpenSportMenu(null);
-    setIsOpen(false);
-  };
-
+  const close = () => setIsOpen(false);
   const itemClass = (href: string) => `drawer-link ${pathname === href ? "is-active" : ""}`;
-  const filterButtonClass = (href: string) => `drawer-link drawer-filter-button ${pathname === href ? "is-active" : ""}`;
-  const sportItemClass = (href: string, sport: DrawerSport) =>
-    `drawer-sport-option ${pathname === href && activeSport === sport ? "is-active" : ""}`;
 
   const open = () => {
     toast.dismiss();
@@ -87,69 +68,13 @@ export function AppDrawer({ profile, onLogout, activeSport = "all", onSportSelec
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (openSportMenu) {
-          setOpenSportMenu(null);
-          return;
-        }
         close();
       }
     };
 
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      if (target.closest("[data-drawer-sport-menu]")) return;
-      setOpenSportMenu(null);
-    };
-
     window.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isOpen, openSportMenu]);
-
-  const renderFilterSection = ({ href, label, icon }: { href: DrawerFilterPath; label: string; icon: IconName }) => {
-    const isMenuOpen = openSportMenu === href;
-
-    return (
-      <div className="drawer-filter-group" data-drawer-sport-menu>
-        <button
-          type="button"
-          className={filterButtonClass(href)}
-          aria-haspopup="menu"
-          aria-expanded={isMenuOpen}
-          onClick={() => setOpenSportMenu((current) => (current === href ? null : href))}
-        >
-          <Icon name={icon} />
-          <span>{label}</span>
-          <span className="drawer-filter-chevron" aria-hidden="true">
-            {isMenuOpen ? "▲" : "▼"}
-          </span>
-        </button>
-
-        {isMenuOpen ? (
-          <div className="drawer-sport-dropdown" role="menu">
-            {sportSubmenu.map((item) => (
-              <Link
-                key={`${href}-${item.value}`}
-                className={sportItemClass(href, item.value)}
-                href={sportHref(href, item.value)}
-                role="menuitem"
-                onClick={() => {
-                  onSportSelect?.(item.value);
-                  close();
-                }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    );
-  };
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   return (
     <>
@@ -179,7 +104,20 @@ export function AppDrawer({ profile, onLogout, activeSport = "all", onSportSelec
         </div>
 
         <nav className="drawer-nav" aria-label="Navegación principal">
-          {filterSections.map((section) => renderFilterSection(section))}
+          {filterSections.map(({ href, label, icon }) => (
+            <Link
+              key={href}
+              className={itemClass(href)}
+              href={href}
+              onClick={() => {
+                onSectionSelect?.();
+                close();
+              }}
+            >
+              <Icon name={icon} />
+              {label}
+            </Link>
+          ))}
 
           <Link className={itemClass("/estadisticas")} href="/estadisticas" onClick={close}>
             <Icon name="chart" />

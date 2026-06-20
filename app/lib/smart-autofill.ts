@@ -82,22 +82,60 @@ const teamAliases: Record<string, string[]> = {
 
 const countryAliases: Record<string, string> = {
   argentina: "Argentina",
+  belgium: "Bélgica",
+  belgica: "Bélgica",
   brasil: "Brasil",
   brazil: "Brasil",
+  croacia: "Croacia",
+  croatia: "Croacia",
   eeuu: "Estados Unidos",
+  england: "Inglaterra",
+  escocia: "Escocia",
+  espana: "España",
+  españa: "España",
   "estados unidos": "Estados Unidos",
+  france: "Francia",
+  francia: "Francia",
+  germany: "Alemania",
+  alemania: "Alemania",
+  inglaterra: "Inglaterra",
+  italy: "Italia",
+  italia: "Italia",
   japon: "Japón",
   japan: "Japón",
+  marruecos: "Marruecos",
+  morocco: "Marruecos",
   mexico: "México",
+  méxico: "México",
   portugal: "Portugal",
   "paises bajos": "Países Bajos",
+  "países bajos": "Países Bajos",
   netherlands: "Países Bajos",
+  "saudi arabia": "Arabia Saudí",
+  "arabia saudi": "Arabia Saudí",
+  "arabia saudí": "Arabia Saudí",
+  scotland: "Escocia",
+  spain: "España",
+  turkey: "Turquía",
+  turquia: "Turquía",
+  turquía: "Turquía",
+  uruguay: "Uruguay",
   usa: "Estados Unidos",
   us: "Estados Unidos",
   "united states": "Estados Unidos",
 };
 
 const externalLeagues: LeagueMatch[] = [
+  { phrase: "Premier League", league: "Premier League", country: "Inglaterra", sport: "football", category: "club" },
+  { phrase: "Championship", league: "Championship", country: "Inglaterra", sport: "football", category: "club" },
+  { phrase: "LaLiga", league: "LaLiga EA Sports", country: "España", sport: "football", category: "club" },
+  { phrase: "La Liga", league: "LaLiga EA Sports", country: "España", sport: "football", category: "club" },
+  { phrase: "Serie A", league: "Serie A", country: "Italia", sport: "football", category: "club" },
+  { phrase: "Serie B", league: "Serie B", country: "Italia", sport: "football", category: "club" },
+  { phrase: "Bundesliga", league: "Bundesliga", country: "Alemania", sport: "football", category: "club" },
+  { phrase: "2. Bundesliga", league: "2. Bundesliga", country: "Alemania", sport: "football", category: "club" },
+  { phrase: "Ligue 1", league: "Ligue 1", country: "Francia", sport: "football", category: "club" },
+  { phrase: "Ligue 2", league: "Ligue 2", country: "Francia", sport: "football", category: "club" },
   { phrase: "MLS", league: "MLS", country: "Estados Unidos", sport: "football", category: "club" },
   { phrase: "Eredivisie", league: "Eredivisie", country: "Países Bajos", sport: "football", category: "club" },
   { phrase: "Liga Portugal", league: "Liga Portugal", country: "Portugal", sport: "football", category: "club" },
@@ -151,6 +189,10 @@ const kitTypeAliases: Record<string, string> = {
   "tercera kit": "Tercera",
   third: "Tercera",
   tercera: "Tercera",
+  "fourth kit": "Cuarta",
+  "cuarta kit": "Cuarta",
+  fourth: "Cuarta",
+  cuarta: "Cuarta",
   "goalkeeper kit": "Portero",
   "gk kit": "Portero",
   goalkeeper: "Portero",
@@ -160,11 +202,10 @@ const kitTypeAliases: Record<string, string> = {
   "special kit": "Especial",
   special: "Especial",
   especial: "Especial",
-  cuarta: "Especial",
   alternativa: "Especial",
 };
 
-const kitWordsToDiscard = ["kit", "camiseta", "shirt"];
+const kitWordsToDiscard = ["kit", "camiseta", "shirt", "equipacion", "equipación"];
 
 const sizeAliases: Record<string, string> = {
   xs: "XS",
@@ -284,6 +325,69 @@ const findKitType = (text: string): TextMatch | undefined => {
   return candidates[0];
 };
 
+const stripKnownNonPlayerEntities = (source: string, options: TeamOption[]) => {
+  let remaining = source;
+  let removedEntity = true;
+
+  while (removedEntity) {
+    removedEntity = false;
+
+    const leagueMatch = findLeague(remaining, options);
+    if (leagueMatch) {
+      const nextRemaining = stripNormalizedPhrase(remaining, leagueMatch.phrase);
+      if (nextRemaining !== remaining) {
+        remaining = nextRemaining;
+        removedEntity = true;
+      }
+    }
+
+    const countryMatch = findCountry(remaining);
+    if (countryMatch) {
+      const nextRemaining = stripNormalizedPhrase(remaining, countryMatch.phrase);
+      if (nextRemaining !== remaining) {
+        remaining = nextRemaining;
+        removedEntity = true;
+      }
+    }
+
+    const season = findSeason(remaining);
+    if (season) {
+      const nextRemaining = stripRawText(remaining, season.raw);
+      if (nextRemaining !== remaining) {
+        remaining = nextRemaining;
+        removedEntity = true;
+      }
+    }
+
+    const kitType = findKitType(remaining);
+    if (kitType) {
+      const nextRemaining = stripAllNormalizedPhrases(
+        stripNormalizedPhrase(remaining, kitType.raw),
+        kitWordsToDiscard,
+      );
+      if (nextRemaining !== remaining) {
+        remaining = nextRemaining;
+        removedEntity = true;
+      }
+    }
+  }
+
+  return remaining;
+};
+
+const isKnownNonPlayerEntity = (value: string, options: TeamOption[]) => {
+  const cleaned = cleanName(value);
+  if (!cleaned) return false;
+
+  return Boolean(
+    findCountry(cleaned) ||
+      findLeague(cleaned, options) ||
+      findSeason(cleaned) ||
+      findKitType(cleaned) ||
+      normalizeSearch(cleaned) === "kit",
+  );
+};
+
 const findNumber = (text: string): TextMatch | undefined => {
   const hashMatch = text.match(/#\s*(\d{1,3})\b/);
   if (hashMatch) {
@@ -312,14 +416,14 @@ const findNumber = (text: string): TextMatch | undefined => {
   return undefined;
 };
 
-const compactPlayer = (text: string) => {
+const compactPlayer = (text: string, options: TeamOption[]) => {
   const value = cleanName(text)
     .replace(/#\s*\d{1,3}\b/g, " ")
     .replace(/\b(?:dorsal|numero|número|number|no)\s+\d{1,3}\b/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
 
-  if (!value || normalizeSearch(value).split(" ").length > 3) {
+  if (!value || isKnownNonPlayerEntity(value, options) || normalizeSearch(value).split(" ").length > 3) {
     return "";
   }
 
@@ -386,6 +490,8 @@ export function parseSmartAutofillText(text: string, teamOptions: TeamOption[]):
     remaining = stripRawText(remaining, number.raw);
   }
 
+  remaining = stripKnownNonPlayerEntities(remaining, teamOptions);
+
   if (!result.teamOption && (result.league || (result.country && result.sport === "football"))) {
     const customTeam = inferCustomTeam(remaining);
     if (customTeam) {
@@ -396,7 +502,9 @@ export function parseSmartAutofillText(text: string, teamOptions: TeamOption[]):
     }
   }
 
-  const player = compactPlayer(remaining);
+  remaining = stripKnownNonPlayerEntities(remaining, teamOptions);
+
+  const player = compactPlayer(remaining, teamOptions);
   if (player) {
     result.player = player;
   }

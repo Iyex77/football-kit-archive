@@ -364,7 +364,7 @@ export const statusLabels: Record<ShirtStatus, string> = {
   wishlist: "Wishlist",
 };
 
-export const kitTypes = ["Local", "Visitante", "Tercera", "Portero", "Especial"];
+export const kitTypes = ["Local", "Visitante", "Tercera", "Cuarta", "Portero", "Especial"];
 
 export const sizes = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "4XL", "5XL"];
 
