@@ -40,8 +40,16 @@ const lemonMilk = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Colección Camisetas",
-  description: "Mi colección personal de camisetas",
+  title: "Football Kit Archive",
+  description: "Colección privada de camisetas de fútbol y baloncesto.",
+  applicationName: "Football Kit Archive",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "180x180" }],
+  },
 };
 
 export default function RootLayout({

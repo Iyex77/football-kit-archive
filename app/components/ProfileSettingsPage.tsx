@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase-auth";
 import type { Profile } from "../lib/types";
 import { notify } from "../lib/notify";
@@ -11,24 +13,104 @@ type ProfileSettingsPageProps = {
   onLogout: () => Promise<void> | void;
 };
 
+type CropImage = {
+  src: string;
+  width: number;
+  height: number;
+};
+
+type DragState = {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+};
+
+const avatarBucket = "avatars";
+const avatarSize = 512;
+const cropPreviewSize = 280;
+const maxAvatarSize = 2 * 1024 * 1024;
+const acceptedAvatarTypes = ["image/jpeg", "image/png", "image/webp"];
+const profileSelect = "id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, created_at";
 const publicProfileUrl = (username: string) =>
   `https://football-kit-archive.vercel.app/u/${username}`;
 
+const getInitial = (displayName: string, username: string) =>
+  (displayName || username || "?").slice(0, 1).toUpperCase();
+
+const getAvatarPath = (userId: string) => `${userId}/avatar.webp`;
+
+const formatDate = (value?: string) => {
+  if (!value) return "No disponible";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "No disponible";
+  return new Intl.DateTimeFormat("es", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+};
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+
 export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragStateRef = useRef<DragState | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [authUser, setAuthUser] = useState<User | null>(null);
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [showCollection, setShowCollection] = useState(true);
   const [showWishlist, setShowWishlist] = useState(true);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [cropImage, setCropImage] = useState<CropImage | null>(null);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
+  const [isDraggingCrop, setIsDraggingCrop] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedUserId, setCopiedUserId] = useState(false);
 
   const cleanUsername = username.trim().toLowerCase();
   const publicUrl = cleanUsername ? publicProfileUrl(cleanUsername) : "";
   const publicPath = cleanUsername ? `/u/${cleanUsername}` : "#";
+  const accountCreatedAt = profile?.created_at || authUser?.created_at;
+
+  const cropMetrics = useMemo(() => {
+    if (!cropImage) return null;
+    const baseScale = cropPreviewSize / Math.min(cropImage.width, cropImage.height);
+    const scale = baseScale * cropZoom;
+    const width = cropImage.width * scale;
+    const height = cropImage.height * scale;
+    const maxX = Math.max(0, (width - cropPreviewSize) / 2);
+    const maxY = Math.max(0, (height - cropPreviewSize) / 2);
+
+    return {
+      scale,
+      width,
+      height,
+      offsetX: clamp(cropOffset.x, -maxX, maxX),
+      offsetY: clamp(cropOffset.y, -maxY, maxY),
+    };
+  }, [cropImage, cropOffset.x, cropOffset.y, cropZoom]);
 
   useEffect(() => {
     let isMounted = true;
@@ -45,18 +127,20 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, username, display_name, is_public, show_collection, show_wishlist, created_at")
+        .select(profileSelect)
         .eq("id", user.id)
         .maybeSingle();
 
       if (!isMounted) return;
 
+      setAuthUser(user);
       setUserId(user.id);
       if (!error && data) {
         const loadedProfile = data as Profile;
         setProfile(loadedProfile);
         setUsername(loadedProfile.username || "");
         setDisplayName(loadedProfile.display_name || "");
+        setAvatarUrl(loadedProfile.avatar_url || "");
         setIsPublic(loadedProfile.is_public);
         setShowCollection(loadedProfile.show_collection ?? true);
         setShowWishlist(loadedProfile.show_wishlist ?? true);
@@ -71,6 +155,59 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
     };
   }, []);
 
+  const syncSavedProfile = (savedProfile: Profile) => {
+    setProfile(savedProfile);
+    setUsername(savedProfile.username);
+    setDisplayName(savedProfile.display_name || "");
+    setAvatarUrl(savedProfile.avatar_url || "");
+    setIsPublic(savedProfile.is_public);
+    setShowCollection(savedProfile.show_collection ?? true);
+    setShowWishlist(savedProfile.show_wishlist ?? true);
+  };
+
+  const closeAvatarCropper = useCallback(() => {
+    setCropImage(null);
+    setCropZoom(1);
+    setCropOffset({ x: 0, y: 0 });
+    setIsDraggingCrop(false);
+    dragStateRef.current = null;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!cropImage) return;
+
+    const scrollY = window.scrollY;
+    const originalPosition = document.body.style.position;
+    const originalTop = document.body.style.top;
+    const originalWidth = document.body.style.width;
+    const originalOverflow = document.body.style.overflow;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeAvatarCropper();
+      }
+    };
+
+    document.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.position = originalPosition;
+      document.body.style.top = originalTop;
+      document.body.style.width = originalWidth;
+      document.body.style.overflow = originalOverflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [closeAvatarCropper, cropImage]);
+
   const handleSave = async () => {
     if (!userId) {
       notify.error("Sesión expirada, inicia sesión otra vez.");
@@ -78,7 +215,7 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
     }
 
     if (!/^[a-z0-9_]{3,30}$/.test(cleanUsername)) {
-      notify.error("El username debe tener 3-30 caracteres: letras, numeros o guion bajo.");
+      notify.error("El username debe tener 3-30 caracteres: letras, números o guion bajo.");
       return;
     }
 
@@ -89,11 +226,12 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
         id: userId,
         username: cleanUsername,
         display_name: displayName.trim() || null,
+        avatar_url: avatarUrl || null,
         is_public: isPublic,
         show_collection: showCollection,
         show_wishlist: showWishlist,
       })
-      .select("id, username, display_name, is_public, show_collection, show_wishlist, created_at")
+      .select(profileSelect)
       .single();
 
     setIsSaving(false);
@@ -103,14 +241,208 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
       return;
     }
 
-    const savedProfile = data as Profile;
-    setProfile(savedProfile);
-    setUsername(savedProfile.username);
-    setDisplayName(savedProfile.display_name || "");
-    setIsPublic(savedProfile.is_public);
-    setShowCollection(savedProfile.show_collection ?? true);
-    setShowWishlist(savedProfile.show_wishlist ?? true);
+    syncSavedProfile(data as Profile);
     notify.success("Perfil guardado");
+  };
+
+  const handleAvatarFile = async (file: File | undefined) => {
+    if (!file || !userId) return;
+
+    if (!acceptedAvatarTypes.includes(file.type)) {
+      notify.error("El avatar debe ser JPG, PNG o WebP.");
+      return;
+    }
+
+    if (file.size > maxAvatarSize) {
+      notify.error("El avatar no puede superar 2 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const src = String(reader.result || "");
+      try {
+        const image = await loadImage(src);
+        setCropImage({ src, width: image.naturalWidth, height: image.naturalHeight });
+        setCropZoom(1);
+        setCropOffset({ x: 0, y: 0 });
+      } catch {
+        notify.error("No se pudo leer la imagen.");
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const createCroppedAvatar = async () => {
+    if (!cropImage || !cropMetrics) return null;
+
+    const image = await loadImage(cropImage.src);
+    const canvas = document.createElement("canvas");
+    canvas.width = avatarSize;
+    canvas.height = avatarSize;
+    const context = canvas.getContext("2d");
+
+    if (!context) return null;
+
+    const displayLeft = cropPreviewSize / 2 + cropMetrics.offsetX - cropMetrics.width / 2;
+    const displayTop = cropPreviewSize / 2 + cropMetrics.offsetY - cropMetrics.height / 2;
+    const sourceX = (0 - displayLeft) / cropMetrics.scale;
+    const sourceY = (0 - displayTop) / cropMetrics.scale;
+    const sourceSize = cropPreviewSize / cropMetrics.scale;
+
+    context.imageSmoothingQuality = "high";
+    context.drawImage(
+      image,
+      sourceX,
+      sourceY,
+      sourceSize,
+      sourceSize,
+      0,
+      0,
+      avatarSize,
+      avatarSize,
+    );
+
+    return new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), "image/webp", 0.86);
+    });
+  };
+
+  const handleSaveAvatar = async () => {
+    if (!userId || !cropImage) return;
+
+    setIsUploadingAvatar(true);
+    const blob = await createCroppedAvatar();
+
+    if (!blob) {
+      setIsUploadingAvatar(false);
+      notify.error("No se pudo preparar el avatar.");
+      return;
+    }
+
+    const path = getAvatarPath(userId);
+    const { error: uploadError } = await supabase.storage
+      .from(avatarBucket)
+      .upload(path, blob, {
+        cacheControl: "3600",
+        contentType: "image/webp",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      setIsUploadingAvatar(false);
+      notify.error(uploadError.message || "No se pudo subir el avatar.");
+      return;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(avatarBucket).getPublicUrl(path);
+
+    const nextAvatarUrl = `${publicUrl}?v=${Date.now()}`;
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ avatar_url: nextAvatarUrl })
+      .eq("id", userId)
+      .select(profileSelect)
+      .single();
+
+    setIsUploadingAvatar(false);
+
+    if (error) {
+      notify.error(error.message || "Avatar subido, pero no se pudo guardar en el perfil.");
+      return;
+    }
+
+    closeAvatarCropper();
+    syncSavedProfile(data as Profile);
+    notify.success("Avatar actualizado");
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!userId) return;
+
+    setIsRemovingAvatar(true);
+    await supabase.storage.from(avatarBucket).remove([
+      `${userId}/avatar.webp`,
+      `${userId}/avatar.jpg`,
+      `${userId}/avatar.jpeg`,
+      `${userId}/avatar.png`,
+    ]);
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ avatar_url: null })
+      .eq("id", userId)
+      .select(profileSelect)
+      .single();
+
+    setIsRemovingAvatar(false);
+
+    if (error) {
+      notify.error(error.message || "No se pudo quitar el avatar.");
+      return;
+    }
+
+    syncSavedProfile(data as Profile);
+    notify.success("Avatar eliminado");
+  };
+
+  const handleCropPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!cropMetrics) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: cropMetrics.offsetX,
+      originY: cropMetrics.offsetY,
+    };
+    setIsDraggingCrop(true);
+  };
+
+  const handleCropPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId || !cropMetrics) return;
+
+    const maxX = Math.max(0, (cropMetrics.width - cropPreviewSize) / 2);
+    const maxY = Math.max(0, (cropMetrics.height - cropPreviewSize) / 2);
+    setCropOffset({
+      x: clamp(dragState.originX + event.clientX - dragState.startX, -maxX, maxX),
+      y: clamp(dragState.originY + event.clientY - dragState.startY, -maxY, maxY),
+    });
+  };
+
+  const handleCropPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStateRef.current?.pointerId === event.pointerId) {
+      dragStateRef.current = null;
+      setIsDraggingCrop(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (newPassword.length < 8) {
+      notify.error("La nueva contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      notify.error("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setIsChangingPassword(false);
+
+    if (error) {
+      notify.error(error.message || "No se pudo cambiar la contraseña.");
+      return;
+    }
+
+    setNewPassword("");
+    setConfirmPassword("");
+    notify.success("Contraseña actualizada");
   };
 
   const handleCopy = async () => {
@@ -120,15 +452,22 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
     window.setTimeout(() => setCopied(false), 1800);
   };
 
+  const handleCopyUserId = async () => {
+    if (!userId) return;
+    await navigator.clipboard.writeText(userId);
+    setCopiedUserId(true);
+    window.setTimeout(() => setCopiedUserId(false), 1800);
+  };
+
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#142f2d_0,#090d13_36rem,#05070b_100%)] px-4 py-7 text-slate-100 sm:px-6 lg:px-10">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#142f2d_0,#090d13_36rem,#05070b_100%)] px-4 py-5 text-slate-100 sm:px-6 sm:py-7 lg:px-10">
       <AppDrawer profile={profile} onLogout={onLogout} />
-      <div className="mx-auto max-w-[960px] space-y-8">
+      <div className="mx-auto max-w-[960px] space-y-5 sm:space-y-8">
         <header className="hero-panel profile-hero">
           <div>
-            <p className="eyebrow">Perfil y vitrina</p>
+            <p className="eyebrow">Cuenta y vitrina</p>
             <h1>Perfil público</h1>
-            <p>Gestiona tu identidad, enlace compartible y visibilidad pública desde un único sitio.</p>
+            <p>Gestiona tu identidad, seguridad y visibilidad pública desde un único sitio.</p>
           </div>
         </header>
 
@@ -137,105 +476,269 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
             <p>Cargando perfil...</p>
           </section>
         ) : (
-          <section className="profile-panel">
-            <div className="section-heading">
-              <div>
-                <p>Perfil</p>
-                <h2>Identidad pública</h2>
+          <>
+            <section className="profile-panel">
+              <div className="section-heading">
+                <div>
+                  <p>Perfil</p>
+                  <h2>Identidad pública</h2>
+                </div>
               </div>
-            </div>
 
-            <div className="profile-avatar-row">
-              <div className="profile-avatar-placeholder" aria-hidden="true">
-                {(displayName || username || "?").slice(0, 1).toUpperCase()}
+              <div className="profile-avatar-row">
+                <div className="profile-avatar-preview" aria-hidden="true">
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarUrl} alt="" />
+                  ) : (
+                    <span>{getInitial(displayName, username)}</span>
+                  )}
+                </div>
+                <div className="profile-avatar-copy">
+                  <h3>Avatar</h3>
+                  <p>Imagen de tu cuenta y vitrina pública.</p>
+                  <div className="profile-actions profile-actions-left">
+                    <input
+                      ref={fileInputRef}
+                      className="sr-only"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => handleAvatarFile(event.target.files?.[0])}
+                    />
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingAvatar || isRemovingAvatar || !userId}
+                    >
+                      {avatarUrl ? "Cambiar avatar" : "Subir avatar"}
+                    </button>
+                    {avatarUrl ? (
+                      <button
+                        className="danger-button"
+                        type="button"
+                        onClick={handleRemoveAvatar}
+                        disabled={isUploadingAvatar || isRemovingAvatar}
+                      >
+                        {isRemovingAvatar ? "Quitando..." : "Quitar avatar"}
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3>Avatar</h3>
-                <p>Preparado para subir una imagen de perfil mas adelante.</p>
+
+              <div className="profile-form-grid">
+                <TextField
+                  label="Username"
+                  value={username}
+                  placeholder="sergiogil"
+                  onChange={setUsername}
+                />
+                <TextField
+                  label="Nombre visible"
+                  value={displayName}
+                  placeholder="Sergio Gil"
+                  onChange={setDisplayName}
+                />
               </div>
-            </div>
 
-            <div className="profile-form-grid">
-              <TextField
-                label="Username"
-                value={username}
-                placeholder="sergiogil"
-                onChange={setUsername}
-              />
-              <TextField
-                label="Nombre visible"
-                value={displayName}
-                placeholder="Sergio Gil"
-                onChange={setDisplayName}
-              />
-            </div>
+              <div className="profile-share-card">
+                <label className="field">
+                  <span>Enlace público</span>
+                  <input value={publicUrl} readOnly onFocus={(event) => event.currentTarget.select()} />
+                </label>
+                <div className="profile-actions">
+                  <a className={`ghost-button ${publicUrl ? "" : "is-disabled"}`} href={publicPath}>
+                    Abrir vitrina
+                  </a>
+                  <button className="ghost-button" type="button" onClick={handleCopy} disabled={!publicUrl}>
+                    {copied ? "Copiado" : "Copiar enlace"}
+                  </button>
+                </div>
+              </div>
 
-            <div className="profile-share-card">
-              <label className="field">
-                <span>Enlace público</span>
-                <input value={publicUrl} readOnly onFocus={(event) => event.currentTarget.select()} />
-              </label>
+              <div className="profile-public-card">
+                <div>
+                  <p className="eyebrow">Visibilidad</p>
+                  <h3>Vitrina pública</h3>
+                  <p>
+                    Estos controles afectan a tu URL pública. Si ocultas colección y wishlist, el perfil seguirá
+                    visible con un aviso.
+                  </p>
+                </div>
+                <div className="profile-toggle-stack">
+                  <label className="profile-toggle">
+                    <input
+                      type="checkbox"
+                      checked={isPublic}
+                      onChange={(event) => setIsPublic(event.target.checked)}
+                    />
+                    <span>Perfil público</span>
+                  </label>
+                  <label className="profile-toggle">
+                    <input
+                      type="checkbox"
+                      checked={showCollection}
+                      onChange={(event) => setShowCollection(event.target.checked)}
+                    />
+                    <span>Mostrar colección</span>
+                  </label>
+                  <label className="profile-toggle">
+                    <input
+                      type="checkbox"
+                      checked={showWishlist}
+                      onChange={(event) => setShowWishlist(event.target.checked)}
+                    />
+                    <span>Mostrar wishlist</span>
+                  </label>
+                </div>
+              </div>
+
               <div className="profile-actions">
-                <a className={`ghost-button ${publicUrl ? "" : "is-disabled"}`} href={publicPath}>
-                  Abrir vitrina
-                </a>
-                <button className="ghost-button" type="button" onClick={handleCopy} disabled={!publicUrl}>
-                  {copied ? "Copiado" : "Copiar enlace"}
+                <button className="primary-button" type="button" onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? "Guardando..." : "Guardar perfil y vitrina"}
                 </button>
               </div>
-            </div>
+            </section>
 
-            <div className="profile-public-card">
-              <div>
-                <p className="eyebrow">Visibilidad</p>
-                <h3>Vitrina pública</h3>
-                <p>
-                  Estos controles afectan a tu URL pública. Si ocultas colección y wishlist, el perfil seguirá visible
-                  con un aviso.
-                </p>
+            <section className="profile-panel">
+              <div className="section-heading">
+                <div>
+                  <p>Seguridad</p>
+                  <h2>Cambiar contraseña</h2>
+                </div>
               </div>
-              <div className="profile-toggle-stack">
-                <label className="profile-toggle">
+              <div className="profile-form-grid">
+                <label className="field">
+                  <span>Nueva contraseña</span>
                   <input
-                    type="checkbox"
-                    checked={isPublic}
-                    onChange={(event) => setIsPublic(event.target.checked)}
+                    type="password"
+                    value={newPassword}
+                    minLength={8}
+                    autoComplete="new-password"
+                    onChange={(event) => setNewPassword(event.target.value)}
                   />
-                  <span>Perfil público</span>
                 </label>
-                <label className="profile-toggle">
+                <label className="field">
+                  <span>Confirmar contraseña</span>
                   <input
-                    type="checkbox"
-                    checked={showCollection}
-                    onChange={(event) => setShowCollection(event.target.checked)}
+                    type="password"
+                    value={confirmPassword}
+                    minLength={8}
+                    autoComplete="new-password"
+                    onChange={(event) => setConfirmPassword(event.target.value)}
                   />
-                  <span>Mostrar colección</span>
-                </label>
-                <label className="profile-toggle">
-                  <input
-                    type="checkbox"
-                    checked={showWishlist}
-                    onChange={(event) => setShowWishlist(event.target.checked)}
-                  />
-                  <span>Mostrar wishlist</span>
                 </label>
               </div>
-            </div>
+              <div className="profile-actions">
+                <button
+                  className="primary-button"
+                  type="button"
+                  onClick={handlePasswordChange}
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword ? "Actualizando..." : "Actualizar contraseña"}
+                </button>
+              </div>
+            </section>
 
-            <div className="profile-future-card">
-              <h3>Preferencias e información de cuenta</h3>
-              <p>Espacio preparado para idioma, orden por defecto, campos visibles e imágenes destacadas.</p>
-              <p>ID de usuario: {userId || "No disponible"}</p>
-            </div>
-
-            <div className="profile-actions">
-              <button className="primary-button" type="button" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? "Guardando..." : "Guardar perfil y vitrina"}
-              </button>
-            </div>
-          </section>
+            <section className="profile-panel">
+              <div className="section-heading">
+                <div>
+                  <p>Cuenta</p>
+                  <h2>Datos de cuenta</h2>
+                </div>
+              </div>
+              <div className="account-list">
+                <div className="account-row">
+                  <span>Email</span>
+                  <strong>{authUser?.email || "No disponible"}</strong>
+                </div>
+                <div className="account-row">
+                  <span>ID de usuario</span>
+                  <button type="button" onClick={handleCopyUserId} disabled={!userId}>
+                    {copiedUserId ? "Copiado" : userId || "No disponible"}
+                  </button>
+                </div>
+                <div className="account-row">
+                  <span>Creada</span>
+                  <strong>{formatDate(accountCreatedAt)}</strong>
+                </div>
+              </div>
+              <div className="profile-actions">
+                <button className="ghost-button" type="button" onClick={onLogout}>
+                  Cerrar sesión
+                </button>
+              </div>
+            </section>
+          </>
         )}
       </div>
+
+      {cropImage && cropMetrics ? (
+        <div
+          className="avatar-crop-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Ajustar avatar"
+          onClick={closeAvatarCropper}
+        >
+          <div className="avatar-crop-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="avatar-crop-header">
+              <div>
+                <p className="eyebrow">Avatar</p>
+                <h2>Ajustar imagen</h2>
+              </div>
+              <button className="avatar-crop-close" type="button" onClick={closeAvatarCropper} aria-label="Cerrar">
+                x
+              </button>
+            </div>
+
+            <div
+              className={`avatar-crop-frame ${isDraggingCrop ? "is-dragging" : ""}`}
+              style={{ width: cropPreviewSize, height: cropPreviewSize }}
+              onPointerDown={handleCropPointerDown}
+              onPointerMove={handleCropPointerMove}
+              onPointerUp={handleCropPointerUp}
+              onPointerCancel={handleCropPointerUp}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={cropImage.src}
+                alt=""
+                draggable={false}
+                style={{
+                  width: cropMetrics.width,
+                  height: cropMetrics.height,
+                  transform: `translate(calc(-50% + ${cropMetrics.offsetX}px), calc(-50% + ${cropMetrics.offsetY}px))`,
+                }}
+              />
+              <span className="avatar-crop-mask" aria-hidden="true" />
+            </div>
+
+            <label className="avatar-zoom-control">
+              <span>Zoom</span>
+              <input
+                type="range"
+                min="1"
+                max="3"
+                step="0.01"
+                value={cropZoom}
+                onChange={(event) => setCropZoom(Number(event.target.value))}
+              />
+            </label>
+
+            <div className="avatar-crop-actions">
+              <button className="ghost-button" type="button" onClick={closeAvatarCropper}>
+                Cancelar
+              </button>
+              <button className="primary-button" type="button" onClick={handleSaveAvatar} disabled={isUploadingAvatar}>
+                {isUploadingAvatar ? "Guardando..." : "Guardar avatar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

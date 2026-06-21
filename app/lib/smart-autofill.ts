@@ -1,4 +1,4 @@
-import type { ShirtCategory, ShirtFormState, Sport, TeamOption } from "./types";
+﻿import type { ShirtCategory, ShirtFormState, Sport, TeamOption } from "./types";
 
 export type SmartAutofillResult = {
   teamOption?: TeamOption;

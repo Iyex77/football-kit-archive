@@ -128,7 +128,7 @@ export function ShirtCard({
           className={`shirt-card-badge ${isWishlist ? "badge-wishlist" : "badge-collection"}`}
           type="button"
           onClick={handleBadgeClick}
-          aria-label={isWishlist ? "Mover a coleccion" : "Estado coleccion"}
+          aria-label={isWishlist ? "Mover a colección" : "Estado colección"}
           disabled={readOnly || !isWishlist}
         >
           {statusLabels[shirt.status]}

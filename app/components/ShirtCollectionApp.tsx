@@ -400,6 +400,7 @@ export function ShirtCollectionApp({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewingShirtId, setViewingShirtId] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState<
     | { type: "single"; id: string }
@@ -503,7 +504,7 @@ export function ShirtCollectionApp({
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, display_name, is_public, show_collection, show_wishlist, created_at")
+      .select("id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, created_at")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -1169,6 +1170,24 @@ export function ShirtCollectionApp({
     : [];
   const hasNoPublicSections =
     readOnly && profile?.show_collection === false && profile?.show_wishlist === false;
+  const hasBlockingLayer =
+    isShirtDetailOpen ||
+    isDrawerOpen ||
+    isFormOpen ||
+    isSelectModeActive ||
+    Boolean(deleteConfirmation) ||
+    Boolean(statsDetail) ||
+    Boolean(selectedStatsItem);
+  const shouldShowFloatingActions = !hasBlockingLayer;
+  const shouldShowSelectionBar =
+    !isShirtDetailOpen &&
+    !isDrawerOpen &&
+    !isFormOpen &&
+    !readOnly &&
+    isSelectModeActive &&
+    !deleteConfirmation &&
+    !statsDetail &&
+    !selectedStatsItem;
   const pageTitle =
     readOnly
       ? profile?.display_name || profile?.username || "Camisetas"
@@ -1183,12 +1202,13 @@ export function ShirtCollectionApp({
     filters.sport === "football" || filters.sport === "basketball" ? sportLabels[filters.sport] : "Todo";
 
   return (
-    <main className="app-shell min-h-screen px-4 py-7 text-slate-100 sm:px-6 lg:px-10">
+    <main className="app-shell min-h-screen px-4 py-5 text-slate-100 sm:px-6 sm:py-7 lg:px-10">
       {!readOnly && onLogout ? (
         <AppDrawer
           profile={profile}
           onLogout={onLogout}
           isSuppressed={isShirtDetailOpen}
+          onOpenChange={setIsDrawerOpen}
           onSectionSelect={() => {
             setFilters((current) => ({
               ...current,
@@ -1198,7 +1218,7 @@ export function ShirtCollectionApp({
         />
       ) : null}
       {isLoading ? (
-        <div className="mx-auto max-w-[1560px] space-y-8">
+        <div className="mx-auto max-w-[1560px] space-y-5 sm:space-y-8">
           <div className="hero-panel">
             <div className="space-y-4">
               <div className="h-3 w-32 animate-shimmer rounded-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 bg-[length:200%_100%]"></div>
@@ -1230,7 +1250,7 @@ export function ShirtCollectionApp({
           </section>
         </div>
       ) : (
-        <div className="mx-auto max-w-[1560px] space-y-8">
+        <div className="mx-auto max-w-[1560px] space-y-5 sm:space-y-8">
           {isViewingOwnPublicProfile ? (
             <div className="public-owner-banner">
               <span>Estás viendo tu vitrina pública</span>
@@ -1271,20 +1291,20 @@ export function ShirtCollectionApp({
                 </div>
 
                 <div className="grid gap-6 sm:grid-cols-2">
-                  {renderTopCard("teams", "Club mas repetido", stats.topTeam)}
-                  {renderTopCard("leagues", "Liga mas repetida", stats.topLeague)}
-                  {renderTopCard("seasons", "Temporada mas repetida", stats.topSeason)}
-                  {renderTopCard("players", "Jugador mas repetido", stats.topPlayer)}
-                  {renderTopCard("numbers", "Dorsal mas repetido", stats.topNumber)}
-                  {renderTopCard("countries", "Pais mas repetido", stats.topCountry)}
-                  {renderTopCard("sizes", "Talla mas repetida", stats.topSize)}
-                  {renderTopCard("kitTypes", "Equipacion mas repetida", stats.topKitType)}
+                  {renderTopCard("teams", "Club más repetido", stats.topTeam)}
+                  {renderTopCard("leagues", "Liga más repetida", stats.topLeague)}
+                  {renderTopCard("seasons", "Temporada más repetida", stats.topSeason)}
+                  {renderTopCard("players", "Jugador más repetido", stats.topPlayer)}
+                  {renderTopCard("numbers", "Dorsal más repetido", stats.topNumber)}
+                  {renderTopCard("countries", "País más repetido", stats.topCountry)}
+                  {renderTopCard("sizes", "Talla más repetida", stats.topSize)}
+                  {renderTopCard("kitTypes", "Equipación más repetida", stats.topKitType)}
                 </div>
               </section>
 
             </>
           ) : (
-            <section className="space-y-7">
+            <section className="space-y-5 sm:space-y-7">
               <FiltersBar
                 filters={filters}
                 leagues={filterOptions.leagues}
@@ -1344,7 +1364,7 @@ export function ShirtCollectionApp({
         </div>
       )}
 
-      {!isShirtDetailOpen ? (
+      {shouldShowFloatingActions ? (
         <div className="floating-actions">
           {!readOnly ? (
             <button className="floating-add" type="button" onClick={openCreateForm}>
@@ -1400,7 +1420,7 @@ export function ShirtCollectionApp({
         </div>
       ) : null}
 
-      {!isShirtDetailOpen && !readOnly && isSelectModeActive && (
+      {shouldShowSelectionBar && (
         <div className="floating-selection-bar" role="toolbar" aria-label="Acciones selección">
           <div className="selection-count">✓ {selectedIds.length} seleccionadas</div>
           <div className="selection-actions">
@@ -1480,7 +1500,7 @@ export function ShirtCollectionApp({
                 type="button"
                 className="stats-modal-close"
                 onClick={closeStatsDetail}
-                aria-label="Cerrar estadistica"
+                aria-label="Cerrar estadística"
               >
                 x
               </button>
@@ -1628,7 +1648,7 @@ export function ShirtCollectionApp({
 
       {!readOnly && deleteConfirmation ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-[160] flex items-center justify-center bg-slate-950/75 px-4 py-8 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-label="Confirmar eliminación"

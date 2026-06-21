@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Shirt } from "../lib/types";
@@ -23,6 +23,7 @@ export function ImageGalleryModal({
 }: ImageGalleryModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const touchStart = useRef(0);
+  const scrollYRef = useRef(0);
 
   const safeCurrentIndex = currentIndex >= shirt.images.length ? 0 : currentIndex;
 
@@ -48,6 +49,29 @@ export function ImageGalleryModal({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleNext, handlePrev, isOpen, onClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    scrollYRef.current = window.scrollY;
+    const originalBodyPosition = document.body.style.position;
+    const originalBodyTop = document.body.style.top;
+    const originalBodyWidth = document.body.style.width;
+    const originalBodyOverflow = document.body.style.overflow;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollYRef.current}px`;
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.position = originalBodyPosition;
+      document.body.style.top = originalBodyTop;
+      document.body.style.width = originalBodyWidth;
+      document.body.style.overflow = originalBodyOverflow;
+      window.scrollTo(0, scrollYRef.current);
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -132,7 +156,10 @@ export function ImageGalleryModal({
                   <button
                     className="gallery-icon-button"
                     type="button"
-                    onClick={() => onEdit(shirt)}
+                    onClick={() => {
+                      onClose();
+                      onEdit(shirt);
+                    }}
                     aria-label="Editar camiseta"
                   >
                     Editar
@@ -140,7 +167,10 @@ export function ImageGalleryModal({
                   <button
                     className="gallery-icon-button"
                     type="button"
-                    onClick={() => onDelete(shirt.id)}
+                    onClick={() => {
+                      onClose();
+                      onDelete(shirt.id);
+                    }}
                     aria-label="Eliminar camiseta"
                   >
                     Eliminar

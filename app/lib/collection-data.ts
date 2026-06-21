@@ -1,4 +1,4 @@
-import type { LeagueCatalog, Shirt, ShirtFormState, ShirtStatus, Sport } from "./types";
+﻿import type { LeagueCatalog, Shirt, ShirtFormState, ShirtStatus, Sport } from "./types";
 
 export const placeholderImages: Record<Sport | "default", string> = {
   default:

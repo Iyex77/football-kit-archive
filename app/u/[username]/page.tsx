@@ -19,7 +19,7 @@ export default async function PublicProfilePage({ params }: PublicProfilePagePro
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, username, display_name, is_public, show_collection, show_wishlist, created_at")
+    .select("id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, created_at")
     .eq("username", normalizedUsername)
     .eq("is_public", true)
     .maybeSingle();

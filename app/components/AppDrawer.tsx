@@ -14,6 +14,7 @@ type AppDrawerProps = {
   onLogout: () => Promise<void> | void;
   onSectionSelect?: () => void;
   isSuppressed?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 type IconName =
@@ -51,7 +52,13 @@ function Icon({ name }: { name: IconName }) {
   );
 }
 
-export function AppDrawer({ profile, onLogout, onSectionSelect, isSuppressed = false }: AppDrawerProps) {
+export function AppDrawer({
+  profile,
+  onLogout,
+  onSectionSelect,
+  isSuppressed = false,
+  onOpenChange,
+}: AppDrawerProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const publicPath = profile?.username ? `/u/${profile.username}` : "";
@@ -77,6 +84,10 @@ export function AppDrawer({ profile, onLogout, onSectionSelect, isSuppressed = f
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
+
+  useEffect(() => {
+    onOpenChange?.(shouldShowDrawer);
+  }, [onOpenChange, shouldShowDrawer]);
 
   return (
     <>
