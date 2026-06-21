@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { categoryLabels, sportLabels, statusLabels } from "../lib/collection-data";
 import type { ShirtCategory, ShirtFilters, ShirtStatus, Sport } from "../lib/types";
 import { SelectField, TextField } from "./FormControls";
@@ -10,6 +11,8 @@ type FiltersBarProps = {
   onFilterChange: <K extends keyof ShirtFilters>(field: K, value: ShirtFilters[K]) => void;
   onReset: () => void;
   showStatusFilter?: boolean;
+  toolbarSlot?: ReactNode;
+  onOpenChange?: (isOpen: boolean) => void;
 };
 
 const sportOptions: Array<"all" | Sport> = ["all", "football", "basketball"];
@@ -31,18 +34,27 @@ export function FiltersBar({
   onFilterChange,
   onReset,
   showStatusFilter = false,
+  toolbarSlot,
+  onOpenChange,
 }: FiltersBarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const countryOptions = withSelectedOption(countries, filters.country);
   const leagueOptions = withSelectedOption(leagues, filters.league);
 
-  const handleToggleMobile = () => setIsMobileOpen((current) => !current);
+  const handleToggleMobile = () => {
+    if (!window.matchMedia("(max-width: 768px)").matches) return;
+    setIsMobileOpen((current) => !current);
+  };
   const handleCloseMobile = () => setIsMobileOpen(false);
 
   const handleReset = () => {
     onReset();
     handleCloseMobile();
   };
+
+  useEffect(() => {
+    onOpenChange?.(isMobileOpen);
+  }, [isMobileOpen, onOpenChange]);
 
   useEffect(() => {
     if (!isMobileOpen) return;
@@ -68,10 +80,18 @@ export function FiltersBar({
 
   return (
     <div className="filters-bar">
-      <button className="filters-mobile-toggle" type="button" onClick={handleToggleMobile}>
-        Filtros
-        {hasActiveFilters ? <span className="filters-badge">×</span> : null}
-      </button>
+      <div className="filters-toolbar">
+        <button
+          className="filters-mobile-toggle"
+          type="button"
+          onClick={handleToggleMobile}
+          aria-expanded={isMobileOpen}
+        >
+          <span>Filtros</span>
+          {hasActiveFilters ? <span className="filters-badge">×</span> : null}
+        </button>
+        {toolbarSlot ? <div className="filters-toolbar-slot">{toolbarSlot}</div> : null}
+      </div>
 
       <div className="filters-grid">
         <TextField

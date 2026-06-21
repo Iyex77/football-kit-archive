@@ -59,12 +59,14 @@ export function ImageGalleryModal({
     const originalBodyWidth = document.body.style.width;
     const originalBodyOverflow = document.body.style.overflow;
 
+    document.body.classList.add("is-shirt-detail-screen");
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollYRef.current}px`;
     document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
 
     return () => {
+      document.body.classList.remove("is-shirt-detail-screen");
       document.body.style.position = originalBodyPosition;
       document.body.style.top = originalBodyTop;
       document.body.style.width = originalBodyWidth;

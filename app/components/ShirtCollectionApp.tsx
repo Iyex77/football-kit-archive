@@ -405,6 +405,7 @@ export function ShirtCollectionApp({
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewingShirtId, setViewingShirtId] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = useState<
     | { type: "single"; id: string }
@@ -529,7 +530,8 @@ export function ShirtCollectionApp({
 
   const editingShirt = shirts.find((shirt) => shirt.id === editingId);
   const viewingShirt = shirts.find((shirt) => shirt.id === viewingShirtId);
-  const isShirtDetailOpen = Boolean(viewingShirt);
+  const isDetailOpen = Boolean(viewingShirt);
+  const isShirtDetailOpen = isDetailOpen;
   const typeOptions = getTypeOptions(form.sport);
   const countryOptions = getCountryOptions(form.sport, form.category);
   const leagueOptions = getLeagueOptions(form.sport, form.category, form.country);
@@ -666,7 +668,8 @@ export function ShirtCollectionApp({
     setSelectedIds((current) => (current.includes(id) ? current.filter((x) => x !== id) : [id, ...current]));
   };
 
-  const isSelectModeActive = !readOnly && selectedIds.length > 0;
+  const isSelectionMode = !readOnly && selectedIds.length > 0;
+  const isSelectModeActive = isSelectionMode;
 
   const openCreateForm = () => {
     if (readOnly) return;
@@ -1041,6 +1044,55 @@ export function ShirtCollectionApp({
   const getShirtsForStatsItem = (key: StatsDetailKey, entry: StatsRankingEntry) =>
     filteredShirts.filter((shirt) => normalizeStatsKey(getStatsValue(shirt, key)) === entry.key);
 
+  const renderViewIcon = (style: CollectionViewStyle) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
+        {style === "compact" ? (
+          <>
+            <path d="M8 6h12" />
+            <path d="M8 12h12" />
+            <path d="M8 18h12" />
+            <path d="M4 6h.01" />
+            <path d="M4 12h.01" />
+            <path d="M4 18h.01" />
+          </>
+        ) : (
+          <>
+            <path d="M4 4h6v6H4z" />
+            <path d="M14 4h6v6h-6z" />
+            <path d="M4 14h6v6H4z" />
+            <path d="M14 14h6v6h-6z" />
+          </>
+        )}
+      </g>
+    </svg>
+  );
+
+  const viewStyleControl = (
+    <div className="view-style-toggle" role="group" aria-label="Selector de vista">
+      <button
+        type="button"
+        className={collectionViewStyle === "compact" ? "is-active" : ""}
+        aria-pressed={collectionViewStyle === "compact"}
+        aria-label="Vista compacta"
+        title="Vista compacta"
+        onClick={() => handleCollectionViewStyleChange("compact")}
+      >
+        {renderViewIcon("compact")}
+      </button>
+      <button
+        type="button"
+        className={collectionViewStyle === "grid" ? "is-active" : ""}
+        aria-pressed={collectionViewStyle === "grid"}
+        aria-label="Vista grid"
+        title="Vista grid"
+        onClick={() => handleCollectionViewStyleChange("grid")}
+      >
+        {renderViewIcon("grid")}
+      </button>
+    </div>
+  );
+
   const getStatsItemTitle = (key: StatsDetailKey, name: string) => {
     if (key === "numbers") return `Dorsal #${name}`;
     return name;
@@ -1057,6 +1109,7 @@ export function ShirtCollectionApp({
     const playerNumberLabel = shirt.number.trim() ? `${playerLabel} · #${shirt.number.trim()}` : playerLabel;
     const kitLabel = shirt.kitType.trim() || "Sin equipación";
     const locationLabel = [shirt.league.trim(), shirt.country.trim()].filter(Boolean).join(" · ") || "Sin liga";
+    const detailLabel = [shirt.league.trim(), shirt.country.trim(), kitLabel].filter(Boolean).join(" · ");
     const isSelected = selectedIds.includes(shirt.id);
 
     return (
@@ -1088,6 +1141,7 @@ export function ShirtCollectionApp({
         <div className="compact-shirt-main">
           <p className="compact-shirt-title">{shirt.team} - {shirt.season}</p>
           <p className="compact-shirt-subtitle">{playerNumberLabel}</p>
+          <p className="compact-shirt-detail">{detailLabel}</p>
         </div>
 
         <div className="compact-shirt-meta compact-shirt-kit">
@@ -1276,24 +1330,20 @@ export function ShirtCollectionApp({
     : [];
   const hasNoPublicSections =
     readOnly && profile?.show_collection === false && profile?.show_wishlist === false;
-  const hasBlockingLayer =
-    isShirtDetailOpen ||
-    isDrawerOpen ||
+  const isMenuOpen = isDrawerOpen;
+  const isAnyOverlayOpen =
+    isFiltersOpen ||
     isFormOpen ||
-    isSelectModeActive ||
     Boolean(deleteConfirmation) ||
     Boolean(statsDetail) ||
     Boolean(selectedStatsItem);
-  const shouldShowFloatingActions = !hasBlockingLayer;
+  const shouldShowFloatingActions = !isAnyOverlayOpen && !isDetailOpen && !isMenuOpen && !isSelectionMode;
   const shouldShowSelectionBar =
-    !isShirtDetailOpen &&
-    !isDrawerOpen &&
-    !isFormOpen &&
     !readOnly &&
-    isSelectModeActive &&
-    !deleteConfirmation &&
-    !statsDetail &&
-    !selectedStatsItem;
+    isSelectionMode &&
+    !isAnyOverlayOpen &&
+    !isDetailOpen &&
+    !isMenuOpen;
   const pageTitle =
     readOnly
       ? profile?.display_name || profile?.username || "Camisetas"
@@ -1418,6 +1468,8 @@ export function ShirtCollectionApp({
                 onFilterChange={handleFilterChange}
                 onReset={() => setFilters(emptyFilters)}
                 showStatusFilter={readOnly || viewMode === "all"}
+                toolbarSlot={viewStyleControl}
+                onOpenChange={setIsFiltersOpen}
               />
 
               <div className="collection-heading">
@@ -1426,24 +1478,6 @@ export function ShirtCollectionApp({
                     {viewMode === "all" ? "Todas las camisetas" : viewMode === "collection" ? "Colección" : "Wishlist"}
                   </p>
                   <h2>{filteredShirts.length} camisetas visibles</h2>
-                </div>
-                <div className="view-style-toggle" role="group" aria-label="Selector de vista">
-                  <button
-                    type="button"
-                    className={collectionViewStyle === "grid" ? "is-active" : ""}
-                    aria-pressed={collectionViewStyle === "grid"}
-                    onClick={() => handleCollectionViewStyleChange("grid")}
-                  >
-                    Grid
-                  </button>
-                  <button
-                    type="button"
-                    className={collectionViewStyle === "compact" ? "is-active" : ""}
-                    aria-pressed={collectionViewStyle === "compact"}
-                    onClick={() => handleCollectionViewStyleChange("compact")}
-                  >
-                    Compacta
-                  </button>
                 </div>
               </div>
 
@@ -1496,7 +1530,8 @@ export function ShirtCollectionApp({
         <div className="floating-actions">
           {!readOnly ? (
             <button className="floating-add" type="button" onClick={openCreateForm}>
-              + Añadir camiseta
+              <span className="floating-add-label-full">+ Añadir camiseta</span>
+              <span className="floating-add-label-short">+ Añadir</span>
             </button>
           ) : null}
 
