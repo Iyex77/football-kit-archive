@@ -3091,14 +3091,17 @@ img {
 
 @media (max-width: 768px) {
   .gallery-modal-backdrop {
-    align-items: stretch;
-    padding: max(0.85rem, env(safe-area-inset-top)) 0.5rem max(0.5rem, env(safe-area-inset-bottom));
+    align-items: center;
+    padding:
+      max(15dvh, calc(env(safe-area-inset-top) + 0.75rem))
+      5vw
+      max(15dvh, calc(env(safe-area-inset-bottom) + 0.75rem));
   }
 
   .gallery-modal-shell {
-    width: 100%;
-    height: auto;
-    max-height: calc(100dvh - 1rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    width: 90vw;
+    height: 70dvh;
+    max-height: 70dvh;
     overflow-x: hidden !important;
     overflow-y: auto !important;
   }
@@ -3128,7 +3131,7 @@ img {
   }
 
   .gallery-premium-container {
-    height: auto;
+    min-height: 100%;
     gap: 0.65rem;
     overflow: visible;
     padding: 0.65rem;
@@ -3144,8 +3147,8 @@ img {
   .gallery-image-container {
     flex: 0 0 auto;
     width: 100%;
-    height: clamp(16rem, 44dvh, 24rem);
-    max-height: 46dvh;
+    height: clamp(18rem, 42dvh, 28rem);
+    max-height: 42dvh;
     border-radius: 9px;
   }
 
