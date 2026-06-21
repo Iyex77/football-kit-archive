@@ -10,6 +10,7 @@ import {
   emptyFilters,
   placeholderImages,
   sportLabels,
+  statusLabels,
 } from "../lib/collection-data";
 import type {
   Shirt,
@@ -30,6 +31,7 @@ import { ShirtForm } from "./ShirtForm";
 
 type SortField = "added" | "team" | "player" | "number" | "season";
 type SortDirection = "asc" | "desc";
+type CollectionViewStyle = "grid" | "compact";
 
 type SortBy = {
   field: SortField;
@@ -88,6 +90,8 @@ const sortOptions: Array<{ field: SortField; label: string; ascLabel: string; de
   { field: "number", label: "Dorsal", ascLabel: "0-99", descLabel: "99-0" },
   { field: "season", label: "Temporada", ascLabel: "Antigua primero", descLabel: "Reciente primero" },
 ];
+
+const viewPreferenceKey = "football-kit-archive-view-style";
 
 const compactLabel = (value: string) => value.trim().replace(/\s+/g, " ");
 
@@ -408,11 +412,21 @@ export function ShirtCollectionApp({
     | null
   >(null);
   const [sortBy, setSortBy] = useState<SortBy>({ field: "added", direction: "desc" });
+  const [collectionViewStyle, setCollectionViewStyle] = useState<CollectionViewStyle>(() => {
+    if (typeof window === "undefined") return "grid";
+    const storedView = window.localStorage.getItem(viewPreferenceKey);
+    return storedView === "compact" || storedView === "grid" ? storedView : "grid";
+  });
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const formBackdropPointerStartedInsideRef = useRef(false);
   const [statsDetailKey, setStatsDetailKey] = useState<StatsDetailKey | null>(null);
   const [selectedStatsItem, setSelectedStatsItem] = useState<SelectedStatsItem | null>(null);
+
+  const handleCollectionViewStyleChange = (nextView: CollectionViewStyle) => {
+    setCollectionViewStyle(nextView);
+    window.localStorage.setItem(viewPreferenceKey, nextView);
+  };
   useEffect(() => {
     if (!readOnly) {
       loadShirts();
@@ -1037,6 +1051,98 @@ export function ShirtCollectionApp({
     return mainImage?.url || placeholderImages[shirt.sport] || placeholderImages.default;
   };
 
+  const renderCompactRow = (shirt: Shirt) => {
+    const isWishlist = shirt.status === "wishlist";
+    const playerLabel = shirt.player.trim() || "Sin jugador";
+    const playerNumberLabel = shirt.number.trim() ? `${playerLabel} · #${shirt.number.trim()}` : playerLabel;
+    const kitLabel = shirt.kitType.trim() || "Sin equipación";
+    const locationLabel = [shirt.league.trim(), shirt.country.trim()].filter(Boolean).join(" · ") || "Sin liga";
+    const isSelected = selectedIds.includes(shirt.id);
+
+    return (
+      <article
+        key={shirt.id}
+        className={`compact-shirt-row ${isSelectModeActive ? "selection-active" : ""} ${isSelected ? "is-selected" : ""}`}
+        onClick={() => handleCardClick(shirt.id)}
+      >
+        {!readOnly ? (
+          <button
+            className={`compact-select-checkbox ${isSelected ? "checked" : ""}`}
+            type="button"
+            aria-pressed={isSelected}
+            aria-label={isSelected ? "Deseleccionar" : "Seleccionar"}
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleSelect(shirt.id);
+            }}
+          >
+            {isSelected ? "✓" : ""}
+          </button>
+        ) : null}
+
+        <div className="compact-shirt-thumb">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={getShirtImageUrl(shirt)} alt={`${shirt.team} ${shirt.season}`} loading="lazy" />
+        </div>
+
+        <div className="compact-shirt-main">
+          <p className="compact-shirt-title">{shirt.team} - {shirt.season}</p>
+          <p className="compact-shirt-subtitle">{playerNumberLabel}</p>
+        </div>
+
+        <div className="compact-shirt-meta compact-shirt-kit">
+          <span>Equipación</span>
+          <strong>{kitLabel}</strong>
+        </div>
+
+        <div className="compact-shirt-meta compact-shirt-location">
+          <span>Liga · País</span>
+          <strong>{locationLabel}</strong>
+        </div>
+
+        <button
+          className={`shirt-card-badge compact-status ${isWishlist ? "badge-wishlist" : "badge-collection"}`}
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            if (!readOnly && isWishlist) {
+              handleToggleWishlist(shirt.id);
+            }
+          }}
+          aria-label={isWishlist ? "Mover a colección" : "Estado colección"}
+          disabled={readOnly || !isWishlist}
+        >
+          {statusLabels[shirt.status]}
+        </button>
+
+        {!readOnly ? (
+          <div className="compact-row-actions" aria-label="Acciones rápidas">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleEdit(shirt);
+              }}
+              aria-label="Editar camiseta"
+            >
+              ✎
+            </button>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleDeleteRequested(shirt.id);
+              }}
+              aria-label="Eliminar camiseta"
+            >
+              ×
+            </button>
+          </div>
+        ) : null}
+      </article>
+    );
+  };
+
   const getRankingPresenceIcons = (entry: StatsRankingEntry) => {
     if (entry.collection > 0 && entry.wishlist > 0) return "Colección + Wishlist";
     if (entry.collection > 0) return "Colección";
@@ -1321,25 +1427,47 @@ export function ShirtCollectionApp({
                   </p>
                   <h2>{filteredShirts.length} camisetas visibles</h2>
                 </div>
+                <div className="view-style-toggle" role="group" aria-label="Selector de vista">
+                  <button
+                    type="button"
+                    className={collectionViewStyle === "grid" ? "is-active" : ""}
+                    aria-pressed={collectionViewStyle === "grid"}
+                    onClick={() => handleCollectionViewStyleChange("grid")}
+                  >
+                    Grid
+                  </button>
+                  <button
+                    type="button"
+                    className={collectionViewStyle === "compact" ? "is-active" : ""}
+                    aria-pressed={collectionViewStyle === "compact"}
+                    onClick={() => handleCollectionViewStyleChange("compact")}
+                  >
+                    Compacta
+                  </button>
+                </div>
               </div>
 
               {sortedShirts.length > 0 ? (
-                <div className="collection-grid">
-                  {sortedShirts.map((shirt) => (
-                    <ShirtCard
-                      key={shirt.id}
-                      shirt={shirt}
-                      onCardClick={handleCardClick}
-                      onEdit={handleEdit}
-                      onDelete={handleDeleteRequested}
-                      onToggleWishlist={handleToggleWishlist}
-                      isSelectModeActive={isSelectModeActive}
-                      isSelected={selectedIds.includes(shirt.id)}
-                      onToggleSelect={toggleSelect}
-                      readOnly={readOnly}
-                    />
-                  ))}
-                </div>
+                collectionViewStyle === "compact" ? (
+                  <div className="compact-shirt-list">{sortedShirts.map(renderCompactRow)}</div>
+                ) : (
+                  <div className="collection-grid">
+                    {sortedShirts.map((shirt) => (
+                      <ShirtCard
+                        key={shirt.id}
+                        shirt={shirt}
+                        onCardClick={handleCardClick}
+                        onEdit={handleEdit}
+                        onDelete={handleDeleteRequested}
+                        onToggleWishlist={handleToggleWishlist}
+                        isSelectModeActive={isSelectModeActive}
+                        isSelected={selectedIds.includes(shirt.id)}
+                        onToggleSelect={toggleSelect}
+                        readOnly={readOnly}
+                      />
+                    ))}
+                  </div>
+                )
               ) : (
                 <div className="empty-state">
                   {hasNoPublicSections ? (

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase-auth";
-import type { Profile } from "../lib/types";
+import type { Profile, Shirt } from "../lib/types";
 import { notify } from "../lib/notify";
 import { AppDrawer } from "./AppDrawer";
 import { TextField } from "./FormControls";
@@ -35,6 +35,28 @@ const acceptedAvatarTypes = ["image/jpeg", "image/png", "image/webp"];
 const profileSelect = "id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, created_at";
 const publicProfileUrl = (username: string) =>
   `https://football-kit-archive.vercel.app/u/${username}`;
+const exportFields = [
+  "id",
+  "sport",
+  "category",
+  "team",
+  "customTeam",
+  "season",
+  "player",
+  "number",
+  "kitType",
+  "size",
+  "status",
+  "country",
+  "league",
+  "notes",
+  "imageUrl",
+  "created_at",
+  "updated_at",
+] as const;
+
+type ExportField = (typeof exportFields)[number];
+type ExportRow = Record<ExportField, string>;
 
 const getInitial = (displayName: string, username: string) =>
   (displayName || username || "?").slice(0, 1).toUpperCase();
@@ -50,6 +72,66 @@ const formatDate = (value?: string) => {
     month: "short",
     year: "numeric",
   }).format(date);
+};
+
+const getExportDate = () => new Date().toISOString().slice(0, 10);
+
+const csvEscape = (value: string) => {
+  if (/[",\r\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+};
+
+const getMainImageUrl = (shirt: Shirt) => {
+  const mainImage = shirt.images?.find((image) => image.id === shirt.mainImageId) || shirt.images?.[0];
+  return mainImage?.url || "";
+};
+
+const toExportRow = (shirt: Shirt): ExportRow => {
+  const shirtWithOptionalFields = shirt as Shirt & {
+    customTeam?: string | null;
+    imageUrl?: string | null;
+    updated_at?: string | null;
+  };
+
+  return {
+    id: shirt.id || "",
+    sport: shirt.sport || "",
+    category: shirt.category || "",
+    team: shirt.team || "",
+    customTeam: shirtWithOptionalFields.customTeam || "",
+    season: shirt.season || "",
+    player: shirt.player || "",
+    number: shirt.number || "",
+    kitType: shirt.kitType || "",
+    size: shirt.size || "",
+    status: shirt.status || "",
+    country: shirt.country || "",
+    league: shirt.league || "",
+    notes: shirt.notes || "",
+    imageUrl: shirtWithOptionalFields.imageUrl || getMainImageUrl(shirt),
+    created_at: shirt.created_at || "",
+    updated_at: shirtWithOptionalFields.updated_at || "",
+  };
+};
+
+const downloadTextFile = (content: string, filename: string, type: string) => {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
+const exportRowsToCsv = (rows: ExportRow[]) => {
+  const header = exportFields.join(",");
+  const body = rows.map((row) => exportFields.map((field) => csvEscape(row[field])).join(","));
+  return `\uFEFF${[header, ...body].join("\r\n")}`;
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -86,6 +168,8 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [copiedJson, setCopiedJson] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
 
@@ -459,6 +543,69 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
     window.setTimeout(() => setCopiedUserId(false), 1800);
   };
 
+  const loadExportRows = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      notify.error("Sesión expirada, inicia sesión otra vez.");
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from("shirts")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      notify.error(error.message || "No se pudieron preparar los datos.");
+      return null;
+    }
+
+    return (data as Shirt[]).map(toExportRow);
+  };
+
+  const handleDownloadExport = async (format: "json" | "csv") => {
+    setIsExporting(true);
+    const rows = await loadExportRows();
+    setIsExporting(false);
+
+    if (!rows) return;
+
+    const date = getExportDate();
+    if (format === "json") {
+      downloadTextFile(
+        JSON.stringify(rows, null, 2),
+        `football-kit-archive-export-${date}.json`,
+        "application/json;charset=utf-8",
+      );
+      notify.success("Exportación JSON descargada");
+      return;
+    }
+
+    downloadTextFile(
+      exportRowsToCsv(rows),
+      `football-kit-archive-export-${date}.csv`,
+      "text/csv;charset=utf-8",
+    );
+    notify.success("Exportación CSV descargada");
+  };
+
+  const handleCopyJsonExport = async () => {
+    setIsExporting(true);
+    const rows = await loadExportRows();
+    setIsExporting(false);
+
+    if (!rows) return;
+
+    await navigator.clipboard.writeText(JSON.stringify(rows, null, 2));
+    setCopiedJson(true);
+    window.setTimeout(() => setCopiedJson(false), 1800);
+    notify.success("JSON copiado");
+  };
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#142f2d_0,#090d13_36rem,#05070b_100%)] px-4 py-5 text-slate-100 sm:px-6 sm:py-7 lg:px-10">
       <AppDrawer profile={profile} onLogout={onLogout} />
@@ -669,6 +816,47 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
                 <button className="ghost-button" type="button" onClick={onLogout}>
                   Cerrar sesión
                 </button>
+              </div>
+            </section>
+
+            <section className="profile-panel">
+              <div className="section-heading">
+                <div>
+                  <p>Backup</p>
+                  <h2>Exportar datos</h2>
+                </div>
+              </div>
+              <div className="export-card">
+                <div>
+                  <h3>Colección y wishlist</h3>
+                  <p>Descarga una copia local para backup o para compartir tu colección fuera de la app.</p>
+                </div>
+                <div className="export-actions">
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => handleDownloadExport("json")}
+                    disabled={isExporting || !userId}
+                  >
+                    Descargar JSON
+                  </button>
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() => handleDownloadExport("csv")}
+                    disabled={isExporting || !userId}
+                  >
+                    Descargar CSV
+                  </button>
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={handleCopyJsonExport}
+                    disabled={isExporting || !userId}
+                  >
+                    {copiedJson ? "JSON copiado" : "Copiar JSON"}
+                  </button>
+                </div>
               </div>
             </section>
           </>
