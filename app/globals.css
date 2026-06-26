@@ -319,24 +319,104 @@ body.is-shirt-detail-screen .sort-dropdown {
   justify-content: space-between;
   gap: 1rem;
   border-bottom: 1px solid var(--border-soft);
-  padding: 0.42rem 0.1rem 0.9rem;
+  padding: 0.42rem 0.1rem 0.78rem;
 }
 
 .drawer-header h2 {
-  margin-top: 0.45rem;
+  margin-top: 0.22rem;
   color: white;
   font-family: var(--font-sans);
-  font-size: 1.16rem;
-  font-weight: 400;
+  font-size: 1.02rem;
+  font-weight: 650;
   letter-spacing: 0;
+  line-height: 1.15;
 }
 
 .drawer-header .eyebrow {
   font-family: var(--font-display);
   color: rgb(214 222 232);
-  font-size: 1.02rem;
+  font-size: 0.82rem;
   font-weight: 400;
   letter-spacing: 0.12em;
+  line-height: 1;
+}
+
+.drawer-user-card {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  grid-template-columns: 3.05rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.drawer-avatar {
+  display: grid;
+  width: 3.05rem;
+  height: 3.05rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 25%, rgb(72 198 187 / 0.35), transparent 48%),
+    rgb(15 23 42 / 0.82);
+  color: rgb(226 252 249);
+  font-size: 1.05rem;
+  font-weight: 800;
+  box-shadow: 0 14px 36px rgb(0 0 0 / 0.26);
+}
+
+.drawer-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.drawer-user-copy {
+  min-width: 0;
+}
+
+.drawer-user-copy h2,
+.drawer-username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drawer-username {
+  margin-top: 0.18rem;
+  color: rgb(148 163 184);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.drawer-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.28rem;
+  margin-top: 0.56rem;
+}
+
+.drawer-stats span {
+  display: grid;
+  gap: 0.08rem;
+  min-width: 0;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.035);
+  color: rgb(151 163 179);
+  padding: 0.34rem 0.4rem;
+  font-size: 0.58rem;
+  font-weight: 650;
+  line-height: 1.05;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.drawer-stats strong {
+  color: white;
+  font-size: 0.9rem;
   line-height: 1;
 }
 
@@ -1912,7 +1992,9 @@ body.is-shirt-detail-screen .sort-dropdown {
 .danger-button,
 .quiet-button,
 .icon-button,
-.floating-add {
+.floating-add,
+.floating-view-button,
+.floating-filter-button {
   font-family: var(--font-sans);
   min-height: 2.5rem;
   border-radius: 10px;
@@ -1965,7 +2047,9 @@ body.is-shirt-detail-screen .sort-dropdown {
 .danger-button:hover,
 .quiet-button:hover,
 .icon-button:hover,
-.floating-add:hover {
+.floating-add:hover,
+.floating-view-button:hover,
+.floating-filter-button:hover {
   transform: translateY(-1px);
 }
 
@@ -1973,11 +2057,17 @@ body.is-shirt-detail-screen .sort-dropdown {
   position: fixed;
   right: clamp(1rem, 3vw, 2rem);
   bottom: max(clamp(1rem, 3vw, 2rem), calc(env(safe-area-inset-bottom) + 1rem));
-  z-index: 60;
+  z-index: 90;
   display: inline-flex;
   flex-direction: row !important;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.46rem;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 999px;
+  background: rgb(3 8 20 / 0.58);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.34);
+  padding: 0.26rem;
+  backdrop-filter: blur(18px);
 }
 
 .floating-reset-button {
@@ -2002,19 +2092,75 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .floating-add {
-  order: 1 !important;
+  order: 2 !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  min-height: 2.6rem;
-  padding: 0 1.05rem;
+  min-height: 2.5rem;
+  padding: 0 0.95rem;
   border-radius: 999px;
   border: 1px solid rgb(72 198 187 / 0.36);
   background: rgb(72 198 187 / 0.18);
   color: rgb(222 250 247);
   white-space: nowrap;
-  box-shadow: 0 18px 54px rgb(0 0 0 / 0.32);
+  box-shadow: none;
+}
+
+.floating-filter-button {
+  position: relative;
+  order: 4 !important;
+  display: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  place-items: center;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.035);
+  color: rgb(204 212 224);
+  padding: 0;
+  font-size: 1rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  backdrop-filter: blur(12px);
+}
+
+.floating-view-button {
+  order: 3 !important;
+  display: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  place-items: center;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.035);
+  color: rgb(204 212 224);
+  padding: 0;
+  backdrop-filter: blur(12px);
+}
+
+.floating-view-button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.floating-view-button.is-compact {
+  border-color: rgb(250 204 21 / 0.28);
+  background: rgb(250 204 21 / 0.12);
+  color: rgb(250 204 21);
+}
+
+.floating-filter-dot {
+  position: absolute;
+  top: 0.42rem;
+  right: 0.42rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: rgb(72 198 187);
+  box-shadow: 0 0 0 3px rgb(72 198 187 / 0.14);
 }
 
 .floating-add-label-short {
@@ -2090,7 +2236,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   position: relative;
   display: inline-flex;
   align-items: center;
-  order: 2 !important;
+  order: 1 !important;
 }
 
 .sort-icon-button {
@@ -2763,18 +2909,15 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .filters-mobile-drawer-backdrop {
   position: fixed;
-  top: 5.5rem;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgb(0 0 0 / 0.42);
   backdrop-filter: blur(8px);
-  z-index: 180;
+  z-index: 260;
 }
 
 .filters-mobile-dropdown {
   position: absolute;
-  top: 0;
+  top: calc(env(safe-area-inset-top) + 4.35rem);
   left: 0.75rem;
   right: 0.75rem;
   max-width: 720px;
@@ -2784,7 +2927,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   box-shadow: 0 24px 80px rgb(0 0 0 / 0.35);
   display: flex;
   flex-direction: column;
-  max-height: calc(80vh);
+  max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 5.7rem);
   overflow: hidden;
   animation: slideInDown 220ms ease;
 }
@@ -2886,17 +3029,32 @@ body.is-shirt-detail-screen .sort-dropdown {
   .floating-actions {
     left: 50%;
     right: auto;
-    bottom: calc(env(safe-area-inset-bottom) + 16px);
+    bottom: calc(env(safe-area-inset-bottom) + 0.7rem);
     transform: translateX(-50%);
-    gap: 0.42rem;
+    gap: 0.28rem;
+    max-width: calc(100vw - 1.2rem);
   }
 
   .floating-add {
     min-height: 44px;
-    padding: 0 1rem;
+    padding: 0 0.9rem;
     border-radius: 999px;
     font-size: 0.78rem;
-    box-shadow: 0 12px 34px rgb(0 0 0 / 0.28);
+    font-weight: 750;
+    box-shadow: none;
+  }
+
+  .sort-icon-button,
+  .floating-view-button,
+  .floating-filter-button {
+    width: 2.55rem;
+    height: 2.55rem;
+    min-height: 2.55rem;
+  }
+
+  .floating-view-button,
+  .floating-filter-button {
+    display: inline-grid;
   }
 
   .floating-add-label-full {
@@ -3025,9 +3183,9 @@ body.is-shirt-detail-screen .sort-dropdown {
   }
 
   .filters-bar {
-    position: sticky;
-    top: calc(env(safe-area-inset-top) + 3.65rem);
-    z-index: 80;
+    position: static;
+    top: auto;
+    z-index: 40;
     border-radius: 10px;
     padding: 0.34rem;
     border: 1px solid rgb(255 255 255 / 0.075);
@@ -3047,6 +3205,10 @@ body.is-shirt-detail-screen .sort-dropdown {
 
   .filters-toolbar {
     gap: 0.5rem;
+  }
+
+  .filters-toolbar-slot {
+    display: none;
   }
 
   .collection-heading {
@@ -3850,26 +4012,26 @@ body.is-shirt-detail-screen .sort-dropdown {
 
   .gallery-premium-container {
     min-height: 100%;
-    gap: 0.65rem;
+    gap: 0.58rem;
     overflow: visible;
     padding:
-      calc(env(safe-area-inset-top) + 4.2rem)
+      calc(env(safe-area-inset-top) + 3.35rem)
       max(0.85rem, env(safe-area-inset-right))
-      calc(env(safe-area-inset-bottom) + 1rem)
+      calc(env(safe-area-inset-bottom) + 0.55rem)
       max(0.85rem, env(safe-area-inset-left));
   }
 
   .gallery-premium-viewer {
     min-height: 0;
-    gap: 0.55rem;
+    gap: 0.54rem;
     overflow: visible;
   }
 
   .gallery-image-container {
     flex: 0 0 auto;
     width: 100%;
-    height: clamp(18rem, 42dvh, 28rem);
-    max-height: 42dvh;
+    height: clamp(23rem, 56dvh, 38rem);
+    max-height: 56dvh;
     border-radius: 9px;
   }
 
@@ -3917,12 +4079,12 @@ body.is-shirt-detail-screen .sort-dropdown {
   .gallery-premium-header {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.55rem;
+    gap: 0.5rem;
     padding: 0.1rem 0 0;
   }
 
   .gallery-meta-compact {
-    gap: 0.18rem;
+    gap: 0.24rem;
     min-width: 0;
   }
 
@@ -3930,6 +4092,17 @@ body.is-shirt-detail-screen .sort-dropdown {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .gallery-meta-compact p:first-child {
+    font-size: 0.84rem;
+    letter-spacing: 0.1em;
+  }
+
+  .gallery-meta-compact p:last-child {
+    font-size: 1.04rem;
+    font-weight: 760;
+    color: rgb(226 232 240);
   }
 
   .gallery-modal-header {
@@ -3942,15 +4115,16 @@ body.is-shirt-detail-screen .sort-dropdown {
     display: grid;
     width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.55rem;
+    gap: 0.5rem;
     justify-content: stretch;
     margin-top: 0;
   }
 
   .gallery-icon-button {
     width: 100%;
-    min-height: 2.35rem;
+    min-height: 2.45rem;
     padding: 0 0.7rem;
+    font-size: 0.92rem;
   }
 
   .gallery-modal-header h3 {
@@ -3967,14 +4141,26 @@ body.is-shirt-detail-screen .sort-dropdown {
 
   .gallery-details-compact {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.5rem;
+    gap: 0.58rem 0.8rem;
     max-height: none;
     overflow: visible;
-    padding: 0.65rem;
+    padding: 0.72rem 0.68rem;
   }
 
   .detail-compact-item {
     min-width: 0;
+    gap: 0.32rem;
+  }
+
+  .detail-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.09em;
+  }
+
+  .detail-value {
+    font-size: 1.02rem;
+    font-weight: 680;
+    line-height: 1.2;
   }
 
   .detail-value {

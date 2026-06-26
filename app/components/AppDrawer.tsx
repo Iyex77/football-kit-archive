@@ -15,6 +15,11 @@ type AppDrawerProps = {
   onSectionSelect?: () => void;
   isSuppressed?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  stats?: {
+    total: number;
+    collection: number;
+    wishlist: number;
+  };
 };
 
 type IconName =
@@ -58,11 +63,15 @@ export function AppDrawer({
   onSectionSelect,
   isSuppressed = false,
   onOpenChange,
+  stats,
 }: AppDrawerProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const publicPath = profile?.username ? `/u/${profile.username}` : "";
   const shouldShowDrawer = isOpen && !isSuppressed;
+  const displayName = profile?.display_name || profile?.username || "Mi cuenta";
+  const username = profile?.username ? `@${profile.username}` : "Perfil privado";
+  const initial = displayName.trim().charAt(0).toUpperCase() || "F";
 
   const close = () => setIsOpen(false);
   const itemClass = (href: string) => `drawer-link ${pathname === href ? "is-active" : ""}`;
@@ -109,9 +118,36 @@ export function AppDrawer({
 
       <aside className={`app-drawer ${shouldShowDrawer ? "is-open" : ""}`} aria-hidden={!shouldShowDrawer}>
         <div className="drawer-header">
-          <div>
-            <p className="eyebrow">Football Kit Archive</p>
-            <h2>{profile?.display_name || profile?.username || "Mi cuenta"}</h2>
+          <div className="drawer-user-card">
+            <div className="drawer-avatar" aria-hidden="true">
+              {profile?.avatar_url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={profile.avatar_url} alt="" />
+              ) : (
+                <span>{initial}</span>
+              )}
+            </div>
+            <div className="drawer-user-copy">
+              <p className="eyebrow">Football Kit Archive</p>
+              <h2>{displayName}</h2>
+              <p className="drawer-username">{username}</p>
+              {stats ? (
+                <div className="drawer-stats" aria-label="Resumen de camisetas">
+                  <span>
+                    <strong>{stats.total}</strong>
+                    Total
+                  </span>
+                  <span>
+                    <strong>{stats.collection}</strong>
+                    Colección
+                  </span>
+                  <span>
+                    <strong>{stats.wishlist}</strong>
+                    Wishlist
+                  </span>
+                </div>
+              ) : null}
+            </div>
           </div>
           <button className="drawer-close" type="button" aria-label="Cerrar menú" onClick={close}>
             x

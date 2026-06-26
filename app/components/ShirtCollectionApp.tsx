@@ -547,6 +547,16 @@ export function ShirtCollectionApp({
   });
   
   const filteredShirts = viewModeFilteredShirts.filter((shirt) => matchesFilters(shirt, filters));
+  const drawerStats = useMemo(() => {
+    const collectionCount = shirts.filter((shirt) => shirt.status === "collection").length;
+    const wishlistCount = shirts.filter((shirt) => shirt.status === "wishlist").length;
+
+    return {
+      total: shirts.length,
+      collection: collectionCount,
+      wishlist: wishlistCount,
+    };
+  }, [shirts]);
   const stats = useMemo(() => {
     const collection = filteredShirts.filter((shirt) => shirt.status === "collection");
     const wishlist = filteredShirts.filter((shirt) => shirt.status === "wishlist");
@@ -1363,6 +1373,7 @@ export function ShirtCollectionApp({
         <AppDrawer
           profile={profile}
           onLogout={onLogout}
+          stats={drawerStats}
           isSuppressed={isShirtDetailOpen}
           onOpenChange={setIsDrawerOpen}
           onSectionSelect={() => {
@@ -1470,6 +1481,7 @@ export function ShirtCollectionApp({
                 showStatusFilter={readOnly || viewMode === "all"}
                 toolbarSlot={viewStyleControl}
                 onOpenChange={setIsFiltersOpen}
+                mobileOpen={isFiltersOpen}
               />
 
               <div className="collection-heading">
@@ -1528,13 +1540,6 @@ export function ShirtCollectionApp({
 
       {shouldShowFloatingActions ? (
         <div className="floating-actions">
-          {!readOnly ? (
-            <button className="floating-add" type="button" onClick={openCreateForm}>
-              <span className="floating-add-label-full">+ Añadir camiseta</span>
-              <span className="floating-add-label-short">+ Añadir</span>
-            </button>
-          ) : null}
-
           <div className="sort-control" ref={sortDropdownRef}>
             <button
               type="button"
@@ -1543,8 +1548,9 @@ export function ShirtCollectionApp({
               aria-expanded={isSortOpen}
               onClick={() => setIsSortOpen((current) => !current)}
               title="Ordenar por"
+              aria-label="Ordenar"
             >
-              ↑↓
+              ↕
             </button>
 
             {isSortOpen && (
@@ -1570,16 +1576,44 @@ export function ShirtCollectionApp({
             )}
           </div>
 
-          {(filters.search.trim() !== "" || filters.sport !== "all" || filters.category !== "all" || filters.league !== "all" || filters.country !== "all" || filters.year.trim() !== "" || filters.status !== "all") && (
-            <button
-              className="floating-reset-button"
-              type="button"
-              onClick={() => setFilters(emptyFilters)}
-              aria-label="Restablecer filtros"
-            >
-              ×
+          {!readOnly ? (
+            <button className="floating-add" type="button" onClick={openCreateForm}>
+              <span className="floating-add-label-full">+ Añadir camiseta</span>
+              <span className="floating-add-label-short">+ Añadir</span>
             </button>
-          )}
+          ) : null}
+
+          <button
+            className={`floating-view-button ${collectionViewStyle === "compact" ? "is-compact" : "is-grid"}`}
+            type="button"
+            onClick={() => {
+              setIsSortOpen(false);
+              handleCollectionViewStyleChange(collectionViewStyle === "compact" ? "grid" : "compact");
+            }}
+            aria-label={collectionViewStyle === "compact" ? "Cambiar a vista normal" : "Cambiar a vista compacta"}
+            aria-pressed={collectionViewStyle === "compact"}
+            title={collectionViewStyle === "compact" ? "Vista normal" : "Vista compacta"}
+          >
+            {renderViewIcon(collectionViewStyle === "compact" ? "grid" : "compact")}
+          </button>
+
+          <button
+            className="floating-filter-button"
+            type="button"
+            onClick={() => {
+              setIsSortOpen(false);
+              setIsFiltersOpen((current) => !current);
+            }}
+            aria-label="Filtros"
+            aria-expanded={isFiltersOpen}
+            title="Filtros"
+          >
+            ≡
+            {(filters.search.trim() !== "" || filters.sport !== "all" || filters.category !== "all" || filters.league !== "all" || filters.country !== "all" || filters.year.trim() !== "" || filters.status !== "all") ? (
+              <span className="floating-filter-dot" aria-hidden="true" />
+            ) : null}
+          </button>
+
         </div>
       ) : null}
 

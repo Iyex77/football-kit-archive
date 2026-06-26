@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { categoryLabels, sportLabels, statusLabels } from "../lib/collection-data";
 import type { ShirtCategory, ShirtFilters, ShirtStatus, Sport } from "../lib/types";
 import { SelectField, TextField } from "./FormControls";
@@ -13,6 +14,7 @@ type FiltersBarProps = {
   showStatusFilter?: boolean;
   toolbarSlot?: ReactNode;
   onOpenChange?: (isOpen: boolean) => void;
+  mobileOpen?: boolean;
 };
 
 const sportOptions: Array<"all" | Sport> = ["all", "football", "basketball"];
@@ -36,25 +38,34 @@ export function FiltersBar({
   showStatusFilter = false,
   toolbarSlot,
   onOpenChange,
+  mobileOpen,
 }: FiltersBarProps) {
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [uncontrolledMobileOpen, setUncontrolledMobileOpen] = useState(false);
+  const isMobileOpen = mobileOpen ?? uncontrolledMobileOpen;
   const countryOptions = withSelectedOption(countries, filters.country);
   const leagueOptions = withSelectedOption(leagues, filters.league);
 
+  const setMobileOpen = useCallback(
+    (nextOpen: boolean) => {
+      if (mobileOpen === undefined) {
+        setUncontrolledMobileOpen(nextOpen);
+      }
+
+      onOpenChange?.(nextOpen);
+    },
+    [mobileOpen, onOpenChange],
+  );
+
   const handleToggleMobile = () => {
     if (!window.matchMedia("(max-width: 768px)").matches) return;
-    setIsMobileOpen((current) => !current);
+    setMobileOpen(!isMobileOpen);
   };
-  const handleCloseMobile = () => setIsMobileOpen(false);
+  const handleCloseMobile = useCallback(() => setMobileOpen(false), [setMobileOpen]);
 
   const handleReset = () => {
     onReset();
     handleCloseMobile();
   };
-
-  useEffect(() => {
-    onOpenChange?.(isMobileOpen);
-  }, [isMobileOpen, onOpenChange]);
 
   useEffect(() => {
     if (!isMobileOpen) return;
@@ -67,7 +78,7 @@ export function FiltersBar({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMobileOpen]);
+  }, [handleCloseMobile, isMobileOpen]);
 
   const hasActiveFilters =
     filters.search.trim() !== "" ||
@@ -77,6 +88,81 @@ export function FiltersBar({
     filters.country !== "all" ||
     filters.league !== "all" ||
     filters.year.trim() !== "";
+
+  const mobileFiltersPanel = (
+    <div className="filters-mobile-drawer-backdrop" onClick={handleCloseMobile}>
+      <div className="filters-mobile-dropdown" onClick={(event) => event.stopPropagation()}>
+        <div className="filters-mobile-header">
+          <span>Filtros</span>
+          {hasActiveFilters ? (
+            <button
+              className="filters-reset-button"
+              type="button"
+              onClick={handleReset}
+              aria-label="Restablecer filtros"
+            >
+              ×
+            </button>
+          ) : null}
+          <button className="icon-button" type="button" onClick={handleCloseMobile} aria-label="Cerrar filtros">
+            ×
+          </button>
+        </div>
+        <div className="filters-mobile-content">
+          <TextField
+            label="Búsqueda"
+            value={filters.search}
+            placeholder="Buscar en la vitrina..."
+            onChange={(value) => onFilterChange("search", value)}
+          />
+          <SelectField
+            label="País"
+            value={filters.country}
+            options={["all", ...countryOptions]}
+            getLabel={(value) => (value === "all" ? "Todos" : value)}
+            onChange={(value) => onFilterChange("country", value as "all" | string)}
+          />
+          {showStatusFilter ? (
+            <SelectField
+              label="Estado"
+              value={filters.status}
+              options={statusOptions}
+              getLabel={(value) => (value === "all" ? "Todas" : statusLabels[value])}
+              onChange={(value) => onFilterChange("status", value as "all" | ShirtStatus)}
+            />
+          ) : null}
+          <SelectField
+            label="Deporte"
+            value={filters.sport}
+            options={sportOptions}
+            getLabel={(value) => (value === "all" ? "Todos" : sportLabels[value])}
+            onChange={(value) => onFilterChange("sport", value as Sport | "all")}
+          />
+          <SelectField
+            label="Tipo"
+            value={filters.category}
+            options={categoryOptions}
+            getLabel={(value) => (value === "all" ? "Todos" : categoryLabels[value])}
+            onChange={(value) => onFilterChange("category", value as ShirtCategory | "all")}
+          />
+          <SelectField
+            label="Liga"
+            value={filters.league}
+            options={["all", ...leagueOptions]}
+            getLabel={(value) => (value === "all" ? "Todas" : value)}
+            onChange={(value) => onFilterChange("league", value as "all" | string)}
+          />
+          <TextField
+            label="Año"
+            value={filters.year}
+            placeholder="2024"
+            type="text"
+            onChange={(value) => onFilterChange("year", value)}
+          />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="filters-bar">
@@ -145,80 +231,8 @@ export function FiltersBar({
           onChange={(value) => onFilterChange("year", value)}
         />
       </div>
-      {isMobileOpen ? (
-        <div className="filters-mobile-drawer-backdrop" onClick={handleCloseMobile}>
-          <div className="filters-mobile-dropdown" onClick={(event) => event.stopPropagation()}>
-            <div className="filters-mobile-header">
-              <span>Filtros</span>
-              {hasActiveFilters ? (
-                <button
-                  className="filters-reset-button"
-                  type="button"
-                  onClick={handleReset}
-                  aria-label="Restablecer filtros"
-                >
-                  ×
-                </button>
-              ) : null}
-              <button className="icon-button" type="button" onClick={handleCloseMobile} aria-label="Cerrar filtros">
-                ×
-              </button>
-            </div>
-            <div className="filters-mobile-content">
-              <TextField
-                label="Búsqueda"
-                value={filters.search}
-                placeholder="Buscar en la vitrina..."
-                onChange={(value) => onFilterChange("search", value)}
-              />
-              <SelectField
-                label="País"
-                value={filters.country}
-                options={["all", ...countryOptions]}
-                getLabel={(value) => (value === "all" ? "Todos" : value)}
-                onChange={(value) => onFilterChange("country", value as "all" | string)}
-              />
-              {showStatusFilter ? (
-                <SelectField
-                  label="Estado"
-                  value={filters.status}
-                  options={statusOptions}
-                  getLabel={(value) => (value === "all" ? "Todas" : statusLabels[value])}
-                  onChange={(value) => onFilterChange("status", value as "all" | ShirtStatus)}
-                />
-              ) : null}
-              <SelectField
-                label="Deporte"
-                value={filters.sport}
-                options={sportOptions}
-                getLabel={(value) => (value === "all" ? "Todos" : sportLabels[value])}
-                onChange={(value) => onFilterChange("sport", value as Sport | "all")}
-              />
-              <SelectField
-                label="Tipo"
-                value={filters.category}
-                options={categoryOptions}
-                getLabel={(value) => (value === "all" ? "Todos" : categoryLabels[value])}
-                onChange={(value) => onFilterChange("category", value as ShirtCategory | "all")}
-              />
-              <SelectField
-                label="Liga"
-                value={filters.league}
-                options={["all", ...leagueOptions]}
-                getLabel={(value) => (value === "all" ? "Todas" : value)}
-                onChange={(value) => onFilterChange("league", value as "all" | string)}
-              />
-              <TextField
-                label="Año"
-                value={filters.year}
-                placeholder="2024"
-                type="text"
-                onChange={(value) => onFilterChange("year", value)}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
+
+      {isMobileOpen && typeof document !== "undefined" ? createPortal(mobileFiltersPanel, document.body) : null}
     </div>
   );
 }
