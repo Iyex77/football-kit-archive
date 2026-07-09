@@ -84,9 +84,10 @@ export function FiltersBar({
     filters.search.trim() !== "" ||
     filters.sport !== "all" ||
     filters.category !== "all" ||
-    filters.status !== "all" ||
+    (showStatusFilter && filters.status !== "all") ||
     filters.country !== "all" ||
     filters.league !== "all" ||
+    filters.team !== "all" ||
     filters.year.trim() !== "";
 
   const mobileFiltersPanel = (
@@ -174,7 +175,26 @@ export function FiltersBar({
           aria-expanded={isMobileOpen}
         >
           <span>Filtros</span>
-          {hasActiveFilters ? <span className="filters-badge">×</span> : null}
+          {hasActiveFilters ? (
+            <span
+              className="filters-badge"
+              role="button"
+              tabIndex={0}
+              aria-label="Limpiar filtros"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleReset();
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                event.stopPropagation();
+                handleReset();
+              }}
+            >
+              ×
+            </span>
+          ) : null}
         </button>
         {toolbarSlot ? <div className="filters-toolbar-slot">{toolbarSlot}</div> : null}
       </div>

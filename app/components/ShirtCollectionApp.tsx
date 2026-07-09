@@ -424,6 +424,11 @@ export function ShirtCollectionApp({
   const [statsDetailKey, setStatsDetailKey] = useState<StatsDetailKey | null>(null);
   const [selectedStatsItem, setSelectedStatsItem] = useState<SelectedStatsItem | null>(null);
 
+  const getResetFilters = (): ShirtFilters => ({
+    ...emptyFilters,
+    status: viewMode === "collection" || viewMode === "wishlist" ? viewMode : "all",
+  });
+
   const handleCollectionViewStyleChange = (nextView: CollectionViewStyle) => {
     setCollectionViewStyle(nextView);
     window.localStorage.setItem(viewPreferenceKey, nextView);
@@ -948,18 +953,40 @@ export function ShirtCollectionApp({
     }
   };
 
-  const handleToggleWishlist = (id: string) => {
+  const handleToggleWishlist = async (id: string) => {
     if (readOnly) return;
-    setShirts((current) =>
-      current.map((shirt) =>
-        shirt.id === id
-          ? {
-              ...shirt,
-              status: shirt.status === "wishlist" ? "collection" : "wishlist",
-            }
-          : shirt,
-      ),
-    );
+
+    const shirt = shirts.find((item) => item.id === id);
+
+    if (!shirt) {
+      notify.error("No se ha encontrado la camiseta.");
+      return;
+    }
+
+    const nextStatus: ShirtStatus = shirt.status === "wishlist" ? "collection" : "wishlist";
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      notify.error("Sesión expirada, inicia sesión otra vez.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("shirts")
+      .update({ status: nextStatus })
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error || !data) {
+      notify.error(error?.message || "No se pudo actualizar la camiseta. Revisa permisos/RLS.");
+      return;
+    }
+
+    setShirts((current) => current.map((item) => (item.id === id ? (data as Shirt) : item)));
+    notify.success(nextStatus === "collection" ? "Camiseta movida a colección" : "Camiseta movida a wishlist");
   };
 
   const handleCardClick = (id: string) => {
@@ -977,10 +1004,35 @@ export function ShirtCollectionApp({
     clearSelection();
   };
 
-  const handleMoveToCollection = () => {
+  const handleMoveToCollection = async () => {
     if (selectedIds.length === 0) return;
-    setShirts((current) => current.map((s) => (selectedIds.includes(s.id) ? { ...s, status: "collection" } : s)));
+
+    const idsToUpdate = [...selectedIds];
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      notify.error("Sesión expirada, inicia sesión otra vez.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("shirts")
+      .update({ status: "collection" })
+      .in("id", idsToUpdate)
+      .select("*");
+
+    if (error || !data || data.length !== idsToUpdate.length) {
+      await loadShirts();
+      notify.error(error?.message || "No se pudieron mover todas las camisetas. Revisa permisos/RLS.");
+      return;
+    }
+
+    const updatedById = new Map((data as Shirt[]).map((shirt) => [shirt.id, shirt]));
+    setShirts((current) => current.map((shirt) => updatedById.get(shirt.id) ?? shirt));
     clearSelection();
+    notify.success(idsToUpdate.length === 1 ? "Camiseta movida a colección" : "Camisetas movidas a colección");
   };
 
   const handleFilterChange = <K extends keyof ShirtFilters>(field: K, value: ShirtFilters[K]) => {
@@ -1477,7 +1529,7 @@ export function ShirtCollectionApp({
                 leagues={filterOptions.leagues}
                 countries={filterOptions.countries}
                 onFilterChange={handleFilterChange}
-                onReset={() => setFilters(emptyFilters)}
+                onReset={() => setFilters(getResetFilters())}
                 showStatusFilter={readOnly || viewMode === "all"}
                 toolbarSlot={viewStyleControl}
                 onOpenChange={setIsFiltersOpen}
