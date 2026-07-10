@@ -32,6 +32,8 @@ import { ShirtForm } from "./ShirtForm";
 type SortField = "added" | "team" | "player" | "number" | "season";
 type SortDirection = "asc" | "desc";
 type CollectionViewStyle = "grid" | "compact";
+type PublicShowcaseTab = "featured" | "collection" | "wishlist" | "all";
+type FeaturedQuickFilter = "all" | "collection" | "wishlist";
 
 type SortBy = {
   field: SortField;
@@ -92,6 +94,11 @@ const sortOptions: Array<{ field: SortField; label: string; ascLabel: string; de
 ];
 
 const viewPreferenceKey = "football-kit-archive-view-style";
+const publicBioFallback =
+  "Una vitrina personal de camisetas, recuerdos y futuras piezas seleccionadas con criterio de coleccionista.";
+const featuredLimit = 9;
+const featuredSuggestionLimit = 12;
+const featuredSearchLimit = 20;
 
 const compactLabel = (value: string) => value.trim().replace(/\s+/g, " ");
 
@@ -395,7 +402,21 @@ export function ShirtCollectionApp({
   const [isLoading, setIsLoading] = useState(!initialShirts);
   const [profile, setProfile] = useState<Profile | null>(publicProfile ?? null);
   const [isViewingOwnPublicProfile, setIsViewingOwnPublicProfile] = useState(false);
-  const viewMode = defaultViewMode;
+  const [activePublicTab, setActivePublicTab] = useState<PublicShowcaseTab>("featured");
+  const [publicBio, setPublicBio] = useState(publicProfile?.public_bio || publicBioFallback);
+  const [isEditingPublicBio, setIsEditingPublicBio] = useState(false);
+  const [featuredSearch, setFeaturedSearch] = useState("");
+  const [debouncedFeaturedSearch, setDebouncedFeaturedSearch] = useState("");
+  const [featuredQuickFilter, setFeaturedQuickFilter] = useState<FeaturedQuickFilter>("all");
+  const [featuredOnlyAvailable, setFeaturedOnlyAvailable] = useState(true);
+  const [featuredVisibleCount, setFeaturedVisibleCount] = useState(featuredSuggestionLimit);
+  const [isFeaturedManagerOpen, setIsFeaturedManagerOpen] = useState(false);
+  const viewMode =
+    readOnly && activePublicTab !== "featured"
+      ? activePublicTab === "all"
+        ? "all"
+        : activePublicTab
+      : defaultViewMode;
   const [form, setForm] = useState<ShirtFormState>(defaultForm);
   const [filters, setFilters] = useState<ShirtFilters>(() => ({
     ...emptyFilters,
@@ -498,6 +519,22 @@ export function ShirtCollectionApp({
     };
   }, [isSortOpen]);
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedFeaturedSearch(featuredSearch.trim());
+    }, 240);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [featuredSearch]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setFeaturedVisibleCount(debouncedFeaturedSearch ? featuredSearchLimit : featuredSuggestionLimit);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [debouncedFeaturedSearch, featuredOnlyAvailable, featuredQuickFilter]);
+
   async function loadShirts() {
     if (readOnly) return;
     try {
@@ -524,7 +561,7 @@ export function ShirtCollectionApp({
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, created_at")
+      .select("id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, public_bio, created_at")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -668,6 +705,61 @@ export function ShirtCollectionApp({
         });
     }
   })();
+  const collectionTotal = shirts.filter((shirt) => shirt.status === "collection").length;
+  const wishlistTotal = shirts.filter((shirt) => shirt.status === "wishlist").length;
+  const featuredShirts = shirts
+    .filter((shirt) => shirt.is_featured)
+    .sort((left, right) => {
+      const leftOrder = left.featured_order ?? Number.MAX_SAFE_INTEGER;
+      const rightOrder = right.featured_order ?? Number.MAX_SAFE_INTEGER;
+      if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+      return getCreatedTimestamp(right) - getCreatedTimestamp(left);
+    })
+    .slice(0, featuredLimit);
+  const displayShirts = readOnly && activePublicTab === "featured" ? featuredShirts : sortedShirts;
+  const effectiveCollectionViewStyle = readOnly ? "grid" : collectionViewStyle;
+  const featuredSearchTerm = debouncedFeaturedSearch.toLowerCase();
+  const featuredResultLimit = debouncedFeaturedSearch ? featuredSearchLimit : featuredSuggestionLimit;
+  const featuredCandidateShirts = shirts
+    .filter((shirt) => {
+      if (featuredQuickFilter !== "all" && shirt.status !== featuredQuickFilter) return false;
+      if (featuredOnlyAvailable && shirt.is_featured) return false;
+
+      if (!featuredSearchTerm) return true;
+
+      const searchableText = [
+        shirt.team,
+        shirt.country,
+        shirt.season,
+        shirt.player,
+        shirt.number,
+        shirt.league,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(featuredSearchTerm);
+    })
+    .sort((left, right) => {
+      if (Boolean(left.is_featured) !== Boolean(right.is_featured)) {
+        return left.is_featured ? 1 : -1;
+      }
+
+      if (featuredQuickFilter === "all" && left.status !== right.status) {
+        return left.status === "collection" ? -1 : 1;
+      }
+
+      const leftSeason = seasonValue(left.season) ?? 0;
+      const rightSeason = seasonValue(right.season) ?? 0;
+      if (leftSeason !== rightSeason) return rightSeason - leftSeason;
+
+      const teamComparison = left.team.localeCompare(right.team, undefined, { sensitivity: "base" });
+      if (teamComparison !== 0) return teamComparison;
+
+      return getCreatedTimestamp(right) - getCreatedTimestamp(left);
+    });
+  const visibleFeaturedCandidates = featuredCandidateShirts.slice(0, featuredVisibleCount);
+  const hasMoreFeaturedCandidates = featuredCandidateShirts.length > visibleFeaturedCandidates.length;
   const filterOptions = getFilterOptions(viewModeFilteredShirts, filters);
 
   const closeForm = () => {
@@ -1041,6 +1133,139 @@ export function ShirtCollectionApp({
     });
   };
 
+  const persistPublicBio = async (nextBio: string) => {
+    if (!isViewingOwnPublicProfile || !profile?.id) return;
+
+    setPublicBio(nextBio);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ public_bio: nextBio.trim() || null })
+      .eq("id", profile.id);
+
+    if (error) {
+      notify.error(error.message || "No se pudo guardar la bio.");
+    }
+  };
+
+  const applyFeaturedUpdates = async (updates: Array<{ id: string; is_featured: boolean; featured_order: number | null }>) => {
+    const results = await Promise.all(
+      updates.map((update) =>
+        supabase
+          .from("shirts")
+          .update({
+            is_featured: update.is_featured,
+            featured_order: update.featured_order,
+          })
+          .eq("id", update.id)
+          .select("*")
+          .single(),
+      ),
+    );
+
+    const firstError = results.find((result) => result.error)?.error;
+    if (firstError) {
+      notify.error(firstError.message || "No se pudieron guardar las destacadas.");
+      return false;
+    }
+
+    const updatedById = new Map(
+      results
+        .map((result) => result.data)
+        .filter((shirt): shirt is Shirt => Boolean(shirt))
+        .map((shirt) => [shirt.id, shirt]),
+    );
+
+    setShirts((current) => current.map((shirt) => updatedById.get(shirt.id) ?? shirt));
+    return true;
+  };
+
+  const toggleFeaturedShirt = async (shirtId: string) => {
+    if (!isViewingOwnPublicProfile) return;
+
+    const shirt = shirts.find((item) => item.id === shirtId);
+    if (!shirt) return;
+
+    if (shirt.is_featured) {
+      const remainingFeatured = featuredShirts.filter((item) => item.id !== shirtId);
+      const updates = [
+        { id: shirtId, is_featured: false, featured_order: null },
+        ...remainingFeatured.map((item, index) => ({
+          id: item.id,
+          is_featured: true,
+          featured_order: index + 1,
+        })),
+      ];
+
+      if (await applyFeaturedUpdates(updates)) {
+        notify.success("Destacada actualizada");
+      }
+      return;
+    }
+
+    if (featuredShirts.length >= featuredLimit) {
+      notify.error(`Puedes destacar un máximo de ${featuredLimit} camisetas. Quita una antes de añadir otra.`);
+      return;
+    }
+
+    if (
+      await applyFeaturedUpdates([
+        {
+          id: shirtId,
+          is_featured: true,
+          featured_order: featuredShirts.length + 1,
+        },
+      ])
+    ) {
+      notify.success("Camiseta destacada");
+    }
+  };
+
+  const moveFeaturedShirt = async (shirtId: string, direction: -1 | 1) => {
+    if (!isViewingOwnPublicProfile) return;
+
+    const currentIndex = featuredShirts.findIndex((shirt) => shirt.id === shirtId);
+    const nextIndex = currentIndex + direction;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= featuredShirts.length) return;
+
+    const currentShirt = featuredShirts[currentIndex];
+    const nextShirt = featuredShirts[nextIndex];
+
+    if (
+      await applyFeaturedUpdates([
+        {
+          id: currentShirt.id,
+          is_featured: true,
+          featured_order: nextIndex + 1,
+        },
+        {
+          id: nextShirt.id,
+          is_featured: true,
+          featured_order: currentIndex + 1,
+        },
+      ])
+    ) {
+      notify.success("Orden actualizado");
+    }
+  };
+
+  const handleSharePublicProfile = async () => {
+    if (!profile?.username || typeof window === "undefined") return;
+
+    const shareUrl = `${window.location.origin}/u/${profile.username}`;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: `${profile.display_name || profile.username} | Football Kit Archive`,
+        text: "Mira esta vitrina de camisetas.",
+        url: shareUrl,
+      });
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareUrl);
+    notify.success("Enlace copiado");
+  };
+
   const statsDetail = (() => {
     if (!statsDetailKey) return null;
 
@@ -1163,6 +1388,97 @@ export function ShirtCollectionApp({
   const getShirtImageUrl = (shirt: Shirt) => {
     const mainImage = shirt.images.find((img) => img.id === shirt.mainImageId) || shirt.images[0];
     return mainImage?.url || placeholderImages[shirt.sport] || placeholderImages.default;
+  };
+
+  const getFeaturedResultTitle = (shirt: Shirt) =>
+    [shirt.team.trim() || shirt.country.trim() || "Camiseta", shirt.season.trim()].filter(Boolean).join(" ");
+
+  const getFeaturedResultSubtitle = (shirt: Shirt) => {
+    const player = shirt.player.trim();
+    const number = shirt.number.trim();
+    if (player && number) return `${player} · #${number}`;
+    if (player) return player;
+    if (number) return `#${number}`;
+    return shirt.league.trim() || shirt.country.trim() || "Sin jugador";
+  };
+
+  const renderFeaturedSelectedItem = (shirt: Shirt, index: number) => (
+    <article key={shirt.id} className="featured-selected-card">
+      <div className="featured-selected-thumb">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={getShirtImageUrl(shirt)} alt={`${shirt.team} ${shirt.season}`} loading="lazy" />
+      </div>
+      <div className="featured-selected-copy">
+        <span className="featured-selected-order">#{index + 1}</span>
+        <strong>{getFeaturedResultTitle(shirt)}</strong>
+        <small>{getFeaturedResultSubtitle(shirt)}</small>
+      </div>
+      <div className="featured-selected-actions">
+        <button type="button" onClick={() => moveFeaturedShirt(shirt.id, -1)} disabled={index === 0} aria-label="Subir destacada">
+          ↑
+        </button>
+        <button
+          type="button"
+          onClick={() => moveFeaturedShirt(shirt.id, 1)}
+          disabled={index === featuredShirts.length - 1}
+          aria-label="Bajar destacada"
+        >
+          ↓
+        </button>
+        <button type="button" className="is-remove" onClick={() => toggleFeaturedShirt(shirt.id)}>
+          Quitar
+        </button>
+      </div>
+    </article>
+  );
+
+  const renderFeaturedCandidate = (shirt: Shirt) => {
+    const isLimitReached = featuredShirts.length >= featuredLimit && !shirt.is_featured;
+
+    return (
+      <article key={shirt.id} className={`featured-result-row ${shirt.is_featured ? "is-featured" : ""}`}>
+        <div className="featured-result-thumb">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={getShirtImageUrl(shirt)} alt={`${shirt.team} ${shirt.season}`} loading="lazy" />
+        </div>
+        <div className="featured-result-copy">
+          <strong>{getFeaturedResultTitle(shirt)}</strong>
+          <span>{getFeaturedResultSubtitle(shirt)}</span>
+          <small>{statusLabels[shirt.status]}</small>
+        </div>
+        <button
+          type="button"
+          onClick={() => toggleFeaturedShirt(shirt.id)}
+          disabled={shirt.is_featured || isLimitReached}
+          aria-label={`Destacar ${shirt.team} ${shirt.season}`}
+        >
+          {shirt.is_featured ? "Destacada" : "Destacar"}
+        </button>
+      </article>
+    );
+  };
+
+  const renderFeaturedEditorialShowcase = () => {
+    return (
+      <section className="collection-grid featured-collection-grid">
+        {featuredShirts.map((shirt, index) => (
+          <div key={shirt.id} className={`featured-card-shell ${index === 0 ? "is-primary" : ""}`}>
+            <span className="featured-card-order">{index === 0 ? "#1 destacada" : `#${index + 1}`}</span>
+            <ShirtCard
+              shirt={shirt}
+              onCardClick={handleCardClick}
+              onEdit={handleEdit}
+              onDelete={handleDeleteRequested}
+              onToggleWishlist={handleToggleWishlist}
+              isSelectModeActive={isSelectModeActive}
+              isSelected={selectedIds.includes(shirt.id)}
+              onToggleSelect={toggleSelect}
+              readOnly={readOnly}
+            />
+          </div>
+        ))}
+      </section>
+    );
   };
 
   const renderCompactRow = (shirt: Shirt) => {
@@ -1399,7 +1715,17 @@ export function ShirtCollectionApp({
     Boolean(deleteConfirmation) ||
     Boolean(statsDetail) ||
     Boolean(selectedStatsItem);
-  const shouldShowFloatingActions = !isAnyOverlayOpen && !isDetailOpen && !isMenuOpen && !isSelectionMode;
+  const hasActiveFilters =
+    filters.search.trim() !== "" ||
+    filters.sport !== "all" ||
+    filters.category !== "all" ||
+    filters.status !== "all" ||
+    filters.country !== "all" ||
+    filters.league !== "all" ||
+    filters.team !== "all" ||
+    filters.year.trim() !== "";
+  const shouldShowFloatingActions =
+    !readOnly && !isAnyOverlayOpen && !isDetailOpen && !isMenuOpen && !isSelectionMode;
   const shouldShowSelectionBar =
     !readOnly &&
     isSelectionMode &&
@@ -1418,6 +1744,34 @@ export function ShirtCollectionApp({
             : "Mi colección";
   const sportContextLabel =
     filters.sport === "football" || filters.sport === "basketball" ? sportLabels[filters.sport] : "Todo";
+  const publicDisplayName = profile?.display_name || profile?.username || "Coleccionista";
+  const publicInitial = publicDisplayName.slice(0, 1).toUpperCase();
+  const publicTabs: Array<{ id: PublicShowcaseTab; label: string; count: number }> = [
+    { id: "featured", label: "Destacadas", count: featuredShirts.length },
+    { id: "collection", label: "Colección", count: collectionTotal },
+    { id: "wishlist", label: "Wishlist", count: wishlistTotal },
+    { id: "all", label: "Todas", count: shirts.length },
+  ];
+
+  const publicSectionTitle =
+    activePublicTab === "featured"
+      ? "Selección destacada"
+      : activePublicTab === "collection"
+        ? "Colección"
+        : activePublicTab === "wishlist"
+          ? "Wishlist"
+          : "Todas las camisetas";
+
+  const renderPublicAvatar = () => (
+    <div className="public-showcase-avatar" aria-hidden="true">
+      {profile?.avatar_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={profile.avatar_url} alt="" />
+      ) : (
+        <span>{publicInitial}</span>
+      )}
+    </div>
+  );
 
   return (
     <main className="app-shell min-h-screen px-4 py-5 text-slate-100 sm:px-6 sm:py-7 lg:px-10">
@@ -1477,26 +1831,82 @@ export function ShirtCollectionApp({
             </div>
           ) : null}
 
-          <header className="hero-panel">
-            <div className="hero-copy">
-              <p className="eyebrow">{readOnly ? "Vitrina pública" : "Vitrina privada"}</p>
-              <h1 className="hero-title">
-                {pageTitle}
-              </h1>
-              {!readOnly && viewMode !== "stats" ? (
-                <p className="hero-context">{sportContextLabel}</p>
-              ) : null}
-              {readOnly && profile?.username ? (
-                <p>@{profile.username}</p>
-              ) : null}
-            </div>
+          {readOnly ? (
+            <header className={`public-showcase-hero ${isViewingOwnPublicProfile ? "is-owner-view" : "is-visitor-view"}`}>
+              <div className="public-showcase-main">
+                {renderPublicAvatar()}
+                <div className="public-showcase-copy">
+                  <p className="eyebrow">Vitrina pública</p>
+                  <h1>{publicDisplayName}</h1>
+                  {profile?.username ? <p className="public-showcase-username">@{profile.username}</p> : null}
+                  {isEditingPublicBio && isViewingOwnPublicProfile ? (
+                    <label className="public-bio-editor">
+                      <span>Bio corta</span>
+                      <textarea
+                        value={publicBio}
+                        maxLength={180}
+                        onChange={(event) => setPublicBio(event.target.value)}
+                        onBlur={() => persistPublicBio(publicBio)}
+                      />
+                    </label>
+                  ) : (
+                    <p className="public-showcase-bio">{publicBio}</p>
+                  )}
+                  <div className="public-showcase-actions">
+                    {isViewingOwnPublicProfile ? (
+                      <button
+                        className="ghost-button"
+                        type="button"
+                        onClick={() => setIsEditingPublicBio((current) => !current)}
+                      >
+                        {isEditingPublicBio ? "Cerrar edición" : "Editar bio"}
+                      </button>
+                    ) : (
+                      <Link className="ghost-button public-create-button" href="/">
+                        Crear mi vitrina
+                      </Link>
+                    )}
+                    <button className="ghost-button" type="button" onClick={handleSharePublicProfile}>
+                      Compartir perfil
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-            <div className="hero-stats" aria-label="Resumen de la colección">
-              <span>{stats.totalShirts} piezas</span>
-              <span>{stats.collectionCount} en colección</span>
-              <span>{stats.wishlistCount} wishlist</span>
-            </div>
-          </header>
+              <div className="public-showcase-stats" aria-label="Resumen de la vitrina">
+                <span>
+                  <strong>{shirts.length}</strong>
+                  Piezas
+                </span>
+                <span className="is-collection">
+                  <strong>{collectionTotal}</strong>
+                  Colección
+                </span>
+                <span className="is-wishlist">
+                  <strong>{wishlistTotal}</strong>
+                  Wishlist
+                </span>
+              </div>
+            </header>
+          ) : (
+            <header className="hero-panel">
+              <div className="hero-copy">
+                <p className="eyebrow">Vitrina privada</p>
+                <h1 className="hero-title">
+                  {pageTitle}
+                </h1>
+                {viewMode !== "stats" ? (
+                  <p className="hero-context">{sportContextLabel}</p>
+                ) : null}
+              </div>
+
+              <div className="hero-stats" aria-label="Resumen de la colección">
+                <span>{stats.totalShirts} piezas</span>
+                <span>{stats.collectionCount} en colección</span>
+                <span>{stats.wishlistCount} wishlist</span>
+              </div>
+            </header>
+          )}
 
           {viewMode === "stats" ? (
             <>
@@ -1524,50 +1934,198 @@ export function ShirtCollectionApp({
             </>
           ) : (
             <section className="space-y-5 sm:space-y-7">
-              <FiltersBar
-                filters={filters}
-                leagues={filterOptions.leagues}
-                countries={filterOptions.countries}
-                onFilterChange={handleFilterChange}
-                onReset={() => setFilters(getResetFilters())}
-                showStatusFilter={readOnly || viewMode === "all"}
-                toolbarSlot={viewStyleControl}
-                onOpenChange={setIsFiltersOpen}
-                mobileOpen={isFiltersOpen}
-              />
+              {readOnly ? (
+                <nav className="public-showcase-tabs" aria-label="Secciones públicas">
+                  {publicTabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={activePublicTab === tab.id ? "is-active" : ""}
+                      aria-pressed={activePublicTab === tab.id}
+                      onClick={() => {
+                        setActivePublicTab(tab.id);
+                        setIsSortOpen(false);
+                        setIsFeaturedManagerOpen(false);
+                      }}
+                    >
+                      <span>{tab.label}</span>
+                      <strong>{tab.count}</strong>
+                    </button>
+                  ))}
+                </nav>
+              ) : null}
+
+              {readOnly && activePublicTab !== "featured" ? (
+                <details
+                  className="public-filters-disclosure"
+                  open={isViewingOwnPublicProfile}
+                >
+                  <summary>Filtros avanzados</summary>
+                  <FiltersBar
+                    filters={filters}
+                    leagues={filterOptions.leagues}
+                    countries={filterOptions.countries}
+                    onFilterChange={handleFilterChange}
+                    onReset={() => setFilters(getResetFilters())}
+                    showStatusFilter={activePublicTab === "all"}
+                    onOpenChange={setIsFiltersOpen}
+                    mobileOpen={isFiltersOpen}
+                  />
+                </details>
+              ) : !readOnly ? (
+                <FiltersBar
+                  filters={filters}
+                  leagues={filterOptions.leagues}
+                  countries={filterOptions.countries}
+                  onFilterChange={handleFilterChange}
+                  onReset={() => setFilters(getResetFilters())}
+                  showStatusFilter={viewMode === "all"}
+                  toolbarSlot={viewStyleControl}
+                  onOpenChange={setIsFiltersOpen}
+                  mobileOpen={isFiltersOpen}
+                />
+              ) : null}
 
               <div className="collection-heading">
                 <div>
                   <p className="eyebrow">
-                    {viewMode === "all" ? "Todas las camisetas" : viewMode === "collection" ? "Colección" : "Wishlist"}
+                    {readOnly ? "Museo personal" : viewMode === "all" ? "Todas las camisetas" : viewMode === "collection" ? "Colección" : "Wishlist"}
                   </p>
-                  <h2>{filteredShirts.length} camisetas visibles</h2>
+                  <h2>{readOnly ? publicSectionTitle : `${filteredShirts.length} camisetas visibles`}</h2>
                 </div>
+                {readOnly && activePublicTab === "featured" && isViewingOwnPublicProfile ? (
+                  <button
+                    type="button"
+                    className="featured-manage-toggle"
+                    onClick={() => setIsFeaturedManagerOpen((current) => !current)}
+                    aria-expanded={isFeaturedManagerOpen}
+                  >
+                    {isFeaturedManagerOpen ? "Cerrar gestión" : "Gestionar destacadas"}
+                  </button>
+                ) : null}
               </div>
 
-              {sortedShirts.length > 0 ? (
-                collectionViewStyle === "compact" ? (
-                  <div className="compact-shirt-list">{sortedShirts.map(renderCompactRow)}</div>
+              {readOnly && activePublicTab === "featured" && isViewingOwnPublicProfile && isFeaturedManagerOpen ? (
+                <div className="featured-curator-panel">
+                  <div className="featured-curator-header">
+                    <div>
+                      <p className="eyebrow">Selección destacada</p>
+                      <h3>Selección destacada</h3>
+                    </div>
+                    <span>{featuredShirts.length}/{featuredLimit} seleccionadas</span>
+                  </div>
+
+                  {featuredShirts.length > 0 ? (
+                    <div className="featured-selected-list">
+                      {featuredShirts.map(renderFeaturedSelectedItem)}
+                    </div>
+                  ) : (
+                    <div className="featured-empty-curator">
+                      <h4>Aún no hay destacadas</h4>
+                      <p>Busca tus camisetas favoritas y selecciónalas para crear la sala principal de tu vitrina.</p>
+                    </div>
+                  )}
+
+                  <div className="featured-search-panel">
+                    <input
+                      type="search"
+                      value={featuredSearch}
+                      placeholder="Buscar camiseta para destacar..."
+                      onChange={(event) => setFeaturedSearch(event.target.value)}
+                    />
+                    <div className="featured-quick-filters" aria-label="Filtros rápidos de destacadas">
+                      {(["all", "collection", "wishlist"] as FeaturedQuickFilter[]).map((filter) => (
+                        <button
+                          key={filter}
+                          type="button"
+                          className={featuredQuickFilter === filter ? "is-active" : ""}
+                          onClick={() => setFeaturedQuickFilter(filter)}
+                        >
+                          {filter === "all" ? "Todas" : statusLabels[filter]}
+                        </button>
+                      ))}
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={featuredOnlyAvailable}
+                          onChange={(event) => setFeaturedOnlyAvailable(event.target.checked)}
+                        />
+                        Solo no destacadas
+                      </label>
+                    </div>
+                  </div>
+
+                  {featuredShirts.length >= featuredLimit ? (
+                    <p className="featured-limit-message">Ya tienes {featuredLimit} destacadas. Quita una para añadir otra.</p>
+                  ) : null}
+
+                  <div className="featured-results-list">
+                    {visibleFeaturedCandidates.length > 0 ? (
+                      visibleFeaturedCandidates.map(renderFeaturedCandidate)
+                    ) : (
+                      <div className="featured-results-empty">
+                        <p>No hay camisetas que coincidan con esa búsqueda.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {hasMoreFeaturedCandidates ? (
+                    <button
+                      type="button"
+                      className="featured-more-button"
+                      onClick={() => setFeaturedVisibleCount((current) => current + featuredResultLimit)}
+                    >
+                      Ver más
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {readOnly && activePublicTab === "featured" ? (
+                featuredShirts.length > 0 ? (
+                  renderFeaturedEditorialShowcase()
                 ) : (
-                  <div className="collection-grid">
-                    {sortedShirts.map((shirt) => (
-                      <ShirtCard
-                        key={shirt.id}
-                        shirt={shirt}
-                        onCardClick={handleCardClick}
-                        onEdit={handleEdit}
-                        onDelete={handleDeleteRequested}
-                        onToggleWishlist={handleToggleWishlist}
-                        isSelectModeActive={isSelectModeActive}
-                        isSelected={selectedIds.includes(shirt.id)}
-                        onToggleSelect={toggleSelect}
-                        readOnly={readOnly}
-                      />
+                  <div className="featured-editorial-empty">
+                    <div>
+                      <p className="eyebrow">Sala principal</p>
+                      <h3>Aún no hay piezas destacadas</h3>
+                      <p>Selecciona hasta {featuredLimit} camisetas para crear la sala principal de tu vitrina.</p>
+                    </div>
+                    {isViewingOwnPublicProfile ? (
+                      <button
+                        type="button"
+                        className="featured-manage-toggle"
+                        onClick={() => setIsFeaturedManagerOpen(true)}
+                      >
+                        Gestionar destacadas
+                      </button>
+                    ) : null}
+                  </div>
+                )
+              ) : displayShirts.length > 0 ? (
+                effectiveCollectionViewStyle === "compact" ? (
+                  <div className="compact-shirt-list">{displayShirts.map(renderCompactRow)}</div>
+                ) : (
+                  <div className={`collection-grid ${readOnly ? "public-collection-grid" : ""}`}>
+                    {displayShirts.map((shirt) => (
+                      <div key={shirt.id} className="public-card-shell">
+                        <ShirtCard
+                          shirt={shirt}
+                          onCardClick={handleCardClick}
+                          onEdit={handleEdit}
+                          onDelete={handleDeleteRequested}
+                          onToggleWishlist={handleToggleWishlist}
+                          isSelectModeActive={isSelectModeActive}
+                          isSelected={selectedIds.includes(shirt.id)}
+                          onToggleSelect={toggleSelect}
+                          readOnly={readOnly}
+                        />
+                      </div>
                     ))}
                   </div>
                 )
               ) : (
-                <div className="empty-state">
+                <div className={`empty-state ${readOnly ? "public-empty-state" : ""}`}>
                   {hasNoPublicSections ? (
                     <>
                       <h3>Este usuario no comparte ninguna sección de su colección.</h3>
@@ -1575,10 +2133,12 @@ export function ShirtCollectionApp({
                     </>
                   ) : (
                     <>
-                      <h3>No hay camisetas con esos filtros</h3>
+                      <h3>{activePublicTab === "featured" ? "Aún no hay destacadas" : "No hay camisetas con esos filtros"}</h3>
                       <p>
                         {readOnly
-                          ? "Ajusta la búsqueda o cambia los filtros de la vitrina."
+                          ? activePublicTab === "featured"
+                            ? "Cuando el coleccionista seleccione piezas clave, aparecerán aquí como una sala principal."
+                            : "Ajusta la búsqueda o cambia los filtros de la vitrina."
                           : "Ajusta la búsqueda o añade una nueva pieza a la vitrina."}
                       </p>
                     </>
@@ -1660,15 +2220,33 @@ export function ShirtCollectionApp({
             aria-expanded={isFiltersOpen}
             title="Filtros"
           >
-            ≡
-            {(filters.search.trim() !== "" || filters.sport !== "all" || filters.category !== "all" || filters.league !== "all" || filters.country !== "all" || filters.year.trim() !== "" || filters.status !== "all") ? (
-              <span className="floating-filter-dot" aria-hidden="true" />
-            ) : null}
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 6h16M7 12h10M10 18h4"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeWidth="1.9"
+              />
+            </svg>
           </button>
 
+          {hasActiveFilters ? (
+            <button
+              className="floating-reset-button"
+              type="button"
+              onClick={() => {
+                setIsSortOpen(false);
+                setFilters(getResetFilters());
+              }}
+              aria-label="Limpiar filtros"
+              title="Limpiar filtros"
+            >
+              ×
+            </button>
+          ) : null}
         </div>
       ) : null}
-
       {shouldShowSelectionBar && (
         <div className="floating-selection-bar" role="toolbar" aria-label="Acciones selección">
           <div className="selection-count">✓ {selectedIds.length} seleccionadas</div>

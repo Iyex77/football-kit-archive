@@ -2,7 +2,16 @@
 alter table public.profiles
 add column if not exists show_collection boolean default true,
 add column if not exists show_wishlist boolean default true,
-add column if not exists avatar_url text;
+add column if not exists avatar_url text,
+add column if not exists public_bio text;
+
+-- Public showcase curation.
+alter table public.shirts
+add column if not exists is_featured boolean not null default false,
+add column if not exists featured_order integer;
+
+create index if not exists shirts_public_featured_order_idx
+on public.shirts (user_id, is_featured, featured_order);
 
 -- Visitors can only see profiles explicitly marked as public.
 create policy "Public profiles are readable"

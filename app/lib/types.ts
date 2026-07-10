@@ -28,6 +28,8 @@ export type Shirt = {
   images: ShirtImage[];
   mainImageId: string;
   notes: string;
+  is_featured?: boolean | null;
+  featured_order?: number | null;
 };
 
 export type Profile = {
@@ -38,6 +40,7 @@ export type Profile = {
   is_public: boolean;
   show_collection: boolean;
   show_wishlist: boolean;
+  public_bio?: string | null;
   created_at?: string;
 };
 

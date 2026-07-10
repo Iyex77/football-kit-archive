@@ -32,7 +32,7 @@ const avatarSize = 512;
 const cropPreviewSize = 280;
 const maxAvatarSize = 2 * 1024 * 1024;
 const acceptedAvatarTypes = ["image/jpeg", "image/png", "image/webp"];
-const profileSelect = "id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, created_at";
+const profileSelect = "id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, public_bio, created_at";
 const publicProfileUrl = (username: string) =>
   `https://football-kit-archive.vercel.app/u/${username}`;
 const exportFields = [
