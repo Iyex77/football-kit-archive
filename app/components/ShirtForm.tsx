@@ -57,6 +57,8 @@ type ShirtFormProps = {
 
 const sportOptions: Sport[] = ["football", "basketball"];
 const statusOptions: ShirtStatus[] = ["collection", "wishlist"];
+const acceptedShirtImageTypes = ["image/jpeg", "image/png", "image/webp"];
+const maxShirtImageSize = 8 * 1024 * 1024;
 const createGoogleImageSearchQuery = (form: ShirtFormState) => {
   const team = form.team === "custom" ? form.customTeam : form.team;
   const query = [team, form.season, form.player, "football shirt front png"]
@@ -232,27 +234,40 @@ export function ShirtForm({
   const handleFiles = async (files: FileList | null) => {
     if (!files) return;
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      notify.error("Inicia sesión para subir imágenes.");
+      return;
+    }
+
     for (const file of Array.from(files)) {
+      if (!acceptedShirtImageTypes.includes(file.type)) {
+        notify.error("La imagen debe ser JPG, PNG o WebP.");
+        continue;
+      }
+
+      if (file.size > maxShirtImageSize) {
+        notify.error("La imagen no puede superar los 8 MB.");
+        continue;
+      }
 
       const extension = file.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${extension}`;
+      const fileName = `${user.id}/${crypto.randomUUID()}.${extension}`;
 
-      console.log("SUBIENDO:", fileName);
+      const result = await supabase.storage
+        .from("shirts")
+        .upload(fileName, file, { contentType: file.type });
 
-        const result = await supabase.storage
-          .from("shirts")
-          .upload(fileName, file);
+      const uploadError = result.error;
 
-        console.log("UPLOAD RESULT:", result);
-
-        const uploadError = result.error;
-
-        if (uploadError) {
-          console.error("UPLOAD ERROR:", uploadError);
-          notify.error("Error subiendo imagen. Intenta otra vez.");
-          continue;
-        }
-
+      if (uploadError) {
+        console.error("UPLOAD ERROR:", uploadError);
+        notify.error("Error subiendo imagen. Intenta otra vez.");
+        continue;
+      }
 
       const { data } = supabase.storage
         .from("shirts")

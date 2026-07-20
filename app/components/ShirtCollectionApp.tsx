@@ -538,9 +538,16 @@ export function ShirtCollectionApp({
   async function loadShirts() {
     if (readOnly) return;
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
       const { data, error } = await supabase
         .from("shirts")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", {
           ascending: false,
         });
@@ -905,6 +912,7 @@ export function ShirtCollectionApp({
         .from("shirts")
         .update(payload)
         .eq("id", editingId)
+        .eq("user_id", user.id)
         .select();
     } else {
       result = await supabase
@@ -986,14 +994,20 @@ export function ShirtCollectionApp({
 
     if (!shirt) return;
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      notify.error("Sesión expirada, inicia sesión otra vez.");
+      return;
+    }
+
     // BORRAR IMAGENES STORAGE
     if (shirt.images?.length) {
 
       const filesToDelete = shirt.images
         .map((img) => {
-
-          console.log("RAW URL:", img.url);
-
           if (!img.url.includes("/storage/v1/object/public/shirts/")) {
             return null;
           }
@@ -1006,23 +1020,13 @@ export function ShirtCollectionApp({
         .filter((file): file is string => Boolean(file))
 
       if (filesToDelete.length) {
+        const { error: removeError } = await supabase.storage
+          .from("shirts")
+          .remove(filesToDelete);
 
-        console.log("SHIRT IMAGES:", shirt.images);
-
-        console.log(
-          "FILES TO DELETE:",
-          filesToDelete
-        );
-      
-        const result =
-          await supabase.storage
-            .from("shirts")
-            .remove(filesToDelete);
-      
-        console.log(
-          "STORAGE DELETE RESULT:",
-          result
-        );
+        if (removeError) {
+          console.error("STORAGE DELETE ERROR:", removeError);
+        }
       }
     }
 
@@ -1030,7 +1034,8 @@ export function ShirtCollectionApp({
     const { error } = await supabase
       .from("shirts")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user.id);
 
     if (error) {
       notify.error(error.message || "Error eliminando camiseta.");
@@ -1069,6 +1074,7 @@ export function ShirtCollectionApp({
       .from("shirts")
       .update({ status: nextStatus })
       .eq("id", id)
+      .eq("user_id", user.id)
       .select("*")
       .single();
 
@@ -1113,6 +1119,7 @@ export function ShirtCollectionApp({
       .from("shirts")
       .update({ status: "collection" })
       .in("id", idsToUpdate)
+      .eq("user_id", user.id)
       .select("*");
 
     if (error || !data || data.length !== idsToUpdate.length) {
@@ -1148,6 +1155,15 @@ export function ShirtCollectionApp({
   };
 
   const applyFeaturedUpdates = async (updates: Array<{ id: string; is_featured: boolean; featured_order: number | null }>) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      notify.error("Sesión expirada, inicia sesión otra vez.");
+      return;
+    }
+
     const results = await Promise.all(
       updates.map((update) =>
         supabase
@@ -1157,6 +1173,7 @@ export function ShirtCollectionApp({
             featured_order: update.featured_order,
           })
           .eq("id", update.id)
+          .eq("user_id", user.id)
           .select("*")
           .single(),
       ),
