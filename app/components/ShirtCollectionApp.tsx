@@ -8,6 +8,7 @@ import {
   defaultForm,
   emptyFilters,
   placeholderImages,
+  sizes,
   sportLabels,
   statusLabels,
 } from "../lib/collection-data";
@@ -114,7 +115,7 @@ export function ShirtCollectionApp({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewingShirtId, setViewingShirtId] = useState<string | null>(null);
-  const [lastViewedShirt, setLastViewedShirt] = useState<Shirt | null>(null);
+  const lastViewedShirtRef = useRef<Shirt | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -258,7 +259,9 @@ export function ShirtCollectionApp({
 
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, public_bio, created_at")
+      .select(
+        "id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, public_bio, default_size, created_at",
+      )
       .eq("id", user.id)
       .maybeSingle();
 
@@ -272,9 +275,8 @@ export function ShirtCollectionApp({
   const isDetailOpen = Boolean(viewingShirt);
   const isShirtDetailOpen = isDetailOpen;
 
-  useEffect(() => {
-    if (viewingShirt) setLastViewedShirt(viewingShirt);
-  }, [viewingShirt]);
+  if (viewingShirt) lastViewedShirtRef.current = viewingShirt;
+
   const typeOptions = getTypeOptions(form.sport);
   const countryOptions = getCountryOptions(form.sport, form.category);
   const leagueOptions = getLeagueOptions(form.sport, form.category, form.country);
@@ -485,6 +487,7 @@ export function ShirtCollectionApp({
       ...defaultForm,
       status: viewMode === "wishlist" ? "wishlist" : viewMode === "collection" ? "collection" : defaultForm.status,
       sport: filters.sport === "football" || filters.sport === "basketball" ? filters.sport : defaultForm.sport,
+      size: profile?.default_size || defaultForm.size,
     };
 
     setEditingId(null);
@@ -826,6 +829,38 @@ export function ShirtCollectionApp({
     setShirts((current) => current.map((shirt) => updatedById.get(shirt.id) ?? shirt));
     clearSelection();
     notify.success(idsToUpdate.length === 1 ? "Camiseta movida a colección" : "Camisetas movidas a colección");
+  };
+
+  const handleBulkSetSize = async (size: string) => {
+    if (selectedIds.length === 0 || !size) return;
+
+    const idsToUpdate = [...selectedIds];
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      notify.error("Sesión expirada, inicia sesión otra vez.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("shirts")
+      .update({ size })
+      .in("id", idsToUpdate)
+      .eq("user_id", user.id)
+      .select("*");
+
+    if (error || !data || data.length !== idsToUpdate.length) {
+      await loadShirts();
+      notify.error(error?.message || "No se pudo asignar la talla a todas. Revisa permisos/RLS.");
+      return;
+    }
+
+    const updatedById = new Map((data as Shirt[]).map((shirt) => [shirt.id, shirt]));
+    setShirts((current) => current.map((shirt) => updatedById.get(shirt.id) ?? shirt));
+    clearSelection();
+    notify.success(idsToUpdate.length === 1 ? "Talla asignada" : `Talla asignada a ${idsToUpdate.length} camisetas`);
   };
 
   const handleFilterChange = <K extends keyof ShirtFilters>(field: K, value: ShirtFilters[K]) => {
@@ -1617,9 +1652,17 @@ export function ShirtCollectionApp({
               </div>
 
               <div className="hero-stats" aria-label="Resumen de la colección">
-                <span>{stats.totalShirts} piezas</span>
-                <span>{stats.collectionCount} en colección</span>
-                <span>{stats.wishlistCount} wishlist</span>
+                {viewMode === "all" ? (
+                  <>
+                    <span>{stats.totalShirts} piezas</span>
+                    <span>{stats.collectionCount} en colección</span>
+                    <span>{stats.wishlistCount} wishlist</span>
+                  </>
+                ) : (
+                  <span>
+                    {stats.totalShirts} {viewMode === "collection" ? "en colección" : "en wishlist"}
+                  </span>
+                )}
               </div>
             </header>
           )}
@@ -1973,6 +2016,25 @@ export function ShirtCollectionApp({
             <button className="primary-button" type="button" onClick={handleMoveToCollection}>
               Mover a Colección
             </button>
+            <select
+              className="ghost-button selection-size-select"
+              aria-label="Asignar talla a las seleccionadas"
+              defaultValue=""
+              onChange={(event) => {
+                const value = event.target.value;
+                if (value) handleBulkSetSize(value);
+                event.target.value = "";
+              }}
+            >
+              <option value="" disabled>
+                Asignar talla…
+              </option>
+              {sizes.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
             <button className="ghost-button" type="button" onClick={clearSelection}>
               Cancelar selección
             </button>
@@ -2178,9 +2240,9 @@ export function ShirtCollectionApp({
         </div>
       ) : null}
 
-      {lastViewedShirt && (
+      {lastViewedShirtRef.current && (
         <ImageGalleryModal
-          shirt={viewingShirt ?? lastViewedShirt}
+          shirt={viewingShirt ?? lastViewedShirtRef.current}
           isOpen={!!viewingShirtId}
           onClose={() => setViewingShirtId(null)}
           onEdit={handleEdit}

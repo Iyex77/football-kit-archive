@@ -41,6 +41,7 @@ export type Profile = {
   show_collection: boolean;
   show_wishlist: boolean;
   public_bio?: string | null;
+  default_size?: string | null;
   created_at?: string;
 };
 
@@ -71,6 +72,7 @@ export type ShirtFilters = {
   league: string;
   team: string;
   year: string;
+  size: string;
 };
 
 export type LeagueCatalog = Record<

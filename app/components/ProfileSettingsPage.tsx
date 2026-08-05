@@ -7,8 +7,9 @@ import { supabase } from "../../lib/supabase-auth";
 import type { Profile, Shirt } from "../lib/types";
 import { notify } from "../lib/notify";
 import { getStoredTheme, setTheme, type ThemePreference } from "../lib/theme";
+import { sizes } from "../lib/collection-data";
 import { AppDrawer } from "./AppDrawer";
-import { TextField } from "./FormControls";
+import { SelectField, TextField } from "./FormControls";
 
 type ProfileSettingsPageProps = {
   onLogout: () => Promise<void> | void;
@@ -33,7 +34,8 @@ const avatarSize = 512;
 const cropPreviewSize = 280;
 const maxAvatarSize = 2 * 1024 * 1024;
 const acceptedAvatarTypes = ["image/jpeg", "image/png", "image/webp"];
-const profileSelect = "id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, public_bio, created_at";
+const profileSelect =
+  "id, username, display_name, avatar_url, is_public, show_collection, show_wishlist, public_bio, default_size, created_at";
 const publicProfileUrl = (username: string) =>
   `https://football-kit-archive.vercel.app/u/${username}`;
 const exportFields = [
@@ -173,15 +175,26 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
   const [copiedJson, setCopiedJson] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
-  const [themePref, setThemePref] = useState<ThemePreference>("system");
-
-  useEffect(() => {
-    setThemePref(getStoredTheme());
-  }, []);
+  const [defaultSize, setDefaultSize] = useState("");
+  const [themePref, setThemePref] = useState<ThemePreference>(getStoredTheme);
 
   const handleThemeChange = (pref: ThemePreference) => {
     setThemePref(pref);
     setTheme(pref);
+  };
+
+  const handleDefaultSizeChange = async (size: string) => {
+    if (!userId) return;
+
+    setDefaultSize(size);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ default_size: size || null })
+      .eq("id", userId);
+
+    if (error) {
+      notify.error(error.message || "No se pudo guardar la talla por defecto.");
+    }
   };
 
   const cleanUsername = username.trim().toLowerCase();
@@ -239,6 +252,7 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
         setIsPublic(loadedProfile.is_public);
         setShowCollection(loadedProfile.show_collection ?? true);
         setShowWishlist(loadedProfile.show_wishlist ?? true);
+        setDefaultSize(loadedProfile.default_size || "");
       }
       setIsLoading(false);
     };
@@ -665,6 +679,22 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
                   Oscuro
                 </button>
               </div>
+            </section>
+
+            <section className="profile-panel">
+              <div className="section-heading">
+                <div>
+                  <p>Preferencias</p>
+                  <h2>Talla por defecto</h2>
+                </div>
+              </div>
+              <SelectField
+                label="Talla al añadir una camiseta nueva"
+                value={defaultSize}
+                options={sizes}
+                placeholder="Sin preferencia"
+                onChange={(value) => handleDefaultSizeChange(value)}
+              />
             </section>
 
             <section className="profile-panel">

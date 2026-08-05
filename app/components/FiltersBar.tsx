@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { categoryLabels, sportLabels, statusLabels } from "../lib/collection-data";
+import { categoryLabels, sizes, sportLabels, statusLabels } from "../lib/collection-data";
 import type { ShirtCategory, ShirtFilters, ShirtStatus, Sport } from "../lib/types";
 import { SelectField, TextField } from "./FormControls";
 
@@ -20,6 +20,8 @@ type FiltersBarProps = {
 const sportOptions: Array<"all" | Sport> = ["all", "football", "basketball"];
 const categoryOptions: Array<"all" | ShirtCategory> = ["all", "club", "national"];
 const statusOptions: Array<"all" | ShirtStatus> = ["all", "collection", "wishlist"];
+const sizeOptions = ["all", "__none__", ...sizes];
+const sizeLabel = (value: string) => (value === "all" ? "Todas" : value === "__none__" ? "Sin talla" : value);
 
 const withSelectedOption = (options: string[], selected: string) => {
   if (selected === "all" || selected.trim() === "" || options.includes(selected)) {
@@ -88,7 +90,8 @@ export function FiltersBar({
     filters.country !== "all" ||
     filters.league !== "all" ||
     filters.team !== "all" ||
-    filters.year.trim() !== "";
+    filters.year.trim() !== "" ||
+    filters.size !== "all";
 
   const mobileFiltersPanel = (
     <div className="filters-mobile-drawer-backdrop" onClick={handleCloseMobile}>
@@ -159,6 +162,13 @@ export function FiltersBar({
             placeholder="2024"
             type="text"
             onChange={(value) => onFilterChange("year", value)}
+          />
+          <SelectField
+            label="Talla"
+            value={filters.size}
+            options={sizeOptions}
+            getLabel={sizeLabel}
+            onChange={(value) => onFilterChange("size", value)}
           />
         </div>
       </div>
@@ -249,6 +259,13 @@ export function FiltersBar({
           placeholder="2024"
           type="text"
           onChange={(value) => onFilterChange("year", value)}
+        />
+        <SelectField
+          label="Talla"
+          value={filters.size}
+          options={sizeOptions}
+          getLabel={sizeLabel}
+          onChange={(value) => onFilterChange("size", value)}
         />
       </div>
 

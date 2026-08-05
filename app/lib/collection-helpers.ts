@@ -344,6 +344,8 @@ export function matchesFilters(shirt: Shirt, filters: ShirtFilters) {
     (filters.country === "all" || shirt.country === filters.country) &&
     (filters.league === "all" || shirt.league === filters.league) &&
     (filters.team === "all" || shirt.team === filters.team) &&
-    (filters.year.trim() === "" || shirt.season.toLowerCase().includes(filters.year.trim().toLowerCase()))
+    (filters.year.trim() === "" || shirt.season.toLowerCase().includes(filters.year.trim().toLowerCase())) &&
+    (filters.size === "all" ||
+      (filters.size === "__none__" ? shirt.size.trim() === "" : shirt.size === filters.size))
   );
 }
