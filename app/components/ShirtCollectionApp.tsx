@@ -45,10 +45,12 @@ import type {
 } from "../lib/types";
 import { notify } from "../lib/notify";
 import { AppDrawer } from "./AppDrawer";
+import { FeaturedShowcaseCard } from "./FeaturedShowcaseCard";
 import { FiltersBar } from "./FiltersBar";
 import { ImageGalleryModal } from "./ImageGalleryModal";
 import { ShirtCard } from "./ShirtCard";
 import { ShirtForm } from "./ShirtForm";
+import { TiltPermissionPrompt } from "./TiltPermissionPrompt";
 
 type CollectionViewStyle = "grid" | "compact";
 type PublicShowcaseTab = "featured" | "collection" | "wishlist" | "all";
@@ -112,6 +114,7 @@ export function ShirtCollectionApp({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [viewingShirtId, setViewingShirtId] = useState<string | null>(null);
+  const [lastViewedShirt, setLastViewedShirt] = useState<Shirt | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -268,6 +271,10 @@ export function ShirtCollectionApp({
   const viewingShirt = shirts.find((shirt) => shirt.id === viewingShirtId);
   const isDetailOpen = Boolean(viewingShirt);
   const isShirtDetailOpen = isDetailOpen;
+
+  useEffect(() => {
+    if (viewingShirt) setLastViewedShirt(viewingShirt);
+  }, [viewingShirt]);
   const typeOptions = getTypeOptions(form.sport);
   const countryOptions = getCountryOptions(form.sport, form.category);
   const leagueOptions = getLeagueOptions(form.sport, form.category, form.country);
@@ -1164,12 +1171,15 @@ export function ShirtCollectionApp({
 
   const renderFeaturedEditorialShowcase = () => {
     return (
-      <section className="collection-grid featured-collection-grid">
-        {featuredShirts.map((shirt, index) => (
-          <div key={shirt.id} className={`featured-card-shell ${index === 0 ? "is-primary" : ""}`}>
-            <span className="featured-card-order">{index === 0 ? "#1 destacada" : `#${index + 1}`}</span>
-            <ShirtCard
+      <>
+        <TiltPermissionPrompt />
+        <section className="collection-grid featured-collection-grid">
+          {featuredShirts.map((shirt, index) => (
+            <FeaturedShowcaseCard
+              key={shirt.id}
               shirt={shirt}
+              order={index + 1}
+              isPrimary={index === 0}
               onCardClick={handleCardClick}
               onEdit={handleEdit}
               onDelete={handleDeleteRequested}
@@ -1179,9 +1189,9 @@ export function ShirtCollectionApp({
               onToggleSelect={toggleSelect}
               readOnly={readOnly}
             />
-          </div>
-        ))}
-      </section>
+          ))}
+        </section>
+      </>
     );
   };
 
@@ -2168,9 +2178,9 @@ export function ShirtCollectionApp({
         </div>
       ) : null}
 
-      {viewingShirt && (
+      {lastViewedShirt && (
         <ImageGalleryModal
-          shirt={viewingShirt}
+          shirt={viewingShirt ?? lastViewedShirt}
           isOpen={!!viewingShirtId}
           onClose={() => setViewingShirtId(null)}
           onEdit={handleEdit}

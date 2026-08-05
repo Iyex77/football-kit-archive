@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Shirt } from "../lib/types";
-import { placeholderImages } from "../lib/collection-data";
+import { placeholderImages, statusLabels } from "../lib/collection-data";
 
 type ImageGalleryModalProps = {
   shirt: Shirt;
@@ -13,6 +13,8 @@ type ImageGalleryModalProps = {
   readOnly?: boolean;
 };
 
+const CLOSE_ANIMATION_MS = 320;
+
 export function ImageGalleryModal({
   shirt,
   isOpen,
@@ -22,8 +24,10 @@ export function ImageGalleryModal({
   readOnly = false,
 }: ImageGalleryModalProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isClosing, setIsClosing] = useState(false);
   const touchStart = useRef(0);
   const scrollYRef = useRef(0);
+  const closeTimerRef = useRef<number | null>(null);
 
   const safeCurrentIndex = currentIndex >= shirt.images.length ? 0 : currentIndex;
 
@@ -37,21 +41,40 @@ export function ImageGalleryModal({
     setCurrentIndex((current) => (current === shirt.images.length - 1 ? 0 : current + 1));
   }, [shirt.images.length]);
 
+  const dismiss = useCallback(() => {
+    setIsClosing(true);
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = window.setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, CLOSE_ANIMATION_MS);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (isOpen) setIsClosing(false);
+  }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") dismiss();
       if (event.key === "ArrowLeft") handlePrev();
       if (event.key === "ArrowRight") handleNext();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNext, handlePrev, isOpen, onClose]);
+  }, [dismiss, handleNext, handlePrev, isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen && !isClosing) return;
 
     scrollYRef.current = window.scrollY;
     const originalBodyPosition = document.body.style.position;
@@ -73,9 +96,9 @@ export function ImageGalleryModal({
       document.body.style.overflow = originalBodyOverflow;
       window.scrollTo(0, scrollYRef.current);
     };
-  }, [isOpen]);
+  }, [isClosing, isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !isClosing) return null;
 
   const placeholderImage = {
     id: "placeholder",
@@ -85,9 +108,17 @@ export function ImageGalleryModal({
   const currentImage = shirt.images[safeCurrentIndex] || shirt.images[0] || placeholderImage;
 
   return (
-    <div className="gallery-modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="gallery-modal-shell gallery-shell-premium" onClick={(event) => event.stopPropagation()}>
-        <button className="gallery-modal-close" type="button" onClick={onClose} aria-label="Cerrar galería">
+    <div
+      className={`gallery-modal-backdrop ${isClosing ? "is-closing" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      onClick={dismiss}
+    >
+      <div
+        className={`gallery-modal-shell gallery-shell-premium ${isClosing ? "is-closing" : ""}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button className="gallery-modal-close" type="button" onClick={dismiss} aria-label="Cerrar galería">
           ×
         </button>
 
@@ -144,10 +175,13 @@ export function ImageGalleryModal({
 
             <div className="gallery-premium-header">
               <div className="gallery-meta-compact">
-                <p>
-                  {shirt.season} · {shirt.team}
+                <span className={`gallery-status-badge ${shirt.status === "wishlist" ? "is-wishlist" : "is-collection"}`}>
+                  {statusLabels[shirt.status]}
+                </span>
+                <p className="gallery-meta-title">
+                  {shirt.team} <span>· {shirt.season}</span>
                 </p>
-                <p>
+                <p className="gallery-meta-subtitle">
                   {shirt.player || "Sin nombre"}
                   {shirt.number ? ` · #${shirt.number}` : ""}
                 </p>
@@ -156,7 +190,7 @@ export function ImageGalleryModal({
               {!readOnly ? (
                 <div className="gallery-header-actions">
                   <button
-                    className="gallery-icon-button"
+                    className="gallery-icon-button is-edit"
                     type="button"
                     onClick={() => {
                       onClose();
@@ -167,7 +201,7 @@ export function ImageGalleryModal({
                     Editar
                   </button>
                   <button
-                    className="gallery-icon-button"
+                    className="gallery-icon-button is-delete"
                     type="button"
                     onClick={() => {
                       onClose();
@@ -181,25 +215,25 @@ export function ImageGalleryModal({
               ) : null}
             </div>
 
-            <div className="gallery-details-compact">
-              <div className="detail-compact-item">
+            <div className="gallery-details-rows">
+              <div className="gallery-detail-row">
                 <span className="detail-label">Equipación</span>
                 <span className="detail-value">{shirt.kitType}</span>
               </div>
-              <div className="detail-compact-item">
+              <div className="gallery-detail-row">
                 <span className="detail-label">Talla</span>
                 <span className="detail-value">{shirt.size}</span>
               </div>
-              <div className="detail-compact-item">
+              <div className="gallery-detail-row">
                 <span className="detail-label">País</span>
                 <span className="detail-value">{shirt.country}</span>
               </div>
-              <div className="detail-compact-item">
+              <div className="gallery-detail-row">
                 <span className="detail-label">Liga</span>
                 <span className="detail-value">{shirt.league}</span>
               </div>
               {shirt.notes ? (
-                <div className="detail-compact-item">
+                <div className="gallery-detail-row">
                   <span className="detail-label">Notas</span>
                   <span className="detail-value">{shirt.notes}</span>
                 </div>
