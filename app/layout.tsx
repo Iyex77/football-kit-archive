@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Inter } from "next/font/google";
 import localFont from "next/font/local";
+import Script from "next/script";
 import { ToastProvider } from "./components/ToastProvider";
 import "./globals.css";
 
@@ -58,8 +59,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`h-full antialiased ${inter.variable} ${bebasNeue.variable} ${lemonMilk.variable}`}>
+    <html
+      lang="es"
+      className={`h-full antialiased ${inter.variable} ${bebasNeue.variable} ${lemonMilk.variable}`}
+      suppressHydrationWarning
+    >
       <body className="min-h-full flex flex-col">
+        <Script id="theme-init" strategy="beforeInteractive">
+          {"try{var t=localStorage.getItem('theme')||'system';var r=t==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):t;document.documentElement.dataset.theme=r;}catch(e){}"}
+        </Script>
         <ToastProvider />
         {children}
       </body>

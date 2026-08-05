@@ -1,18 +1,46 @@
 @import "tailwindcss";
 
-:root {
-  --background: #05070d;
-  --foreground: #f4f7fb;
-  --surface-1: #080d14;
-  --surface-2: #0c121b;
-  --surface-3: #101823;
-  --border-soft: rgb(255 255 255 / 0.07);
-  --border-muted: rgb(255 255 255 / 0.1);
-  --text-muted: rgb(159 171 187);
-  --text-soft: rgb(204 212 224);
-  --accent: rgb(72 198 187);
-  --accent-soft: rgb(72 198 187 / 0.12);
-  --amber-soft: rgb(217 166 61 / 0.14);
+:root,
+:root[data-theme="dark"] {
+  --background: #000000;
+  --foreground: #ffffff;
+  --surface-1: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --surface-3: #3a3a3c;
+  --border-soft: rgb(255 255 255 / 0.08);
+  --border-muted: rgb(255 255 255 / 0.14);
+  --text-muted: rgb(142 142 147);
+  --text-soft: rgb(199 199 204);
+  --accent: rgb(10 132 255);
+  --accent-soft: rgb(10 132 255 / 0.12);
+  --gold: rgb(255 159 10);
+  --gold-soft: rgb(255 159 10 / 0.14);
+
+  /* unified scale — premium/minimal pass */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --shadow-resting: 0 10px 30px rgb(0 0 0 / 0.18);
+  --shadow-lifted: 0 16px 40px rgb(0 0 0 / 0.28);
+}
+
+:root[data-theme="light"] {
+  --background: #f2f2f7;
+  --foreground: #000000;
+  --surface-1: #ffffff;
+  --surface-2: #e9e9eb;
+  --surface-3: #ffffff;
+  --border-soft: rgb(0 0 0 / 0.08);
+  --border-muted: rgb(0 0 0 / 0.14);
+  --text-muted: rgb(107 107 112);
+  --text-soft: rgb(60 60 67);
+  --accent: rgb(0 122 255);
+  --accent-soft: rgb(0 122 255 / 0.12);
+  --gold: rgb(255 149 0);
+  --gold-soft: rgb(255 149 0 / 0.14);
+  --shadow-resting: 0 6px 20px rgb(0 0 0 / 0.07);
+  --shadow-lifted: 0 10px 28px rgb(0 0 0 / 0.12);
 }
 
 @theme inline {
@@ -35,9 +63,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, #07101a 0%, var(--background) 34rem),
-    var(--background);
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   font-weight: 400;
@@ -48,9 +74,7 @@ main {
 }
 
 .app-shell {
-  background:
-    radial-gradient(circle at 50% -18rem, rgb(68 88 106 / 0.18), transparent 38rem),
-    linear-gradient(180deg, #07101a 0%, #05070d 42rem, #04060a 100%);
+  background: var(--background);
 }
 
 button,
@@ -95,7 +119,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .app-toaster [data-sonner-toast],
 .app-toast {
   pointer-events: auto;
-  border: 1px solid rgb(94 234 212 / 0.22) !important;
+  border: 1px solid rgb(100 176 255 / 0.22) !important;
   border-radius: 8px !important;
   background:
     linear-gradient(135deg, rgb(20 184 166 / 0.13), transparent 44%),
@@ -128,14 +152,14 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .app-toast-close:hover,
 .app-toaster [data-close-button]:hover {
-  border-color: rgb(94 234 212 / 0.38) !important;
-  background: rgb(15 23 42 / 0.94) !important;
+  border-color: rgb(100 176 255 / 0.38) !important;
+  background: rgb(26 20 14 / 0.94) !important;
   color: white !important;
 }
 
 .app-toast-title {
   color: white !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
 }
 
 .app-toast-description {
@@ -162,46 +186,50 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .hero-panel {
   display: flex;
-  min-height: 220px;
-  align-items: end;
-  justify-content: space-between;
-  gap: clamp(1rem, 3vw, 2rem);
-  border-bottom: 1px solid var(--border-soft);
-  padding: clamp(1.5rem, 4vw, 3.25rem) 0 clamp(1.1rem, 2.4vw, 1.85rem);
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 0;
+  gap: 0.5rem;
+  border-bottom: none;
+  padding: clamp(1.4rem, 3vw, 2rem) 0 clamp(1rem, 2vw, 1.4rem);
 }
 
 .hero-panel h1 {
-  margin-top: 0.55rem;
-  max-width: 920px;
-  color: white;
-  font-family: var(--font-page-title);
-  font-size: clamp(2.65rem, 4vw, 3.2rem);
-  font-weight: 400;
-  letter-spacing: 0.03em;
-  line-height: 0.96;
+  margin-top: 0;
+  max-width: 100%;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: clamp(1.9rem, 3vw, 2.3rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
   text-wrap: balance;
 }
 
 .hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   min-width: 0;
+  width: 100%;
 }
 
 .hero-title {
-  max-width: min(920px, 100%);
+  max-width: 100%;
   overflow-wrap: normal;
 }
 
 .hero-context {
   display: inline-flex;
-  margin-top: 0.72rem;
-  border: 1px solid rgb(255 255 255 / 0.08);
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.035);
-  color: rgb(176 191 205);
+  margin-top: 0.9rem;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-soft);
   padding: 0.31rem 0.6rem;
-  font-size: 0.66rem;
-  font-weight: 650;
-  letter-spacing: 0.11em;
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -215,9 +243,9 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .hero-panel .hero-context {
-  margin-top: 0.72rem;
+  margin-top: 0.9rem;
   max-width: max-content;
-  color: rgb(176 191 205);
+  color: var(--text-soft);
   font-size: 0.66rem;
   line-height: 1;
 }
@@ -225,34 +253,46 @@ body.is-shirt-detail-screen .sort-dropdown {
 .eyebrow,
 .section-heading p {
   font-family: var(--font-sans);
-  color: rgb(135 151 168);
-  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
   font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .hero-stats {
-  display: grid;
+  display: flex;
   flex-wrap: wrap;
-  grid-template-columns: repeat(3, max-content);
-  justify-content: end;
-  gap: 0.42rem;
-  max-width: min(100%, 620px);
+  justify-content: flex-start;
+  gap: 0.9rem;
+  align-self: flex-start;
+  max-width: 100%;
+  margin-top: 0.2rem;
 }
 
-.hero-stats span,
+.hero-stats span {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.hero-stats span:first-child {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .pill {
   border: 1px solid var(--border-soft);
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.035);
-  color: rgb(190 202 215);
-  padding: 0.42rem 0.62rem;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 0.03);
+  color: var(--text-soft);
+  padding: 0.44rem 0.68rem;
   font-size: 0.64rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  backdrop-filter: blur(10px);
   white-space: nowrap;
 }
 
@@ -268,7 +308,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   place-content: center;
   border: 1px solid var(--border-muted);
   border-radius: 999px;
-  background: rgb(8 13 20 / 0.72);
+  background: color-mix(in srgb, var(--surface-1) 72%, transparent);
   box-shadow: 0 14px 42px rgb(0 0 0 / 0.26);
   backdrop-filter: blur(18px);
 }
@@ -279,6 +319,31 @@ body.is-shirt-detail-screen .sort-dropdown {
   height: 1.5px;
   border-radius: 999px;
   background: rgb(198 209 219);
+}
+
+.tab-bar {
+  display: none;
+}
+
+.tab-bar-item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 0.3rem 0;
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 500;
+}
+
+.tab-bar-item svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.tab-bar-item.is-active {
+  color: var(--accent);
 }
 
 .drawer-backdrop {
@@ -300,9 +365,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   height: 100vh;
   flex-direction: column;
   border-left: 1px solid var(--border-soft);
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 0.035), transparent 18rem),
-    rgb(7 11 18 / 0.98);
+  background: color-mix(in srgb, var(--surface-1) 98%, transparent);
   box-shadow: -24px 0 80px rgb(0 0 0 / 0.38);
   padding: max(1rem, env(safe-area-inset-top)) 0.85rem max(1rem, env(safe-area-inset-bottom));
   transform: translateX(100%);
@@ -324,10 +387,10 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .drawer-header h2 {
   margin-top: 0.22rem;
-  color: white;
+  color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 1.02rem;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: 0;
   line-height: 1.15;
 }
@@ -359,11 +422,11 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid rgb(255 255 255 / 0.14);
   border-radius: 999px;
   background:
-    radial-gradient(circle at 35% 25%, rgb(72 198 187 / 0.35), transparent 48%),
-    rgb(15 23 42 / 0.82);
+    radial-gradient(circle at 35% 25%, rgb(10 132 255 / 0.35), transparent 48%),
+    rgb(26 20 14 / 0.82);
   color: rgb(226 252 249);
   font-size: 1.05rem;
-  font-weight: 800;
+  font-weight: 700;
   box-shadow: 0 14px 36px rgb(0 0 0 / 0.26);
 }
 
@@ -408,14 +471,14 @@ body.is-shirt-detail-screen .sort-dropdown {
   color: rgb(151 163 179);
   padding: 0.34rem 0.4rem;
   font-size: 0.58rem;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.05;
   text-align: center;
   text-transform: uppercase;
 }
 
 .drawer-stats strong {
-  color: white;
+  color: var(--foreground);
   font-size: 0.9rem;
   line-height: 1;
 }
@@ -429,7 +492,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border-radius: 999px;
   background: rgb(255 255 255 / 0.035);
   color: rgb(190 202 215);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .drawer-nav {
@@ -458,7 +521,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
-  color: rgb(204 212 224);
+  color: rgb(214 203 184);
   padding: 0.6rem 0.68rem;
   text-align: left;
   text-decoration: none;
@@ -476,7 +539,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .drawer-link.is-active {
   border-color: rgb(255 255 255 / 0.09);
   background: rgb(255 255 255 / 0.045);
-  color: white;
+  color: var(--foreground);
   outline: none;
 }
 
@@ -536,7 +599,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .drawer-sport-option:hover,
 .drawer-sport-option:focus-visible,
 .drawer-sport-option.is-active {
-  background: rgb(72 198 187 / 0.1);
+  background: rgb(10 132 255 / 0.1);
   color: rgb(180 231 225);
   outline: none;
 }
@@ -571,7 +634,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .profile-panel h2,
 .profile-public-card h3 {
   font-family: var(--font-page-title);
-  color: white;
+  color: var(--foreground);
   font-weight: 400;
   letter-spacing: 0.03em;
 }
@@ -655,12 +718,12 @@ body.is-shirt-detail-screen .sort-dropdown {
   height: 4.25rem;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid rgb(94 234 212 / 0.35);
+  border: 1px solid rgb(100 176 255 / 0.35);
   border-radius: 999px;
-  background: rgb(45 212 191 / 0.12);
-  color: rgb(204 251 241);
+  background: rgb(64 156 255 / 0.12);
+  color: rgb(214 234 255);
   font-size: 1.5rem;
-  font-weight: 860;
+  font-weight: 700;
   overflow: hidden;
 }
 
@@ -684,8 +747,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .profile-avatar-row h3 {
-  color: white;
-  font-weight: 820;
+  color: var(--foreground);
+  font-weight: 700;
 }
 
 .profile-avatar-row p {
@@ -713,15 +776,15 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid rgb(255 255 255 / 0.09);
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgb(45 212 191 / 0.09), transparent 42%),
+    linear-gradient(135deg, rgb(64 156 255 / 0.09), transparent 42%),
     rgb(2 6 23 / 0.54);
   padding: 1rem;
 }
 
 .export-card h3 {
-  color: white;
+  color: var(--foreground);
   font-size: 0.98rem;
-  font-weight: 820;
+  font-weight: 700;
 }
 
 .export-card p {
@@ -811,7 +874,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .avatar-crop-header h2 {
   margin-top: 0.28rem;
-  color: white;
+  color: var(--foreground);
   font-family: var(--font-page-title);
   font-size: 1.35rem;
   font-weight: 400;
@@ -835,7 +898,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   justify-self: center;
   overflow: hidden;
   touch-action: none;
-  border: 1px solid rgb(94 234 212 / 0.3);
+  border: 1px solid rgb(100 176 255 / 0.3);
   border-radius: 999px;
   background:
     linear-gradient(45deg, rgb(255 255 255 / 0.045) 25%, transparent 25%),
@@ -894,19 +957,19 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .public-owner-banner {
   justify-content: space-between;
-  border-color: rgb(94 234 212 / 0.24);
+  border-color: rgb(100 176 255 / 0.24);
   background: rgb(20 184 166 / 0.11);
-  color: rgb(204 251 241);
-  font-weight: 780;
+  color: rgb(214 234 255);
+  font-weight: 700;
 }
 
 .public-owner-banner a {
-  color: white;
+  color: var(--foreground);
   text-decoration: none;
 }
 
 .pill-green {
-  border-color: rgb(94 234 212 / 0.34);
+  border-color: rgb(100 176 255 / 0.34);
   color: rgb(153 246 228);
 }
 
@@ -928,11 +991,11 @@ body.is-shirt-detail-screen .sort-dropdown {
   width: 100%;
   gap: 0.55rem;
   border: 1px solid var(--border-soft);
-  border-radius: 12px;
-  background: rgb(8 13 20 / 0.72);
-  box-shadow: 0 18px 54px rgb(0 0 0 / 0.18);
-  padding: 0.48rem;
-  backdrop-filter: blur(20px);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface-1) 86%, transparent);
+  box-shadow: var(--shadow-resting);
+  padding: 0.5rem;
+  backdrop-filter: blur(12px);
 }
 
 .filters-toolbar {
@@ -980,8 +1043,8 @@ body.is-shirt-detail-screen .sort-dropdown {
   min-height: 2.45rem;
   width: 100%;
   border: 1px solid rgb(255 255 255 / 0.075);
-  border-radius: 9px;
-  background: rgb(12 18 27 / 0.74);
+  border-radius: var(--radius-sm);
+  background: rgb(18 14 10 / 0.74);
   color: rgb(235 241 248);
   outline: none;
   padding: 0.58rem 0.7rem;
@@ -1003,19 +1066,19 @@ body.is-shirt-detail-screen .sort-dropdown {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  border-color: rgb(72 198 187 / 0.48);
-  background: rgb(9 15 23 / 0.96);
-  box-shadow: 0 0 0 3px rgb(72 198 187 / 0.08);
+  border-color: rgb(10 132 255 / 0.48);
+  background: rgb(15 12 9 / 0.96);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .smart-autofill {
   display: grid;
   gap: 0.85rem;
-  border: 1px solid rgb(94 234 212 / 0.14);
+  border: 1px solid rgb(100 176 255 / 0.14);
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgb(45 212 191 / 0.1), transparent 48%),
-    rgb(15 23 42 / 0.54);
+    linear-gradient(135deg, rgb(64 156 255 / 0.1), transparent 48%),
+    rgb(26 20 14 / 0.54);
   padding: 0.85rem;
 }
 
@@ -1039,9 +1102,9 @@ body.is-shirt-detail-screen .sort-dropdown {
 .smart-secondary-button {
   font-family: var(--font-sans);
   min-height: 2.8rem;
-  border: 1px solid rgb(94 234 212 / 0.28);
+  border: 1px solid rgb(100 176 255 / 0.28);
   border-radius: 8px;
-  color: rgb(204 251 241);
+  color: rgb(214 234 255);
   padding: 0.72rem 1rem;
   font-size: 0.82rem;
   font-weight: 500;
@@ -1053,17 +1116,17 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .smart-autofill-button {
-  background: rgb(45 212 191 / 0.14);
+  background: rgb(64 156 255 / 0.14);
 }
 
 .smart-secondary-button {
-  background: rgb(15 23 42 / 0.66);
+  background: rgb(26 20 14 / 0.66);
 }
 
 .smart-autofill-button:hover,
 .smart-secondary-button:hover {
-  border-color: rgb(94 234 212 / 0.5);
-  background: rgb(45 212 191 / 0.22);
+  border-color: rgb(100 176 255 / 0.5);
+  background: rgb(64 156 255 / 0.22);
   transform: translateY(-1px);
 }
 
@@ -1104,7 +1167,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   overflow-y: auto;
   border: 1px solid rgb(255 255 255 / 0.12);
   border-radius: 18px;
-  background: rgb(5 9 14 / 0.96);
+  background: rgb(11 9 7 / 0.96);
   padding: 0.5rem;
   box-shadow: 0 30px 70px rgb(0 0 0 / 0.35);
   backdrop-filter: blur(18px);
@@ -1117,8 +1180,8 @@ body.is-shirt-detail-screen .sort-dropdown {
   width: 100%;
   border: 0;
   border-radius: 14px;
-  background: rgb(15 23 42 / 0.86);
-  color: white;
+  background: rgb(26 20 14 / 0.86);
+  color: var(--foreground);
   padding: 0.95rem 1rem;
   text-align: left;
   transition:
@@ -1130,7 +1193,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .team-suggestion-item:focus-visible,
 .team-suggestions .custom-team-option:hover,
 .team-suggestions .custom-team-option:focus-visible {
-  background: rgb(45 212 191 / 0.14);
+  background: rgb(64 156 255 / 0.14);
   transform: translateX(2px);
   outline: none;
 }
@@ -1242,7 +1305,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border-radius: 18px;
   overflow: hidden;
   background: rgb(10 14 24);
-  border: 1px solid rgb(45 212 191 / 0.12);
+  border: 1px solid rgb(64 156 255 / 0.12);
   box-shadow: 0 18px 40px rgb(0 0 0 / 0.16);
   margin-top: 0.75rem;
 }
@@ -1305,7 +1368,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border-radius: 50%;
   border: 1px solid rgb(255 255 255 / 0.2);
   background: rgb(255 255 255 / 0.1);
-  color: white;
+  color: var(--foreground);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 160ms ease;
@@ -1333,9 +1396,9 @@ body.is-shirt-detail-screen .sort-dropdown {
   bottom: 0.35rem;
   left: 0.35rem;
   background: rgb(56 189 248 / 0.85);
-  color: white;
+  color: var(--foreground);
   font-size: 0.65rem;
-  font-weight: 780;
+  font-weight: 700;
   padding: 0.25rem 0.4rem;
   border-radius: 4px;
   letter-spacing: 0.08em;
@@ -1349,13 +1412,13 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .auto-summary span {
-  border: 1px solid rgb(94 234 212 / 0.2);
+  border: 1px solid rgb(100 176 255 / 0.2);
   border-radius: 999px;
-  background: rgb(45 212 191 / 0.08);
-  color: rgb(204 251 241);
+  background: rgb(64 156 255 / 0.08);
+  color: rgb(214 234 255);
   padding: 0.55rem 0.78rem;
   font-size: 0.78rem;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1369,7 +1432,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .collection-heading h2 {
   margin-top: 0.35rem;
-  color: white;
+  color: var(--foreground);
   font-family: var(--font-page-title);
   font-size: clamp(1.25rem, 2.2vw, 1.85rem);
   font-weight: 400;
@@ -1388,7 +1451,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid rgb(255 255 255 / 0.08);
   border-radius: 14px;
   background:
-    linear-gradient(135deg, rgb(72 198 187 / 0.15), transparent 34%),
+    linear-gradient(135deg, rgb(10 132 255 / 0.15), transparent 34%),
     linear-gradient(180deg, rgb(255 255 255 / 0.07), transparent 42%),
     rgb(4 8 14 / 0.96);
   box-shadow: 0 22px 62px rgb(0 0 0 / 0.26);
@@ -1432,7 +1495,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid rgb(255 255 255 / 0.18);
   border-radius: 13px;
   background: rgb(255 255 255 / 0.07);
-  color: white;
+  color: var(--foreground);
   font-family: var(--font-page-title);
   font-size: clamp(1.8rem, 3.5vw, 2.8rem);
   box-shadow: 0 16px 42px rgb(0 0 0 / 0.24);
@@ -1450,7 +1513,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .public-showcase-copy h1 {
   margin-top: 0.24rem;
-  color: white;
+  color: var(--foreground);
   font-family: var(--font-page-title);
   font-size: clamp(2rem, 4.4vw, 4.15rem);
   font-weight: 400;
@@ -1466,7 +1529,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .public-showcase-username {
-  color: rgb(151 222 215);
+  color: rgb(125 194 255);
   font-weight: 700;
 }
 
@@ -1502,7 +1565,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .public-bio-editor span {
   color: rgb(148 163 184);
   font-size: 0.72rem;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1513,7 +1576,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid rgb(255 255 255 / 0.1);
   border-radius: 10px;
   background: rgb(2 6 23 / 0.55);
-  color: white;
+  color: var(--foreground);
   padding: 0.8rem;
   outline: none;
 }
@@ -1533,23 +1596,23 @@ body.is-shirt-detail-screen .sort-dropdown {
   padding: 0.55rem 0.68rem;
   color: rgb(148 163 184);
   font-size: 0.58rem;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
 .public-showcase-stats strong {
-  color: white;
+  color: var(--foreground);
   font-size: clamp(1.05rem, 1.7vw, 1.42rem);
   line-height: 1;
 }
 
 .public-showcase-stats .is-collection strong {
-  color: rgb(151 222 215);
+  color: rgb(125 194 255);
 }
 
 .public-showcase-stats .is-wishlist strong {
-  color: rgb(226 188 104);
+  color: rgb(255 159 10);
 }
 
 .public-showcase-tabs {
@@ -1573,18 +1636,18 @@ body.is-shirt-detail-screen .sort-dropdown {
   background: transparent;
   color: rgb(148 163 184);
   padding: 0.5rem 0.66rem;
-  font-weight: 760;
+  font-weight: 700;
   font-size: 0.82rem;
 }
 
 .public-showcase-tabs button.is-active {
-  border-color: rgb(72 198 187 / 0.26);
-  background: rgb(72 198 187 / 0.11);
-  color: white;
+  border-color: rgb(10 132 255 / 0.26);
+  background: rgb(10 132 255 / 0.11);
+  color: var(--foreground);
 }
 
 .public-showcase-tabs strong {
-  color: rgb(151 222 215);
+  color: rgb(125 194 255);
   font-size: 0.85rem;
 }
 
@@ -1601,7 +1664,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   padding: 0.55rem 0.7rem;
   color: rgb(203 213 225);
   font-size: 0.78rem;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1617,10 +1680,10 @@ body.is-shirt-detail-screen .sort-dropdown {
 .featured-curator-panel {
   display: grid;
   gap: 1rem;
-  border: 1px solid rgb(226 188 104 / 0.16);
+  border: 1px solid rgb(255 159 10 / 0.16);
   border-radius: 14px;
   background:
-    linear-gradient(135deg, rgb(226 188 104 / 0.08), transparent 44%),
+    linear-gradient(135deg, rgb(255 159 10 / 0.08), transparent 44%),
     rgb(5 10 18 / 0.82);
   padding: 1rem;
 }
@@ -1634,20 +1697,20 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .featured-curator-header h3 {
   margin-top: 0.24rem;
-  color: white;
+  color: var(--foreground);
   font-size: 1.08rem;
-  font-weight: 760;
+  font-weight: 700;
 }
 
 .featured-curator-header > span {
   flex: 0 0 auto;
-  border: 1px solid rgb(226 188 104 / 0.26);
+  border: 1px solid rgb(255 159 10 / 0.26);
   border-radius: 999px;
-  background: rgb(226 188 104 / 0.1);
+  background: rgb(255 159 10 / 0.1);
   color: rgb(255 240 197);
   padding: 0.44rem 0.72rem;
   font-size: 0.78rem;
-  font-weight: 760;
+  font-weight: 700;
 }
 
 .featured-selected-list,
@@ -1670,8 +1733,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .featured-selected-card {
   grid-template-columns: 3.2rem minmax(0, 1fr) auto;
-  border-color: rgb(226 188 104 / 0.2);
-  background: rgb(226 188 104 / 0.08);
+  border-color: rgb(255 159 10 / 0.2);
+  background: rgb(255 159 10 / 0.08);
 }
 
 .featured-result-row {
@@ -1721,18 +1784,18 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .featured-selected-order {
-  color: rgb(226 188 104);
+  color: rgb(255 159 10);
   font-size: 0.68rem;
-  font-weight: 780;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .featured-selected-copy strong,
 .featured-result-copy strong {
-  color: white;
+  color: var(--foreground);
   font-size: 0.9rem;
-  font-weight: 720;
+  font-weight: 600;
 }
 
 .featured-selected-copy small,
@@ -1748,7 +1811,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   color: rgb(203 213 225);
   padding: 0.16rem 0.42rem;
   font-size: 0.62rem;
-  font-weight: 720;
+  font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -1769,7 +1832,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   color: rgb(226 232 240);
   padding: 0 0.62rem;
   font-size: 0.74rem;
-  font-weight: 720;
+  font-weight: 600;
 }
 
 .featured-selected-actions button:not(.is-remove) {
@@ -1789,23 +1852,23 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .featured-result-row > button:not(:disabled) {
-  border-color: rgb(226 188 104 / 0.28);
-  background: rgb(226 188 104 / 0.12);
+  border-color: rgb(255 159 10 / 0.28);
+  background: rgb(255 159 10 / 0.12);
   color: rgb(255 240 197);
 }
 
 .featured-empty-curator,
 .featured-results-empty {
-  border: 1px dashed rgb(226 188 104 / 0.2);
+  border: 1px dashed rgb(255 159 10 / 0.2);
   border-radius: 10px;
-  background: rgb(226 188 104 / 0.045);
+  background: rgb(255 159 10 / 0.045);
   padding: 1rem;
 }
 
 .featured-empty-curator h4 {
-  color: white;
+  color: var(--foreground);
   font-size: 1rem;
-  font-weight: 760;
+  font-weight: 700;
 }
 
 .featured-empty-curator p,
@@ -1826,14 +1889,14 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid rgb(255 255 255 / 0.09);
   border-radius: 10px;
   background: rgb(2 6 12 / 0.62);
-  color: white;
+  color: var(--foreground);
   padding: 0 0.9rem;
   outline: none;
 }
 
 .featured-search-panel input[type="search"]:focus {
-  border-color: rgb(226 188 104 / 0.34);
-  box-shadow: 0 0 0 3px rgb(226 188 104 / 0.08);
+  border-color: rgb(255 159 10 / 0.34);
+  box-shadow: 0 0 0 3px rgb(255 159 10 / 0.08);
 }
 
 .featured-quick-filters {
@@ -1856,8 +1919,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .featured-quick-filters button.is-active {
-  border-color: rgb(226 188 104 / 0.3);
-  background: rgb(226 188 104 / 0.12);
+  border-color: rgb(255 159 10 / 0.3);
+  background: rgb(255 159 10 / 0.12);
   color: rgb(255 240 197);
 }
 
@@ -1868,9 +1931,9 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .featured-limit-message {
-  border: 1px solid rgb(226 188 104 / 0.22);
+  border: 1px solid rgb(255 159 10 / 0.22);
   border-radius: 10px;
-  background: rgb(226 188 104 / 0.075);
+  background: rgb(255 159 10 / 0.075);
   color: rgb(255 240 197);
   padding: 0.72rem 0.85rem;
 }
@@ -1882,13 +1945,13 @@ body.is-shirt-detail-screen .sort-dropdown {
 .featured-manage-toggle {
   flex: 0 0 auto;
   min-height: 2rem;
-  border: 1px solid rgb(226 188 104 / 0.24);
+  border: 1px solid rgb(255 159 10 / 0.24);
   border-radius: 999px;
-  background: rgb(226 188 104 / 0.095);
+  background: rgb(255 159 10 / 0.095);
   color: rgb(255 240 197);
   padding: 0 0.72rem;
   font-size: 0.72rem;
-  font-weight: 760;
+  font-weight: 700;
 }
 
 .featured-editorial-showcase {
@@ -1922,13 +1985,13 @@ body.is-shirt-detail-screen .sort-dropdown {
   grid-template-rows: minmax(0, 1fr) auto;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid rgb(226 188 104 / 0.18);
+  border: 1px solid rgb(255 159 10 / 0.18);
   border-radius: 11px;
   background:
-    linear-gradient(135deg, rgb(226 188 104 / 0.13), transparent 44%),
+    linear-gradient(135deg, rgb(255 159 10 / 0.13), transparent 44%),
     linear-gradient(180deg, rgb(255 255 255 / 0.045), transparent 42%),
     rgb(5 9 15);
-  color: white;
+  color: var(--foreground);
   text-align: left;
   box-shadow: 0 18px 48px rgb(0 0 0 / 0.22);
   transition:
@@ -1938,7 +2001,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .featured-editorial-card:hover {
-  border-color: rgb(226 188 104 / 0.34);
+  border-color: rgb(255 159 10 / 0.34);
   box-shadow: 0 22px 58px rgb(0 0 0 / 0.3);
   transform: translateY(-1px);
 }
@@ -1977,13 +2040,13 @@ body.is-shirt-detail-screen .sort-dropdown {
   top: 0.58rem;
   left: 0.58rem;
   z-index: 3;
-  border: 1px solid rgb(226 188 104 / 0.3);
+  border: 1px solid rgb(255 159 10 / 0.3);
   border-radius: 999px;
   background: rgb(4 8 13 / 0.68);
   color: rgb(255 240 197);
   padding: 0.27rem 0.46rem;
   font-size: 0.55rem;
-  font-weight: 780;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   backdrop-filter: blur(12px);
@@ -2046,9 +2109,9 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .featured-editorial-copy strong {
-  color: white;
+  color: var(--foreground);
   font-size: clamp(1rem, 1.85vw, 1.55rem);
-  font-weight: 780;
+  font-weight: 700;
   line-height: 1.05;
 }
 
@@ -2064,7 +2127,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .featured-editorial-copy span {
   color: rgb(226 232 240);
   font-size: 0.76rem;
-  font-weight: 620;
+  font-weight: 600;
 }
 
 .featured-editorial-copy small {
@@ -2084,14 +2147,14 @@ body.is-shirt-detail-screen .sort-dropdown {
   background: rgb(4 8 13 / 0.62);
   padding: 0.24rem 0.42rem;
   font-size: 0.55rem;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   backdrop-filter: blur(12px);
 }
 
 .featured-editorial-status.is-collection {
-  color: rgb(151 222 215);
+  color: rgb(125 194 255);
 }
 
 .featured-editorial-status.is-wishlist {
@@ -2104,19 +2167,19 @@ body.is-shirt-detail-screen .sort-dropdown {
   justify-content: space-between;
   gap: 1rem;
   min-height: 12.5rem;
-  border: 1px solid rgb(226 188 104 / 0.16);
+  border: 1px solid rgb(255 159 10 / 0.16);
   border-radius: 12px;
   background:
-    linear-gradient(135deg, rgb(226 188 104 / 0.1), transparent 45%),
+    linear-gradient(135deg, rgb(255 159 10 / 0.1), transparent 45%),
     rgb(5 10 18 / 0.82);
   padding: clamp(0.9rem, 2vw, 1.35rem);
 }
 
 .featured-editorial-empty h3 {
   margin-top: 0.35rem;
-  color: white;
+  color: var(--foreground);
   font-size: clamp(1.4rem, 3vw, 2.4rem);
-  font-weight: 780;
+  font-weight: 700;
 }
 
 .featured-editorial-empty p {
@@ -2141,15 +2204,15 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .featured-card-shell .shirt-card {
-  border-color: rgb(226 188 104 / 0.2);
+  border-color: rgb(255 159 10 / 0.2);
   background:
-    linear-gradient(180deg, rgb(226 188 104 / 0.045), transparent 34%),
-    rgb(10 15 23 / 0.96);
+    linear-gradient(180deg, rgb(255 159 10 / 0.045), transparent 34%),
+    rgb(16 13 10 / 0.96);
   box-shadow: 0 20px 56px rgb(0 0 0 / 0.26);
 }
 
 .featured-card-shell.is-primary .shirt-card {
-  border-color: rgb(226 188 104 / 0.3);
+  border-color: rgb(255 159 10 / 0.3);
   box-shadow: 0 24px 68px rgb(0 0 0 / 0.32);
 }
 
@@ -2158,13 +2221,13 @@ body.is-shirt-detail-screen .sort-dropdown {
   top: 0.65rem;
   left: 0.65rem;
   z-index: 8;
-  border: 1px solid rgb(226 188 104 / 0.38);
+  border: 1px solid rgb(255 159 10 / 0.38);
   border-radius: 999px;
   background: rgb(7 10 15 / 0.72);
   color: rgb(255 240 197);
   padding: 0.34rem 0.58rem;
   font-size: 0.62rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   backdrop-filter: blur(12px);
@@ -2189,13 +2252,13 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .featured-card-ribbon > span:first-child {
-  border: 1px solid rgb(226 188 104 / 0.28);
+  border: 1px solid rgb(255 159 10 / 0.28);
   border-radius: 999px;
   background: rgb(7 10 15 / 0.66);
   color: rgb(255 240 197);
   padding: 0.34rem 0.58rem;
   font-size: 0.63rem;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   backdrop-filter: blur(12px);
@@ -2215,13 +2278,13 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid rgb(255 255 255 / 0.12);
   border-radius: 999px;
   background: rgb(3 8 20 / 0.72);
-  color: white;
+  color: var(--foreground);
 }
 
 .public-empty-state {
   border-style: solid;
   background:
-    linear-gradient(135deg, rgb(72 198 187 / 0.09), transparent 34%),
+    linear-gradient(135deg, rgb(10 132 255 / 0.09), transparent 34%),
     rgb(4 9 17 / 0.72);
 }
 
@@ -2229,30 +2292,24 @@ body.is-shirt-detail-screen .sort-dropdown {
   display: inline-flex;
   flex: 0 0 auto;
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 0.09);
-  border-radius: 7px;
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 0.055), transparent),
-    rgb(2 6 23 / 0.56);
-  padding: 0.12rem;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 10px 28px rgb(0 0 0 / 0.14);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: 2px;
+  gap: 2px;
 }
 
 .view-style-toggle button {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 5px;
+  border-radius: calc(var(--radius-sm) - 3px);
   background: transparent;
-  color: rgb(116 133 151);
+  color: var(--text-muted);
   width: 2rem;
   height: 1.82rem;
   padding: 0;
-  font-weight: 760;
-  transition:
-    background 160ms ease,
-    color 160ms ease,
-    box-shadow 160ms ease;
+  transition: background 160ms ease, color 160ms ease;
 }
 
 .view-style-toggle button svg {
@@ -2261,9 +2318,23 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .view-style-toggle button.is-active {
-  background: rgb(250 204 21 / 0.14);
-  color: rgb(250 204 21);
-  box-shadow: inset 0 0 0 1px rgb(250 204 21 / 0.24);
+  background: var(--surface-3);
+  color: var(--foreground);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+.theme-toggle {
+  width: max-content;
+}
+
+.theme-toggle button {
+  width: auto;
+  height: 2.1rem;
+  padding: 0 0.9rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .collection-grid {
@@ -2274,52 +2345,61 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .compact-shirt-list {
-  display: grid;
-  gap: 0.62rem;
-  padding-bottom: 5rem;
+  display: block;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  overflow: hidden;
+  margin-bottom: 5rem;
 }
 
 .compact-shirt-row {
   position: relative;
   display: grid;
-  grid-template-columns: 4.35rem minmax(10rem, 1.2fr) minmax(7rem, 0.65fr) minmax(10rem, 0.85fr) auto auto;
+  grid-template-columns: 3.75rem minmax(10rem, 1.2fr) minmax(7rem, 0.65fr) minmax(10rem, 0.85fr) auto auto;
   align-items: center;
-  gap: 0.9rem;
-  min-height: 5.15rem;
-  border: 1px solid rgb(255 255 255 / 0.07);
-  border-radius: 10px;
-  background:
-    linear-gradient(135deg, rgb(255 255 255 / 0.06), transparent 42%),
-    rgb(8 13 21 / 0.9);
-  box-shadow: 0 18px 42px rgb(0 0 0 / 0.18);
-  padding: 0.58rem 0.68rem;
+  gap: 1.1rem;
+  min-height: 4.6rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0.85rem 1rem;
   cursor: pointer;
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
+  transition: background 160ms ease;
+}
+
+.compact-shirt-row::after {
+  content: "";
+  position: absolute;
+  left: calc(3.75rem + 1.1rem + 1rem);
+  right: 1rem;
+  bottom: 0;
+  height: 1px;
+  background: var(--border-soft);
+}
+
+.compact-shirt-list .compact-shirt-row:last-child::after {
+  display: none;
 }
 
 .compact-shirt-row:hover {
-  border-color: rgb(255 255 255 / 0.13);
-  box-shadow: 0 22px 54px rgb(0 0 0 / 0.26);
-  transform: translateY(-1px);
+  background: rgb(255 255 255 / 0.035);
 }
 
 .compact-shirt-row.is-selected {
-  outline: 2px solid rgb(34 197 94 / 0.78);
-  box-shadow: 0 18px 48px rgb(34 197 94 / 0.08);
+  background: rgb(34 197 94 / 0.05);
+  outline: none;
+  box-shadow: inset 2px 0 0 rgb(34 197 94 / 0.7);
 }
 
 .compact-shirt-thumb {
-  width: 4.35rem;
-  height: 4.35rem;
+  width: 3.75rem;
+  height: 3.75rem;
   overflow: hidden;
-  border: 1px solid rgb(255 255 255 / 0.075);
-  border-radius: 8px;
-  background:
-    radial-gradient(circle at 50% 35%, rgb(255 255 255 / 0.07), transparent 58%),
-    rgb(3 7 13);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
 }
 
 .compact-shirt-thumb img {
@@ -2343,23 +2423,23 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .compact-shirt-title {
-  color: white;
+  color: var(--foreground);
   font-size: 0.96rem;
-  font-weight: 790;
+  font-weight: 700;
 }
 
 .compact-shirt-subtitle {
   margin-top: 0.18rem;
   color: rgb(148 163 184);
   font-size: 0.82rem;
-  font-weight: 570;
+  font-weight: 500;
 }
 
 .compact-shirt-detail {
   margin-top: 0.16rem;
   color: rgb(100 116 139);
   font-size: 0.72rem;
-  font-weight: 560;
+  font-weight: 500;
   line-height: 1.2;
 }
 
@@ -2371,7 +2451,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .compact-shirt-meta span {
   color: rgb(100 116 139);
   font-size: 0.62rem;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -2379,7 +2459,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .compact-shirt-meta strong {
   color: rgb(226 232 240);
   font-size: 0.82rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .compact-status {
@@ -2393,6 +2473,16 @@ body.is-shirt-detail-screen .sort-dropdown {
   gap: 0.38rem;
 }
 
+.compact-row-chevron {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  opacity: 0.6;
+}
+
 .compact-row-actions button,
 .compact-select-checkbox {
   display: grid;
@@ -2403,7 +2493,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border-radius: 7px;
   background: rgb(255 255 255 / 0.045);
   color: rgb(226 232 240);
-  font-weight: 780;
+  font-weight: 700;
   transition:
     border-color 160ms ease,
     background 160ms ease,
@@ -2411,9 +2501,9 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .compact-row-actions button:hover {
-  border-color: rgb(94 234 212 / 0.28);
-  background: rgb(45 212 191 / 0.1);
-  color: rgb(204 251 241);
+  border-color: rgb(100 176 255 / 0.28);
+  background: rgb(64 156 255 / 0.1);
+  color: rgb(214 234 255);
 }
 
 .compact-select-checkbox {
@@ -2449,21 +2539,15 @@ body.is-shirt-detail-screen .sort-dropdown {
   flex-direction: column;
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 0.055);
-  border-radius: 12px;
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 0.035), transparent 36%),
-    rgb(10 15 23 / 0.96);
-  box-shadow: 0 18px 50px rgb(0 0 0 / 0.22);
-  transition:
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-resting);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .shirt-card:hover {
-  border-color: rgb(255 255 255 / 0.11);
-  box-shadow: 0 24px 62px rgb(0 0 0 / 0.32);
-  transform: translateY(-2px);
+  border-color: rgb(255 255 255 / 0.14);
+  box-shadow: var(--shadow-lifted);
 }
 
 .shirt-image-wrap {
@@ -2472,7 +2556,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   overflow: hidden;
   background:
     radial-gradient(circle at 50% 35%, rgb(255 255 255 / 0.05), transparent 52%),
-    rgb(5 9 14);
+    rgb(11 9 7);
 }
 
 .shirt-card-image {
@@ -2480,11 +2564,6 @@ body.is-shirt-detail-screen .sort-dropdown {
   height: 100%;
   object-fit: contain;
   object-position: center;
-  transition: transform 420ms ease;
-}
-
-.shirt-card:hover .shirt-card-image {
-  transform: scale(1.018);
 }
 
 .shirt-image-wrap::after {
@@ -2505,47 +2584,10 @@ body.is-shirt-detail-screen .sort-dropdown {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 1px solid rgb(45 212 191 / 0.32);
-  background: rgb(45 212 191 / 0.18);
-  color: rgb(45 212 191);
+  border: 1px solid rgb(10 132 255 / 0.32);
+  background: rgb(10 132 255 / 0.18);
+  color: var(--accent);
   font-size: 1rem;
-}
-
-.shirt-card-badge {
-  flex-shrink: 0;
-  padding: 0.4rem 0.7rem;
-  border-radius: 5px;
-  border: 1px solid transparent;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transition: all 180ms ease;
-  cursor: pointer;
-}
-
-.shirt-card-badge:disabled {
-  cursor: default;
-}
-
-.shirt-card-badge.badge-collection {
-  background: rgb(14 165 233 / 0.16);
-  color: rgb(56 189 248);
-  border-color: rgb(56 189 248 / 0.3);
-  cursor: default;
-}
-
-.shirt-card-badge.badge-wishlist {
-  background: rgb(251 191 36 / 0.16);
-  color: rgb(254 208 80);
-  border-color: rgb(251 191 36 / 0.4);
-}
-
-.shirt-card-badge.badge-wishlist:hover {
-  background: rgb(251 191 36 / 0.28);
-  border-color: rgb(251 191 36 / 0.6);
-  transform: translateY(-1px);
 }
 
 .shirt-card-actions {
@@ -2578,7 +2620,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
+  font-weight: 700;
   z-index: 6;
   cursor: pointer;
   transition: all 160ms ease;
@@ -2624,8 +2666,8 @@ body.is-shirt-detail-screen .sort-dropdown {
   display: flex;
   gap: 0.75rem;
   align-items: center;
-  background: rgb(6 12 22 / 0.7);
-  border: 1px solid rgb(45 212 191 / 0.12);
+  background: rgb(12 10 8 / 0.7);
+  border: 1px solid rgb(64 156 255 / 0.12);
   padding: 0.75rem 1rem;
   border-radius: 12px;
   box-shadow: 0 12px 40px rgb(0 0 0 / 0.5);
@@ -2643,13 +2685,13 @@ body.is-shirt-detail-screen .sort-dropdown {
   .floating-selection-bar {
     right: 0.75rem;
     left: 0.75rem;
-    bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
+    bottom: calc(env(safe-area-inset-bottom) + 4.6rem);
     display: grid;
     grid-template-columns: 1fr;
     gap: 0.55rem;
     padding: 0.62rem;
     border-radius: 10px;
-    background: rgb(6 12 22 / 0.92);
+    background: rgb(12 10 8 / 0.92);
     backdrop-filter: blur(14px);
   }
 
@@ -2681,7 +2723,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border-radius: 50%;
   border: 1px solid rgb(255 255 255 / 0.15);
   background: rgb(0 0 0 / 0.55);
-  color: white;
+  color: var(--foreground);
   font-size: 1rem;
   display: inline-flex;
   align-items: center;
@@ -2690,9 +2732,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .shirt-card-action-icon:hover {
-  transform: scale(1.08);
-  background: rgb(45 212 191 / 0.16);
-  border-color: rgb(45 212 191 / 0.5);
+  background: var(--accent-soft);
+  border-color: rgb(10 132 255 / 0.5);
 }
 
 .shirt-card-footer {
@@ -2700,7 +2741,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   gap: 0.62rem;
   padding: 0.82rem 0.9rem 0.9rem;
   border-top: 1px solid rgb(255 255 255 / 0.055);
-  background: linear-gradient(180deg, rgb(10 15 23 / 0.96), rgb(6 10 16 / 0.98));
+  background: var(--surface-1);
 }
 
 .shirt-card-info {
@@ -2711,7 +2752,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .shirt-card-team {
   margin: 0;
-  color: white;
+  color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
@@ -2767,21 +2808,21 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .shirt-card-badge.badge-collection {
-  background: rgb(72 198 187 / 0.1);
-  color: rgb(151 222 215);
-  border-color: rgb(72 198 187 / 0.18);
+  background: rgb(10 132 255 / 0.1);
+  color: rgb(125 194 255);
+  border-color: rgb(10 132 255 / 0.18);
   cursor: default;
 }
 
 .shirt-card-badge.badge-wishlist {
-  background: rgb(217 166 61 / 0.12);
-  color: rgb(226 188 104);
-  border-color: rgb(217 166 61 / 0.22);
+  background: rgb(191 122 20 / 0.12);
+  color: rgb(255 159 10);
+  border-color: rgb(191 122 20 / 0.22);
 }
 
 .shirt-card-badge.badge-wishlist:hover {
-  background: rgb(217 166 61 / 0.18);
-  border-color: rgb(217 166 61 / 0.34);
+  background: rgb(191 122 20 / 0.18);
+  border-color: rgb(191 122 20 / 0.34);
   transform: translateY(-1px);
 }
 
@@ -2808,7 +2849,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .public-collection-grid .shirt-card-team {
   font-size: 0.94rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .public-collection-grid .shirt-card-badge {
@@ -2827,11 +2868,11 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .public-collection-grid .shirt-card-badge.badge-collection::before {
-  background: rgb(151 222 215);
+  background: rgb(125 194 255);
 }
 
 .public-collection-grid .shirt-card-badge.badge-wishlist::before {
-  background: rgb(226 188 104);
+  background: rgb(255 159 10);
 }
 
 .shirt-details {
@@ -2869,8 +2910,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .detail-list dd {
   margin-top: 0.18rem;
-  color: white;
-  font-weight: 720;
+  color: var(--foreground);
+  font-weight: 600;
 }
 
 .shirt-details p {
@@ -2895,20 +2936,19 @@ body.is-shirt-detail-screen .sort-dropdown {
 .floating-filter-button {
   font-family: var(--font-sans);
   min-height: 2.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 0.62rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 500;
   transition:
-    transform 160ms ease,
     border-color 160ms ease,
     background 160ms ease,
     box-shadow 160ms ease;
 }
 
 .primary-button {
-  border: 1px solid rgb(72 198 187 / 0.42);
-  background: rgb(72 198 187 / 0.16);
+  border: 1px solid rgb(10 132 255 / 0.42);
+  background: var(--accent-soft);
   color: rgb(210 247 243);
 }
 
@@ -2917,7 +2957,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 .icon-button {
   border: 1px solid var(--border-soft);
   background: rgb(255 255 255 / 0.035);
-  color: rgb(204 212 224);
+  color: rgb(214 203 184);
 }
 
 .quiet-button {
@@ -2960,9 +3000,9 @@ body.is-shirt-detail-screen .sort-dropdown {
   flex-direction: row !important;
   align-items: center;
   gap: 0.46rem;
-  border: 1px solid rgb(255 255 255 / 0.08);
+  border: 1px solid var(--border-soft);
   border-radius: 999px;
-  background: rgb(3 8 20 / 0.58);
+  background: color-mix(in srgb, var(--surface-1) 70%, transparent);
   box-shadow: 0 18px 48px rgb(0 0 0 / 0.34);
   padding: 0.26rem;
   backdrop-filter: blur(18px);
@@ -2998,8 +3038,8 @@ body.is-shirt-detail-screen .sort-dropdown {
   min-height: 2.5rem;
   padding: 0 0.95rem;
   border-radius: 999px;
-  border: 1px solid rgb(72 198 187 / 0.36);
-  background: rgb(72 198 187 / 0.18);
+  border: 1px solid rgb(10 132 255 / 0.36);
+  background: rgb(10 132 255 / 0.18);
   color: rgb(222 250 247);
   white-space: nowrap;
   box-shadow: none;
@@ -3016,10 +3056,10 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid var(--border-soft);
   border-radius: 999px;
   background: rgb(255 255 255 / 0.035);
-  color: rgb(204 212 224);
+  color: rgb(214 203 184);
   padding: 0;
   font-size: 1rem;
-  font-weight: 850;
+  font-weight: 700;
   letter-spacing: 0;
   backdrop-filter: blur(12px);
 }
@@ -3034,7 +3074,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid var(--border-soft);
   border-radius: 999px;
   background: rgb(255 255 255 / 0.035);
-  color: rgb(204 212 224);
+  color: rgb(214 203 184);
   padding: 0;
   backdrop-filter: blur(12px);
 }
@@ -3057,8 +3097,8 @@ body.is-shirt-detail-screen .sort-dropdown {
   width: 0.42rem;
   height: 0.42rem;
   border-radius: 999px;
-  background: rgb(72 198 187);
-  box-shadow: 0 0 0 3px rgb(72 198 187 / 0.14);
+  background: rgb(10 132 255);
+  box-shadow: 0 0 0 3px rgb(10 132 255 / 0.14);
 }
 
 .floating-add-label-short {
@@ -3102,7 +3142,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .section-heading h2 {
   margin-top: 0.35rem;
-  color: white;
+  color: var(--foreground);
   font-family: var(--font-page-title);
   font-size: 1.45rem;
   font-weight: 400;
@@ -3112,14 +3152,14 @@ body.is-shirt-detail-screen .sort-dropdown {
 .empty-state {
   border: 1px solid rgb(255 255 255 / 0.1);
   border-radius: 8px;
-  background: rgb(15 23 42 / 0.62);
+  background: rgb(26 20 14 / 0.62);
   padding: 4rem 1.5rem;
   text-align: center;
 }
 
 .empty-state h3 {
   font-family: var(--font-page-title);
-  color: white;
+  color: var(--foreground);
   font-size: 1.25rem;
   font-weight: 400;
   letter-spacing: 0.03em;
@@ -3145,12 +3185,12 @@ body.is-shirt-detail-screen .sort-dropdown {
   height: 2.5rem;
   padding: 0;
   font-size: 0.86rem;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0;
   border: 1px solid var(--border-soft);
   border-radius: 999px;
   background: rgb(255 255 255 / 0.035);
-  color: rgb(204 212 224);
+  color: rgb(214 203 184);
   cursor: pointer;
   transition: all 120ms ease;
   backdrop-filter: blur(12px);
@@ -3168,11 +3208,11 @@ body.is-shirt-detail-screen .sort-dropdown {
 .sort-dropdown {
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
+  left: 0;
   width: max-content;
   min-width: 184px;
   max-width: calc(100vw - 2rem);
-  background: rgb(7 11 18 / 0.98);
+  background: var(--surface-1);
   border: 1px solid var(--border-soft);
   border-radius: 12px;
   box-shadow: 0 16px 48px rgb(0 0 0 / 0.3);
@@ -3208,7 +3248,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .sort-dropdown button.is-active {
-  background: rgb(72 198 187 / 0.1);
+  background: rgb(10 132 255 / 0.1);
   color: rgb(230 250 248);
 }
 
@@ -3255,7 +3295,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .stats-card:hover {
   transform: translateY(-2px);
-  border-color: rgb(94 234 212 / 0.36);
+  border-color: rgb(100 176 255 / 0.36);
   background: rgb(255 255 255 / 0.075);
 }
 
@@ -3273,7 +3313,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .stats-link-button {
   flex: 0 0 auto;
-  border: 1px solid rgb(94 234 212 / 0.25);
+  border: 1px solid rgb(100 176 255 / 0.25);
   border-radius: 999px;
   background: rgb(20 184 166 / 0.1);
   color: rgb(153 246 228);
@@ -3307,8 +3347,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .stats-ranking-row:hover {
   transform: translateY(-1px);
-  border-color: rgb(94 234 212 / 0.22);
-  background: rgb(15 23 42 / 0.54);
+  border-color: rgb(100 176 255 / 0.22);
+  background: rgb(26 20 14 / 0.54);
 }
 
 .stats-ranking-main,
@@ -3438,7 +3478,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   gap: 0.65rem;
   border: 1px solid rgb(255 255 255 / 0.08);
   border-radius: 8px;
-  background: linear-gradient(135deg, rgb(255 255 255 / 0.055), rgb(15 23 42 / 0.44));
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.055), rgb(26 20 14 / 0.44));
   padding: 0.9rem;
 }
 
@@ -3497,7 +3537,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .stats-detail-header h3 {
   margin-top: 0.35rem;
-  color: white;
+  color: var(--foreground);
   font-family: var(--font-page-title);
   font-size: 1.5rem;
   font-weight: 400;
@@ -3522,7 +3562,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   background: rgb(255 255 255 / 0.06);
   color: rgb(226 232 240);
   font-size: 1rem;
-  font-weight: 760;
+  font-weight: 700;
   line-height: 1;
   transition:
     background 160ms ease,
@@ -3549,7 +3589,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   gap: 0.9rem;
   border: 1px solid rgb(255 255 255 / 0.08);
   border-radius: 8px;
-  background: rgb(15 23 42 / 0.52);
+  background: rgb(26 20 14 / 0.52);
   padding: 1rem;
 }
 
@@ -3569,13 +3609,13 @@ body.is-shirt-detail-screen .sort-dropdown {
   background: rgb(20 184 166 / 0.14);
   color: rgb(153 246 228);
   font-size: 0.82rem;
-  font-weight: 780;
+  font-weight: 700;
 }
 
 .stats-detail-entry-main p,
 .stats-shirt-list span {
-  color: white;
-  font-weight: 760;
+  color: var(--foreground);
+  font-weight: 700;
 }
 
 .stats-detail-entry-main small,
@@ -3604,8 +3644,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .stats-detail-shirts button:hover,
 .stats-shirt-list button:hover {
-  border-color: rgb(94 234 212 / 0.25);
-  background: rgb(15 23 42 / 0.8);
+  border-color: rgb(100 176 255 / 0.25);
+  background: rgb(26 20 14 / 0.8);
 }
 
 .stats-item-shirt-list {
@@ -3645,8 +3685,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .stats-item-shirt-row:hover {
   transform: translateY(-1px);
-  border-color: rgb(94 234 212 / 0.28);
-  background: rgb(15 23 42 / 0.72);
+  border-color: rgb(100 176 255 / 0.28);
+  background: rgb(26 20 14 / 0.72);
 }
 
 .stats-item-shirt-row img {
@@ -3655,7 +3695,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border: 1px solid rgb(255 255 255 / 0.1);
   border-radius: 8px;
   object-fit: cover;
-  background: rgb(15 23 42);
+  background: rgb(26 20 14);
 }
 
 .stats-item-shirt-copy {
@@ -3666,9 +3706,9 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .stats-item-shirt-title {
   overflow: hidden;
-  color: white;
+  color: var(--foreground);
   font-size: 0.98rem;
-  font-weight: 820;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -3697,7 +3737,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   color: rgb(191 219 254);
   padding: 0.38rem 0.62rem;
   font-size: 0.72rem;
-  font-weight: 820;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -3733,7 +3773,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   }
 
   .compact-shirt-row {
-    grid-template-columns: 4rem minmax(0, 1fr) auto;
+    grid-template-columns: 4rem minmax(0, 1fr) auto auto;
     gap: 0.72rem;
   }
 
@@ -3746,6 +3786,10 @@ body.is-shirt-detail-screen .sort-dropdown {
   .compact-shirt-location,
   .compact-row-actions {
     display: none;
+  }
+
+  .compact-row-chevron {
+    display: inline-flex;
   }
 
   .hero-panel {
@@ -3842,7 +3886,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .filters-mobile-header span {
   font-size: 1rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.06em;
   color: rgb(226 232 240);
 }
@@ -3857,7 +3901,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   background: rgb(250 204 21 / 0.16);
   color: rgb(250 204 21);
   font-size: 0.68rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .filters-reset-button {
@@ -3912,6 +3956,27 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 @media (max-width: 768px) {
+  .app-menu-button {
+    display: none;
+  }
+
+  .tab-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 140;
+    display: flex;
+    border-top: 1px solid var(--border-soft);
+    background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+    backdrop-filter: blur(20px);
+    padding: 0.4rem 0.2rem calc(env(safe-area-inset-bottom) + 0.35rem);
+  }
+
+  main {
+    padding-bottom: calc(150px + env(safe-area-inset-bottom));
+  }
+
   .filters-grid {
     display: none;
   }
@@ -4160,7 +4225,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   .floating-actions {
     left: 50%;
     right: auto;
-    bottom: calc(env(safe-area-inset-bottom) + 0.7rem);
+    bottom: calc(env(safe-area-inset-bottom) + 4.6rem);
     transform: translateX(-50%);
     gap: 0.28rem;
     max-width: calc(100vw - 1.2rem);
@@ -4171,7 +4236,7 @@ body.is-shirt-detail-screen .sort-dropdown {
     padding: 0 0.9rem;
     border-radius: 999px;
     font-size: 0.78rem;
-    font-weight: 750;
+    font-weight: 700;
     box-shadow: none;
   }
 
@@ -4233,14 +4298,33 @@ body.is-shirt-detail-screen .sort-dropdown {
 
   .collection-grid{
     grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:.7rem;
+    gap: 1.4rem .9rem;
     padding-bottom: 6rem;
   }
 
   .shirt-card{
     max-width:none;
-    min-height:390px;
+    min-height:0;
     height:auto;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .shirt-card:hover {
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .shirt-image-wrap {
+    aspect-ratio: 1 / 1;
+    flex: none;
+  }
+
+  .shirt-card-footer {
+    background: transparent;
+    border-top: none;
+    padding: 0.65rem 0.1rem 0;
   }
 
 }
@@ -4289,47 +4373,24 @@ body.is-shirt-detail-screen .sort-dropdown {
 
   .hero-panel {
     min-height: auto;
-    align-items: start;
-    gap: 0.85rem;
+    align-items: flex-start;
+    gap: 0.4rem;
     padding-top: 1.1rem;
     padding-bottom: 0.9rem;
   }
 
   .hero-panel h1 {
-    margin-top: 0.42rem;
-    max-width: 14ch;
-    font-size: clamp(1.48rem, 6.7vw, 1.88rem);
-    letter-spacing: 0.02em;
-    line-height: 0.98;
+    margin-top: 0;
+    max-width: 100%;
+    font-size: clamp(1.7rem, 6.5vw, 2rem);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
   }
 
   .hero-stats {
     width: 100%;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0;
-    overflow: hidden;
-    border: 1px solid rgb(255 255 255 / 0.07);
-    border-radius: 10px;
-    background: rgb(255 255 255 / 0.025);
-  }
-
-  .hero-stats span {
-    display: inline-flex;
-    min-width: 0;
-    justify-content: center;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    padding: 0.48rem 0.34rem;
-    text-align: center;
-    font-size: 0.56rem;
-    font-weight: 560;
-    letter-spacing: 0.055em;
-    white-space: normal;
-  }
-
-  .hero-stats span + span {
-    border-left: 1px solid rgb(255 255 255 / 0.07);
+    justify-content: flex-start;
+    gap: 0.9rem;
   }
 
   .hero-context {
@@ -4351,8 +4412,8 @@ body.is-shirt-detail-screen .sort-dropdown {
     z-index: 40;
     border-radius: 10px;
     padding: 0.34rem;
-    border: 1px solid rgb(255 255 255 / 0.075);
-    background: rgb(7 12 20 / 0.78);
+    border: 1px solid var(--border-soft);
+    background: color-mix(in srgb, var(--surface-1) 78%, transparent);
     box-shadow: 0 14px 34px rgb(0 0 0 / 0.18);
     backdrop-filter: blur(18px);
   }
@@ -4389,54 +4450,78 @@ body.is-shirt-detail-screen .sort-dropdown {
     width: auto;
   }
 
-  .view-style-toggle button {
+  .view-style-toggle:not(.theme-toggle) button {
     width: 1.9rem;
     height: 1.7rem;
   }
 
-  .compact-shirt-list {
-    gap: 0.55rem;
-  }
-
   .compact-shirt-row {
-    min-height: 5.15rem;
-    grid-template-columns: 3.85rem minmax(0, 1fr) auto;
+    min-height: 0;
+    grid-template-columns: 5rem minmax(0, 1fr) auto auto;
     align-items: center;
-    border-radius: 9px;
-    padding: 0.52rem;
+    gap: 1rem;
+    padding: 1.1rem 0.7rem;
   }
 
   .compact-shirt-thumb {
-    width: 3.85rem;
-    height: 3.85rem;
+    width: 5rem;
+    height: 5rem;
   }
 
   .compact-shirt-title {
-    font-size: 0.83rem;
-    line-height: 1.12;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.16;
   }
 
   .compact-shirt-subtitle {
-    margin-top: 0.16rem;
-    font-size: 0.72rem;
-    line-height: 1.14;
+    margin-top: 0.2rem;
+    font-size: 0.76rem;
+    line-height: 1.16;
   }
 
   .compact-shirt-detail {
-    margin-top: 0.15rem;
-    font-size: 0.66rem;
-    line-height: 1.12;
+    margin-top: 0.18rem;
+    font-size: 0.68rem;
+    line-height: 1.16;
   }
 
   .compact-status {
     align-self: start;
-    margin-top: 0.08rem;
+    margin-top: 0.1rem;
+  }
+
+  .shirt-card-badge.compact-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 0.6rem;
+  }
+
+  .shirt-card-badge.compact-status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .shirt-card-badge.compact-status.badge-collection {
+    color: var(--accent);
+  }
+
+  .shirt-card-badge.compact-status.badge-wishlist {
+    color: var(--gold);
   }
 
   .compact-select-checkbox {
-    width: 1.45rem;
-    height: 1.45rem;
-    border-radius: 6px;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: var(--radius-sm);
   }
 
   .export-card {
@@ -4587,7 +4672,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   height: 92vh;
   max-height: 92vh;
   background: rgb(2 6 23 / 0.95);
-  border: 1px solid rgb(45 212 191 / 0.25);
+  border: 1px solid rgb(64 156 255 / 0.25);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -4617,7 +4702,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   border-radius: 8px;
   border: 1px solid rgb(255 255 255 / 0.15);
   background: rgb(0 0 0 / 0.5);
-  color: white;
+  color: var(--foreground);
   font-size: 1.5rem;
   cursor: pointer;
   transition: all 160ms ease;
@@ -4664,7 +4749,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   margin: 0;
   font-size: 1.3rem;
   font-weight: 700;
-  color: white;
+  color: var(--foreground);
   min-width: fit-content;
 }
 
@@ -4696,9 +4781,9 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .gallery-pill.active {
-  background: rgb(45 212 191 / 0.14);
-  border-color: rgb(45 212 191 / 0.35);
-  color: rgb(45 212 191);
+  background: rgb(64 156 255 / 0.14);
+  border-color: rgb(64 156 255 / 0.35);
+  color: rgb(64 156 255);
 }
 
 .gallery-icon-button {
@@ -4706,20 +4791,20 @@ body.is-shirt-detail-screen .sort-dropdown {
   border-radius: 8px;
   border: 1px solid rgb(255 255 255 / 0.16);
   background: rgb(0 0 0 / 0.55);
-  color: white;
+  color: var(--foreground);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0 0.85rem;
   font-size: 0.8rem;
-  font-weight: 780;
+  font-weight: 700;
   transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
   white-space: nowrap;
 }
 
 .gallery-icon-button:hover {
-  background: rgb(45 212 191 / 0.18);
-  border-color: rgb(45 212 191 / 0.4);
+  background: rgb(64 156 255 / 0.18);
+  border-color: rgb(64 156 255 / 0.4);
   transform: scale(1.05);
 }
 
@@ -4757,7 +4842,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   width: 120px;
   height: 120px;
   border-radius: 8px;
-  border: 2px solid rgb(45 212 191 / 0.2);
+  border: 2px solid rgb(64 156 255 / 0.2);
   background-color: rgb(6 20 40 / 0.8);
   overflow: hidden;
   cursor: pointer;
@@ -4779,7 +4864,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .gallery-thumbnail-vertical:hover {
-  border-color: rgb(45 212 191 / 0.4);
+  border-color: rgb(64 156 255 / 0.4);
   background-color: rgb(6 20 40);
 }
 
@@ -4788,8 +4873,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .gallery-thumbnail-vertical.is-active {
-  border-color: rgb(45 212 191);
-  box-shadow: 0 0 15px rgb(45 212 191 / 0.4);
+  border-color: rgb(64 156 255);
+  box-shadow: 0 0 15px rgb(64 156 255 / 0.4);
 }
 
 /* Scrollbar vertical */
@@ -4802,12 +4887,12 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .gallery-thumbnails-vertical::-webkit-scrollbar-thumb {
-  background: rgb(45 212 191 / 0.3);
+  background: rgb(64 156 255 / 0.3);
   border-radius: 3px;
 }
 
 .gallery-thumbnails-vertical::-webkit-scrollbar-thumb:hover {
-  background: rgb(45 212 191 / 0.5);
+  background: rgb(64 156 255 / 0.5);
 }
 
 /* Main viewer area */
@@ -4824,7 +4909,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   position: relative;
   overflow: hidden;
   background: rgb(10 13 20);
-  border: 1px solid rgb(45 212 191 / 0.15);
+  border: 1px solid rgb(64 156 255 / 0.15);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -4875,7 +4960,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   gap: 0.75rem;
   padding: 0.75rem;
   background: rgb(6 20 40 / 0.5);
-  border: 1px solid rgb(45 212 191 / 0.15);
+  border: 1px solid rgb(64 156 255 / 0.15);
   border-radius: 8px;
   max-height: 100px;
   overflow-y: auto;
@@ -4959,9 +5044,9 @@ body.is-shirt-detail-screen .sort-dropdown {
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 50%;
-  border: 1px solid rgb(45 212 191 / 0.5);
+  border: 1px solid rgb(64 156 255 / 0.5);
   background: rgb(0 0 0 / 0.6);
-  color: rgb(45 212 191);
+  color: rgb(64 156 255);
   font-size: 1.5rem;
   cursor: pointer;
   transition: all 200ms ease;
@@ -4972,7 +5057,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
 .gallery-nav-btn:hover {
   background: rgb(13 148 136 / 0.8);
-  border-color: rgb(45 212 191 / 0.8);
+  border-color: rgb(64 156 255 / 0.8);
   transform: translateY(-50%) scale(1.1);
 }
 
@@ -4994,7 +5079,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   z-index: 8;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  border: 1px solid rgb(45 212 191 / 0.4);
+  border: 1px solid rgb(64 156 255 / 0.4);
   background: rgb(0 0 0 / 0.7);
   color: rgb(206 243 232);
   font-size: 0.875rem;
@@ -5016,12 +5101,12 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .gallery-thumbnails::-webkit-scrollbar-thumb {
-  background: rgb(45 212 191 / 0.4);
+  background: rgb(64 156 255 / 0.4);
   border-radius: 3px;
 }
 
 .gallery-thumbnails::-webkit-scrollbar-thumb:hover {
-  background: rgb(45 212 191 / 0.6);
+  background: rgb(64 156 255 / 0.6);
 }
 
 .gallery-thumbnail {
@@ -5029,7 +5114,7 @@ body.is-shirt-detail-screen .sort-dropdown {
   width: 120px;
   height: 120px;
   border-radius: 10px;
-  border: 2px solid rgb(45 212 191 / 0.2);
+  border: 2px solid rgb(64 156 255 / 0.2);
   background-color: rgb(6 20 40 / 0.8);
   overflow: hidden;
   cursor: pointer;
@@ -5048,7 +5133,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .gallery-thumbnail:hover {
-  border-color: rgb(45 212 191 / 0.4);
+  border-color: rgb(64 156 255 / 0.4);
   background-color: rgb(6 20 40);
 }
 
@@ -5057,14 +5142,14 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .gallery-thumbnail.is-active {
-  border-color: rgb(45 212 191);
-  box-shadow: 0 0 15px rgb(45 212 191 / 0.4);
+  border-color: rgb(64 156 255);
+  box-shadow: 0 0 15px rgb(64 156 255 / 0.4);
 }
 
 .gallery-details-panel {
   padding: 1.5rem;
   background: rgb(4 8 18 / 0.92);
-  border-top: 1px solid rgb(45 212 191 / 0.1);
+  border-top: 1px solid rgb(64 156 255 / 0.1);
   display: grid;
   gap: 1rem;
 }
@@ -5082,8 +5167,8 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .gallery-details-toggle:hover {
-  background: rgb(45 212 191 / 0.13);
-  border-color: rgb(45 212 191 / 0.35);
+  background: rgb(64 156 255 / 0.13);
+  border-color: rgb(64 156 255 / 0.35);
 }
 
 .gallery-modal-details {
@@ -5103,7 +5188,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .gallery-detail-row:not(:last-child) {
-  border-bottom: 1px solid rgb(45 212 191 / 0.08);
+  border-bottom: 1px solid rgb(64 156 255 / 0.08);
   padding-bottom: 0.75rem;
 }
 
@@ -5118,7 +5203,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 }
 
 .detail-value {
-  color: white;
+  color: var(--foreground);
   font-weight: 500;
 }
 
@@ -5264,7 +5349,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
   .gallery-meta-compact p:last-child {
     font-size: 1.04rem;
-    font-weight: 760;
+    font-weight: 700;
     color: rgb(226 232 240);
   }
 
@@ -5322,7 +5407,7 @@ body.is-shirt-detail-screen .sort-dropdown {
 
   .detail-value {
     font-size: 1.02rem;
-    font-weight: 680;
+    font-weight: 600;
     line-height: 1.2;
   }
 

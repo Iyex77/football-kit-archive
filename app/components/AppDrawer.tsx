@@ -37,6 +37,14 @@ const filterSections: Array<{ href: DrawerFilterPath; label: string; icon: IconN
   { href: "/wishlist", label: "Wishlist", icon: "star" },
 ];
 
+const tabItems: Array<{ href: string; label: string; icon: IconName }> = [
+  { href: "/", label: "Inicio", icon: "layers" },
+  { href: "/coleccion", label: "Colección", icon: "grid" },
+  { href: "/wishlist", label: "Wishlist", icon: "star" },
+  { href: "/estadisticas", label: "Stats", icon: "chart" },
+  { href: "/perfil", label: "Perfil", icon: "user" },
+];
+
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
     user: <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm7 8a7 7 0 0 0-14 0" />,
@@ -112,6 +120,17 @@ export function AppDrawer({
           <span></span>
           <span></span>
         </button>
+      ) : null}
+
+      {!isSuppressed ? (
+        <nav className="tab-bar" aria-label="Navegación principal">
+          {tabItems.map(({ href, label, icon }) => (
+            <Link key={href} className={`tab-bar-item ${pathname === href ? "is-active" : ""}`} href={href}>
+              <Icon name={icon} />
+              <span>{label}</span>
+            </Link>
+          ))}
+        </nav>
       ) : null}
 
       {shouldShowDrawer ? <button className="drawer-backdrop" type="button" aria-label="Cerrar menú" onClick={close} /> : null}

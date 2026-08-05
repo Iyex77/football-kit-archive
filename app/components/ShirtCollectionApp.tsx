@@ -1275,6 +1275,8 @@ export function ShirtCollectionApp({
             </button>
           </div>
         ) : null}
+
+        <span className="compact-row-chevron" aria-hidden="true">›</span>
       </article>
     );
   };

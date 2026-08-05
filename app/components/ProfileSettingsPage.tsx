@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase-auth";
 import type { Profile, Shirt } from "../lib/types";
 import { notify } from "../lib/notify";
+import { getStoredTheme, setTheme, type ThemePreference } from "../lib/theme";
 import { AppDrawer } from "./AppDrawer";
 import { TextField } from "./FormControls";
 
@@ -172,6 +173,16 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
   const [copiedJson, setCopiedJson] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedUserId, setCopiedUserId] = useState(false);
+  const [themePref, setThemePref] = useState<ThemePreference>("system");
+
+  useEffect(() => {
+    setThemePref(getStoredTheme());
+  }, []);
+
+  const handleThemeChange = (pref: ThemePreference) => {
+    setThemePref(pref);
+    setTheme(pref);
+  };
 
   const cleanUsername = username.trim().toLowerCase();
   const publicUrl = cleanUsername ? publicProfileUrl(cleanUsername) : "";
@@ -607,7 +618,7 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#142f2d_0,#090d13_36rem,#05070b_100%)] px-4 py-5 text-slate-100 sm:px-6 sm:py-7 lg:px-10">
+    <main className="min-h-screen px-4 py-5 sm:px-6 sm:py-7 lg:px-10" style={{ background: "var(--background)", color: "var(--foreground)" }}>
       <AppDrawer profile={profile} onLogout={onLogout} />
       <div className="mx-auto max-w-[960px] space-y-5 sm:space-y-8">
         <header className="hero-panel profile-hero">
@@ -624,6 +635,38 @@ export function ProfileSettingsPage({ onLogout }: ProfileSettingsPageProps) {
           </section>
         ) : (
           <>
+            <section className="profile-panel">
+              <div className="section-heading">
+                <div>
+                  <p>Apariencia</p>
+                  <h2>Tema</h2>
+                </div>
+              </div>
+              <div className="view-style-toggle theme-toggle" role="group" aria-label="Selector de tema">
+                <button
+                  type="button"
+                  className={themePref === "system" ? "is-active" : ""}
+                  onClick={() => handleThemeChange("system")}
+                >
+                  Sistema
+                </button>
+                <button
+                  type="button"
+                  className={themePref === "light" ? "is-active" : ""}
+                  onClick={() => handleThemeChange("light")}
+                >
+                  Claro
+                </button>
+                <button
+                  type="button"
+                  className={themePref === "dark" ? "is-active" : ""}
+                  onClick={() => handleThemeChange("dark")}
+                >
+                  Oscuro
+                </button>
+              </div>
+            </section>
+
             <section className="profile-panel">
               <div className="section-heading">
                 <div>
